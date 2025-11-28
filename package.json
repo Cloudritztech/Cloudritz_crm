@@ -2,7 +2,7 @@
   "name": "anvi-crm",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd frontend && npm ci && npm run build",
+    "build": "cd frontend && npm install && npm run build",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
     "start": "cd backend && npm start"
   },
