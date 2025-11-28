@@ -64,8 +64,8 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 
-// For Vercel serverless functions
-if (process.env.NODE_ENV !== 'production') {
+// For local development
+if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Anvi CRM Server running on port ${PORT}`);
     console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
