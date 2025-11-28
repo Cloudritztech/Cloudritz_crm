@@ -21,7 +21,7 @@ connectDB();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://anvi-crm.vercel.app', 'https://anvi-crm-*.vercel.app']
+    ? true // Allow all origins in production for Vercel
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
