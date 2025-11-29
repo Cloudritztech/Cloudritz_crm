@@ -13,8 +13,6 @@ import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
 import Reports from './pages/Reports';
 
-
-
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   

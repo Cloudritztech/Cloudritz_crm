@@ -6,7 +6,6 @@ import {
   Users, 
   Package, 
   AlertTriangle,
-  TrendingUp,
   FileText,
   Wallet
 } from 'lucide-react';

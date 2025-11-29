@@ -24,9 +24,5 @@ build/
 # Logs
 *.log
 
-# PDF files
-backend/invoices/*.pdf
-
-# Lock files
-**/package-lock.json
-**/node_modules/
+# Old backend (now serverless)
+backend/

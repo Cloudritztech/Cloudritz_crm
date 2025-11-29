@@ -3,7 +3,6 @@ import { productsAPI } from '../services/api';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import ProductCard from '../components/ProductCard';
 import ProductForm from '../components/forms/ProductForm';
@@ -62,8 +61,6 @@ const Products = () => {
       }
     }
   };
-
-
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">
