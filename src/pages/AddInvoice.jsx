@@ -210,9 +210,15 @@ const AddInvoice = () => {
       
       const response = await invoicesAPI.create(invoiceData);
       
-      console.log('Invoice response:', response.data);
-      alert("Invoice created successfully!");
-      navigate("/invoices");
+      console.log('Invoice response:', response);
+      console.log('Invoice response data:', response.data);
+      
+      if (response.data?.success) {
+        alert("Invoice created successfully!");
+        navigate("/invoices");
+      } else {
+        throw new Error(response.data?.message || 'Failed to create invoice');
+      }
     } catch (err) {
       console.error('Invoice creation error:', err);
       const errorMessage = err.response?.data?.message || err.message || 'Unknown error';

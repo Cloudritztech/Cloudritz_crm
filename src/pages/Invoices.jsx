@@ -11,21 +11,30 @@ const InvoiceManagement = () => {
 
   const fetchInvoices = async () => {
     try {
+      console.log('Fetching invoices...');
       const res = await invoicesAPI.getAll();
-      console.log('Invoices response:', res.data);
-      if (res.data?.success) {
-        const sorted = (res.data.invoices || []).sort((a, b) => {
+      console.log('Full API response:', res);
+      console.log('Response data:', res.data);
+      
+      if (res.data?.success && res.data?.invoices) {
+        console.log('Invoices found:', res.data.invoices.length);
+        const sorted = res.data.invoices.sort((a, b) => {
           const aDate = new Date(a.createdAt || parseInt(a._id.substring(0, 8), 16) * 1000);
           const bDate = new Date(b.createdAt || parseInt(b._id.substring(0, 8), 16) * 1000);
           return bDate - aDate;
         });
         setInvoices(sorted);
+        setError(null);
       } else {
-        throw new Error(res.data?.message || "Failed to load invoices");
+        console.log('No invoices in response or success=false');
+        setInvoices([]);
+        setError(res.data?.message || "No invoices found");
       }
     } catch (err) {
       console.error("Error fetching invoices:", err);
+      console.error("Error response:", err.response);
       setError(err.response?.data?.message || err.message || "Failed to load invoices");
+      setInvoices([]);
     } finally {
       setLoading(false);
     }
@@ -61,12 +70,30 @@ const InvoiceManagement = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
           Invoice Management
         </h2>
-        <button
-          onClick={() => navigate("/invoices/add")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          + New Invoice
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                console.log('Health check:', data);
+                alert(`API Status: ${data.success ? 'Working' : 'Failed'}`);
+              } catch (err) {
+                console.error('Health check failed:', err);
+                alert('API Health Check Failed');
+              }
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            Test API
+          </button>
+          <button
+            onClick={() => navigate("/invoices/add")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            + New Invoice
+          </button>
+        </div>
       </div>
 
       <div className="mb-6 bg-blue-gray-200/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg shadow-md p-6 border border-white/20 dark:border-gray-700/50">
