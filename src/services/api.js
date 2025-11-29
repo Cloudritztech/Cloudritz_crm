@@ -1,9 +1,26 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Dynamic API base URL for different environments
+const getApiBaseUrl = () => {
+  // In production (deployed), use same domain
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+  
+  // In development, check if we have a custom API URL
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Default to same domain API
+  return '/api';
+};
 
-console.log('API Base URL:', API_BASE_URL);
-console.log('Environment:', import.meta.env.MODE);
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🌍 Environment:', import.meta.env.MODE);
+console.log('📝 Production mode:', import.meta.env.PROD);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -24,10 +41,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor to handle auth errors and logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API Response:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
+    console.error('❌ API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message,
+      data: error.response?.data
+    });
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

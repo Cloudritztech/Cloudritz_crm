@@ -19,42 +19,59 @@ async function runMiddleware(req, res, fn) {
 }
 
 async function handler(req, res) {
-  await connectDB();
-  await runMiddleware(req, res, auth);
+  try {
+    await connectDB();
+    await runMiddleware(req, res, auth);
 
-  const { method } = req;
+    const { method } = req;
 
-  switch (method) {
-    case 'GET':
-      try {
-        const { search, startDate, endDate, customer } = req.query;
-        let query = {};
-        
-        if (search) {
-          query.invoiceNumber = { $regex: search, $options: 'i' };
+    switch (method) {
+      case 'GET':
+        try {
+          const { search, startDate, endDate, customer } = req.query;
+          let query = {};
+          
+          if (search) {
+            query.$or = [
+              { invoiceNumber: { $regex: search, $options: 'i' } },
+              { 'customer.name': { $regex: search, $options: 'i' } }
+            ];
+          }
+          
+          if (startDate && endDate) {
+            query.createdAt = {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate)
+            };
+          }
+          
+          if (customer) {
+            query.customer = customer;
+          }
+
+          console.log('🔍 Fetching invoices with query:', query);
+
+          const invoices = await Invoice.find(query)
+            .populate('customer', 'name phone address')
+            .populate('createdBy', 'name')
+            .sort({ createdAt: -1 })
+            .lean(); // Use lean() for better performance
+
+          console.log(`✅ Found ${invoices.length} invoices`);
+
+          return res.status(200).json({ 
+            success: true, 
+            invoices,
+            count: invoices.length
+          });
+        } catch (error) {
+          console.error('❌ Error fetching invoices:', error);
+          return res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch invoices',
+            error: error.message 
+          });
         }
-        
-        if (startDate && endDate) {
-          query.createdAt = {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          };
-        }
-        
-        if (customer) {
-          query.customer = customer;
-        }
-
-        const invoices = await Invoice.find(query)
-          .populate('customer', 'name phone')
-          .populate('createdBy', 'name')
-          .sort({ createdAt: -1 });
-
-        res.json({ success: true, invoices });
-      } catch (error) {
-        res.status(500).json({ message: error.message });
-      }
-      break;
 
     case 'POST':
       try {
@@ -238,23 +255,36 @@ async function handler(req, res) {
           .populate('items.product', 'name category hsnCode')
           .populate('createdBy', 'name');
 
-        res.status(201).json({ 
+        console.log('✅ Invoice created successfully:', populatedInvoice.invoiceNumber);
+        
+        return res.status(201).json({ 
           success: true, 
           message: 'Invoice created successfully',
           invoice: populatedInvoice 
         });
       } catch (error) {
-        res.status(500).json({ 
+        console.error('❌ Error creating invoice:', error);
+        return res.status(500).json({ 
           success: false, 
           message: 'Failed to create invoice', 
           error: error.message 
         });
       }
-      break;
 
     default:
       res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${method} Not Allowed`);
+      return res.status(405).json({
+        success: false,
+        message: `Method ${method} Not Allowed`
+      });
+  }
+  } catch (error) {
+    console.error('❌ Handler error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
 }
 
