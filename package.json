@@ -1,5 +1,9 @@
 {
   "name": "anvi-crm",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "echo 'Root build complete'",
+    "dev": "echo 'Use npm run dev in frontend or backend directories'"
+  }
 }
