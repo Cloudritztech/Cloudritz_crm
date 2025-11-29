@@ -20,7 +20,15 @@ const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 const connectDB = async () => {
   if (mongoose.connections[0].readyState) return;
-  await mongoose.connect(process.env.MONGODB_URI);
+  
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI not found');
+  }
+  
+  await mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
 };
 
 export default async function handler(req, res) {
@@ -44,6 +52,10 @@ export default async function handler(req, res) {
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'JWT_SECRET not configured' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -70,6 +82,10 @@ export default async function handler(req, res) {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message 
+    });
   }
 }
