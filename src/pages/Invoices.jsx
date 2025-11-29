@@ -88,6 +88,39 @@ const InvoiceManagement = () => {
             Test API
           </button>
           <button
+            onClick={async () => {
+              try {
+                const testId = '507f1f77bcf86cd799439011';
+                const response = await fetch(`/api/test-dynamic/${testId}`);
+                const data = await response.json();
+                console.log('Dynamic test:', data);
+                alert(`Dynamic Route: ${data.success ? 'Working' : 'Failed'} - ID: ${data.id}`);
+              } catch (err) {
+                console.error('Dynamic test failed:', err);
+                alert('Dynamic Route Test Failed');
+              }
+            }}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+          >
+            Test Dynamic
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                console.log('DB test:', data);
+                alert(`DB Test: ${data.success ? 'Working' : 'Failed'} - Count: ${data.invoiceCount}`);
+              } catch (err) {
+                console.error('DB test failed:', err);
+                alert('DB Test Failed');
+              }
+            }}
+            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+          >
+            Test DB
+          </button>
+          <button
             onClick={() => navigate("/invoices/add")}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >

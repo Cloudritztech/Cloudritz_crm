@@ -27,7 +27,11 @@ async function handler(req, res) {
     await connectDB();
     await runMiddleware(req, res, auth);
 
-    const id = req.query.id || req.query.slug;
+    const id = req.query.id;
+    
+    console.log('🔍 PDF generation - Invoice ID:', id);
+    console.log('🔍 PDF generation - Query params:', req.query);
+    console.log('🔍 PDF generation - URL:', req.url);
     
     console.log('🔍 PDF generation requested for invoice ID:', id);
 
@@ -79,6 +83,14 @@ async function handler(req, res) {
   }
 }
 
-export default function(req, res) {
+export default async function(req, res) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(200).end();
+  }
+  
   return handleCors(req, res, handler);
 }

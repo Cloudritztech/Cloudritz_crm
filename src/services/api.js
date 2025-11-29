@@ -97,9 +97,17 @@ export const customersAPI = {
 // Invoices API
 export const invoicesAPI = {
   getAll: (params) => api.get('/invoices', { params }),
-  getById: (id) => api.get(`/invoices/${id}`),
+  getById: (id) => {
+    console.log('🔍 Making API call to get invoice by ID:', id);
+    console.log('🔍 Full URL will be:', `${API_BASE_URL}/invoices/${id}`);
+    return api.get(`/invoices/${id}`);
+  },
   create: (invoice) => api.post('/invoices', invoice),
-  generatePDF: (id) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
+  generatePDF: (id) => {
+    console.log('🔍 Making API call to generate PDF for ID:', id);
+    console.log('🔍 Full URL will be:', `${API_BASE_URL}/invoices/${id}/pdf`);
+    return api.get(`/invoices/${id}/pdf`, { responseType: 'blob' });
+  },
   getWhatsAppLink: (id) => api.get(`/invoices/${id}/whatsapp-link`),
 };
 
