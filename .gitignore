@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 npm-debug.log*
 
 # Environment variables
@@ -23,5 +24,9 @@ build/
 # Logs
 *.log
 
-# PDF files (invoices)
+# PDF files
 backend/invoices/*.pdf
+
+# Lock files
+**/package-lock.json
+**/node_modules/
