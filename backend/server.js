@@ -20,9 +20,7 @@ connectDB();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? true // Allow all origins in production for Vercel
-    : ['http://localhost:3000', 'http://localhost:3001'],
+  origin: true, // Allow all origins for Vercel deployment
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -65,7 +63,7 @@ app.use('*', (req, res) => {
 const PORT = process.env.PORT || 5001;
 
 // For local development
-if (require.main === module) {
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`🚀 Anvi CRM Server running on port ${PORT}`);
     console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
