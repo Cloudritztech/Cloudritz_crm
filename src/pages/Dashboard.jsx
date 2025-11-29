@@ -20,10 +20,20 @@ const Dashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
+      console.log('📊 Fetching dashboard statistics...');
       const response = await reportsAPI.getDashboard();
-      setStats(response.data.stats);
+      console.log('✅ Dashboard API response:', response.data);
+      
+      if (response.data?.success && response.data?.stats) {
+        setStats(response.data.stats);
+      } else {
+        console.error('❌ Invalid dashboard response:', response.data);
+        setStats(null);
+      }
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('❌ Error fetching dashboard stats:', error);
+      console.error('❌ Error details:', error.response?.data);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -65,6 +75,12 @@ const Dashboard = () => {
       color: 'bg-purple-500'
     },
     {
+      title: 'Total Invoices',
+      value: stats?.totalInvoices || 0,
+      icon: FileText,
+      color: 'bg-indigo-500'
+    },
+    {
       title: 'Low Stock Alerts',
       value: stats?.lowStockProducts || 0,
       icon: AlertTriangle,
@@ -82,7 +98,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (

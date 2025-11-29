@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -28,6 +28,8 @@ const customers = (await import('./api/customers/index.js')).default;
 const products = (await import('./api/products/index.js')).default;
 const invoices = (await import('./api/invoices/index.js')).default;
 const invoiceById = (await import('./api/invoices/[id].js')).default;
+const invoicePdf = (await import('./api/invoices/[id]/pdf.js')).default;
+const dashboard = (await import('./api/reports/dashboard.js')).default;
 const health = (await import('./api/health.js')).default;
 
 // API Routes
@@ -40,6 +42,11 @@ app.all('/api/invoices/:id', (req, res) => {
   req.query = { ...req.query, id: req.params.id };
   invoiceById(req, res);
 });
+app.all('/api/invoices/:id/pdf', (req, res) => {
+  req.query = { ...req.query, id: req.params.id };
+  invoicePdf(req, res);
+});
+app.all('/api/reports/dashboard', dashboard);
 app.all('/api/health', health);
 
 app.listen(PORT, () => {

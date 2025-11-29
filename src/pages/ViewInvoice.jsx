@@ -35,10 +35,27 @@ const ViewInvoice = () => {
 
   const fetchInvoice = async () => {
     try {
+      console.log('🔍 Fetching invoice with ID:', id);
+      
+      if (!id) {
+        console.error('❌ No invoice ID provided');
+        setLoading(false);
+        return;
+      }
+      
       const res = await invoicesAPI.getById(id);
-      setInvoice(res.data.invoice);
+      console.log('✅ Invoice API response:', res.data);
+      
+      if (res.data?.success && res.data?.invoice) {
+        setInvoice(res.data.invoice);
+      } else {
+        console.error('❌ Invalid response structure:', res.data);
+        setInvoice(null);
+      }
     } catch (err) {
-      console.error("Error fetching invoice:", err);
+      console.error('❌ Error fetching invoice:', err);
+      console.error('❌ Error details:', err.response?.data);
+      setInvoice(null);
     } finally {
       setLoading(false);
     }
