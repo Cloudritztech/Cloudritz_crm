@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -14,14 +13,7 @@ import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
 import Reports from './pages/Reports';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -53,8 +45,7 @@ const PublicRoute = ({ children }) => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+    <AuthProvider>
         <Router>
           <div className="App">
             <Routes>
@@ -96,8 +87,7 @@ function App() {
             <Toaster position="top-right" />
           </div>
         </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
