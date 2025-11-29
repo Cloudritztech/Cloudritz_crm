@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { customersAPI, productsAPI, invoicesAPI } from '../services/api';
 
 const AddInvoice = () => {
-  const API_URL = "http://localhost:5000";
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -50,10 +49,9 @@ const AddInvoice = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const [customersRes, productsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/customers`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_URL}/api/products`, { headers: { Authorization: `Bearer ${token}` } })
+        customersAPI.getAll(),
+        productsAPI.getAll()
       ]);
       setCustomers(customersRes.data.customers || customersRes.data.data || []);
       setProducts(productsRes.data.products || productsRes.data.data || []);
@@ -67,13 +65,10 @@ const AddInvoice = () => {
     if (!quickCustomer.name || !quickCustomer.phone) return;
     
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/api/customers`, {
+      const response = await customersAPI.create({
         name: quickCustomer.name,
         phone: quickCustomer.phone,
         address: { street: "", city: "", state: "", pincode: "" }
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       
       const newCustomer = response.data.customer;
@@ -109,16 +104,13 @@ const AddInvoice = () => {
     setAddingProduct({ ...addingProduct, [itemIndex]: true });
     
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/api/products`, {
+      const response = await productsAPI.create({
         name: productName,
-        category: 'other',
+        category: 'accessories',
         purchasePrice: 100, // Default price
         sellingPrice: 120, // Default selling price
         stock: 1000,
         brand: 'Generic'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       
       const newProduct = response.data.product;
@@ -216,10 +208,7 @@ const AddInvoice = () => {
       
       console.log('Sending invoice data:', invoiceData);
       
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/api/invoices`, invoiceData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await invoicesAPI.create(invoiceData);
       
       console.log('Invoice response:', response.data);
       alert("Invoice created successfully!");

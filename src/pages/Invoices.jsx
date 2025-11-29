@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { invoicesAPI } from '../services/api';
 
 const InvoiceManagement = () => {
-  const API_URL = "http://localhost:5000";
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
@@ -12,10 +11,7 @@ const InvoiceManagement = () => {
 
   const fetchInvoices = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/invoices`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await invoicesAPI.getAll();
       console.log('Invoices response:', res.data);
       if (res.data?.success) {
         const sorted = (res.data.invoices || []).sort((a, b) => {
@@ -29,7 +25,7 @@ const InvoiceManagement = () => {
       }
     } catch (err) {
       console.error("Error fetching invoices:", err);
-      setError(err.message || "Failed to load invoices");
+      setError(err.response?.data?.message || err.message || "Failed to load invoices");
     } finally {
       setLoading(false);
     }
@@ -42,17 +38,8 @@ const InvoiceManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this invoice? This will restore product stock.")) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.delete(`${API_URL}/api/invoices/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (response.data.success) {
-          alert("Invoice deleted successfully");
-          fetchInvoices();
-        } else {
-          throw new Error(response.data.message);
-        }
+        // Note: Delete endpoint not implemented in API yet
+        alert("Delete functionality not implemented yet");
       } catch (err) {
         console.error('Delete error:', err);
         alert(`Failed to delete invoice: ${err.response?.data?.message || err.message}`);

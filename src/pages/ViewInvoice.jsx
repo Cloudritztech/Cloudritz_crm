@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { invoicesAPI } from '../services/api';
 
 // Add print styles
 const printStyles = `
@@ -26,7 +26,6 @@ const printStyles = `
 const ViewInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const API_URL = "http://localhost:5000";
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,10 +35,7 @@ const ViewInvoice = () => {
 
   const fetchInvoice = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/invoices/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await invoicesAPI.getById(id);
       setInvoice(res.data.invoice);
     } catch (err) {
       console.error("Error fetching invoice:", err);
@@ -61,11 +57,7 @@ const ViewInvoice = () => {
           <button
             onClick={async () => {
               try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get(`${API_URL}/api/invoices/${id}/pdf`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                  responseType: 'blob'
-                });
+                const response = await invoicesAPI.generatePDF(id);
                 
                 const blob = new Blob([response.data], { type: 'application/pdf' });
                 const url = window.URL.createObjectURL(blob);
