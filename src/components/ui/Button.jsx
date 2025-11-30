@@ -1,5 +1,5 @@
-import React from 'react';
-import { clsx } from 'clsx';
+import React, { Children, cloneElement } from 'react';
+import clsx from 'clsx';
 import { Loader2 } from 'lucide-react';
 
 const Button = ({ 
@@ -118,13 +118,13 @@ export const IconButton = ({ icon: Icon, size = 'md', variant = 'ghost', classNa
 
 export const ButtonGroup = ({ children, className }) => (
   <div className={clsx('inline-flex rounded-xl shadow-sm', className)}>
-    {React.Children.map(children, (child, index) => {
+    {Children.map(children, (child, index) => {
       if (!React.isValidElement(child)) return child;
       
       const isFirst = index === 0;
-      const isLast = index === React.Children.count(children) - 1;
+      const isLast = index === Children.count(children) - 1;
       
-      return React.cloneElement(child, {
+      return cloneElement(child, {
         className: clsx(
           child.props.className,
           !isFirst && !isLast && 'rounded-none border-l-0',

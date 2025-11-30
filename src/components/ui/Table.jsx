@@ -1,5 +1,5 @@
-import React from 'react';
-import { clsx } from 'clsx';
+import React, { useState } from 'react';
+import clsx from 'clsx';
 import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 
 const Table = ({ children, className, ...props }) => (
@@ -213,7 +213,7 @@ export const StatusBadge = ({ status, variant }) => {
 
 // Action menu for table rows
 export const TableActions = ({ actions = [], row, index }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="relative">

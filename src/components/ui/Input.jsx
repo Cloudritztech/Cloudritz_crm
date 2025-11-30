@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { clsx } from 'clsx';
+import React, { forwardRef, useState } from 'react';
+import clsx from 'clsx';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Input = forwardRef(({ 
@@ -16,7 +16,7 @@ const Input = forwardRef(({
   rightIcon: RightIcon,
   ...props 
 }, ref) => {
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
   
