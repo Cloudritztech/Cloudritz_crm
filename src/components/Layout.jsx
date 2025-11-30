@@ -24,7 +24,6 @@ const Layout = ({ children }) => {
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Invoices', href: '/invoices', icon: FileText },
-    { name: 'Reports', href: '/reports', icon: BarChart3 },
   ];
 
   const handleLogout = () => {

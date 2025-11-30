@@ -215,6 +215,10 @@ const AddInvoice = () => {
       
       if (response.data?.success) {
         alert("Invoice created successfully!");
+        // Refresh dashboard data
+        if (window.refreshDashboard) {
+          window.refreshDashboard();
+        }
         navigate("/invoices");
       } else {
         throw new Error(response.data?.message || 'Failed to create invoice');

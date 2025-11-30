@@ -11,7 +11,6 @@ import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
-import Reports from './pages/Reports';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -75,7 +74,6 @@ function App() {
                         <Route path="/invoices" element={<Invoices />} />
                         <Route path="/invoices/add" element={<AddInvoice />} />
                         <Route path="/invoices/view/:id" element={<ViewInvoice />} />
-                        <Route path="/reports" element={<Reports />} />
                       </Routes>
                     </Layout>
                   </ProtectedRoute>
