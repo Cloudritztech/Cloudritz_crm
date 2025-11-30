@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { invoicesAPI } from '../services/api';
+import { invoicesAPI, profileAPI } from '../services/api';
 
 // Add print styles
 const printStyles = `
@@ -27,11 +27,27 @@ const ViewInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInvoice();
+    fetchData();
   }, [id]);
+
+  const fetchData = async () => {
+    try {
+      const [invoiceRes, profileRes] = await Promise.all([
+        fetchInvoice(),
+        profileAPI.getProfile()
+      ]);
+      
+      if (profileRes.data?.success && profileRes.data?.profile) {
+        setProfile(profileRes.data.profile);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const fetchInvoice = async () => {
     try {
@@ -133,20 +149,36 @@ const ViewInvoice = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 border-b border-black sm:border-b-2">
             <div className="p-2 sm:p-4 sm:border-r-2 border-black">
               <div className="flex items-center mb-2">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                  AT
-                </div>
+                {profile?.logoUrl ? (
+                  <img 
+                    src={profile.logoUrl} 
+                    alt="Business Logo" 
+                    className="w-8 h-8 sm:w-12 sm:h-12 object-contain mr-3"
+                  />
+                ) : (
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                    {profile?.businessName?.charAt(0) || 'A'}
+                  </div>
+                )}
                 <div>
-                  <h2 className="font-bold text-sm sm:text-lg break-words whitespace-normal">ANVI TILES & DECORHUB</h2>
-                  <p className="text-xs sm:text-sm break-words whitespace-normal">GSTIN: 09FTIPS4577P1ZD</p>
+                  <h2 className="font-bold text-sm sm:text-lg break-words whitespace-normal">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
+                  <p className="text-xs sm:text-sm break-words whitespace-normal">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
                 </div>
               </div>
               <div className="text-xs sm:text-sm space-y-1">
-                <p className="break-words whitespace-normal">Shop No. 123, Tiles Market</p>
-                <p className="break-words whitespace-normal">Main Road, City Center</p>
-                <p className="break-words whitespace-normal">State: UTTAR PRADESH, 273001</p>
-                <p className="break-words whitespace-normal">Mobile: +91 9876543210</p>
-                <p className="break-words whitespace-normal">Email: info@anvitiles.com</p>
+                {profile?.businessAddress ? (
+                  profile.businessAddress.split('\n').map((line, index) => (
+                    <p key={index} className="break-words whitespace-normal">{line}</p>
+                  ))
+                ) : (
+                  <>
+                    <p className="break-words whitespace-normal">Shop No. 123, Tiles Market</p>
+                    <p className="break-words whitespace-normal">Main Road, City Center</p>
+                    <p className="break-words whitespace-normal">State: UTTAR PRADESH, 273001</p>
+                  </>
+                )}
+                <p className="break-words whitespace-normal">Mobile: {profile?.phone || '+91 9876543210'}</p>
+                <p className="break-words whitespace-normal">Email: {profile?.email || 'info@anvitiles.com'}</p>
               </div>
             </div>
             
@@ -245,8 +277,18 @@ const ViewInvoice = () => {
             
             <div className="p-2 sm:p-4 text-right">
               <p className="mb-4 break-words whitespace-normal"><strong>Amount Payable:</strong></p>
-              <p className="mb-8 break-words whitespace-normal">For ANVI TILES & DECORHUB</p>
-              <p className="mt-16 break-words whitespace-normal">Authorised Signatory</p>
+              <p className="mb-8 break-words whitespace-normal">For {profile?.businessName || 'ANVI TILES & DECORHUB'}</p>
+              {profile?.signatureUrl ? (
+                <div className="mt-8 mb-4">
+                  <img 
+                    src={profile.signatureUrl} 
+                    alt="Digital Signature" 
+                    className="max-w-24 max-h-12 object-contain ml-auto"
+                  />
+                </div>
+              ) : (
+                <p className="mt-16 break-words whitespace-normal">Authorised Signatory</p>
+              )}
             </div>
           </div>
         </div>

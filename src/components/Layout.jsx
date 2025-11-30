@@ -12,7 +12,8 @@ import {
   Bell,
   Search,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -27,6 +28,7 @@ const Layout = ({ children }) => {
     { name: 'Products', href: '/products', icon: Package, description: 'Inventory Management' },
     { name: 'Customers', href: '/customers', icon: Users, description: 'Customer Database' },
     { name: 'Invoices', href: '/invoices', icon: FileText, description: 'Billing & Sales' },
+    { name: 'Business Profile', href: '/business-profile', icon: Building2, description: 'Business Settings' },
   ];
 
   const handleLogout = () => {

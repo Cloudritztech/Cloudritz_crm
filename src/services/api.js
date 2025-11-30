@@ -121,4 +121,14 @@ export const reportsAPI = {
   getSalesReports: (params) => api.get('/reports?action=sales-reports', { params }),
 };
 
+// Profile API
+export const profileAPI = {
+  getProfile: () => api.get('/profile'),
+  updateProfile: (formData) => api.post('/profile', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+};
+
 export default api;
