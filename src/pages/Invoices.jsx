@@ -5,7 +5,7 @@ import { ResponsiveTable, StatusBadge, TableActions } from '../components/ui/Tab
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Loading from '../components/ui/Loading';
-import { Search, Plus, Eye, Download, Trash2, Filter } from 'lucide-react';
+import { Search, Plus, Eye, Download, Trash2, Filter, AlertTriangle } from 'lucide-react';
 
 const InvoiceManagement = () => {
   const navigate = useNavigate();
