@@ -76,12 +76,13 @@ const BusinessProfile = () => {
     try {
       const formData = new FormData();
       
-      // Add text fields
-      Object.keys(profile).forEach(key => {
-        if (key !== 'logoUrl' && key !== 'signatureUrl' && profile[key]) {
-          formData.append(key, profile[key]);
-        }
-      });
+      // Add text fields with backend-compatible names
+      if (profile.businessName) formData.append('business_name', profile.businessName);
+      if (profile.ownerName) formData.append('owner_name', profile.ownerName);
+      if (profile.businessAddress) formData.append('address', profile.businessAddress);
+      if (profile.gstin) formData.append('gstin', profile.gstin);
+      if (profile.phone) formData.append('phone', profile.phone);
+      if (profile.email) formData.append('email', profile.email);
 
       // Add files
       if (logoFile) {
@@ -279,7 +280,7 @@ const BusinessProfile = () => {
               <div>
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={(e) => handleFileChange('logo', e.target.files[0])}
                   className="hidden"
                   id="logo-upload"
@@ -291,7 +292,7 @@ const BusinessProfile = () => {
                   <div className="text-center">
                     <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">Click to upload logo</p>
-                    <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
                   </div>
                 </label>
               </div>
@@ -324,7 +325,7 @@ const BusinessProfile = () => {
               <div>
                 <input
                   type="file"
-                  accept="image/png"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={(e) => handleFileChange('signature', e.target.files[0])}
                   className="hidden"
                   id="signature-upload"
@@ -336,7 +337,7 @@ const BusinessProfile = () => {
                   <div className="text-center">
                     <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">Click to upload signature</p>
-                    <p className="text-xs text-gray-500">PNG with transparency</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
                   </div>
                 </label>
               </div>
