@@ -22,21 +22,32 @@ app.use(cors());
 app.use(express.json());
 
 // Dynamic import API routes after env is loaded
-const authLogin = (await import('./api/auth/login.js')).default;
-const authRegister = (await import('./api/auth/register.js')).default;
-const customers = (await import('./api/customers/index.js')).default;
-const products = (await import('./api/products/index.js')).default;
+const auth = (await import('./api/auth.js')).default;
+const customers = (await import('./api/customers.js')).default;
+const products = (await import('./api/products.js')).default;
+const reports = (await import('./api/reports.js')).default;
 const invoices = (await import('./api/invoices/index.js')).default;
 const invoiceById = (await import('./api/invoices/[id].js')).default;
 const invoicePdf = (await import('./api/invoices/[id]/pdf.js')).default;
-const dashboard = (await import('./api/reports/dashboard.js')).default;
-const health = (await import('./api/health.js')).default;
 
 // API Routes
-app.all('/api/auth/login', authLogin);
-app.all('/api/auth/register', authRegister);
+app.all('/api/auth', auth);
 app.all('/api/customers', customers);
+app.all('/api/customers/:id', (req, res) => {
+  req.params.id = req.params.id;
+  customers(req, res);
+});
 app.all('/api/products', products);
+app.all('/api/products/:id', (req, res) => {
+  req.params.id = req.params.id;
+  products(req, res);
+});
+app.all('/api/products/:id/:action', (req, res) => {
+  req.params.id = req.params.id;
+  req.params.action = req.params.action;
+  products(req, res);
+});
+app.all('/api/reports', reports);
 app.all('/api/invoices', invoices);
 app.all('/api/invoices/:id', (req, res) => {
   req.query = { ...req.query, id: req.params.id };
@@ -46,8 +57,6 @@ app.all('/api/invoices/:id/pdf', (req, res) => {
   req.query = { ...req.query, id: req.params.id };
   invoicePdf(req, res);
 });
-app.all('/api/reports/dashboard', dashboard);
-app.all('/api/health', health);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

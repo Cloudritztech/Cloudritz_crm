@@ -70,63 +70,12 @@ const InvoiceManagement = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
           Invoice Management
         </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                console.log('Health check:', data);
-                alert(`API Status: ${data.success ? 'Working' : 'Failed'}`);
-              } catch (err) {
-                console.error('Health check failed:', err);
-                alert('API Health Check Failed');
-              }
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-          >
-            Test API
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const testId = '507f1f77bcf86cd799439011';
-                const response = await fetch(`/api/test-dynamic/${testId}`);
-                const data = await response.json();
-                console.log('Dynamic test:', data);
-                alert(`Dynamic Route: ${data.success ? 'Working' : 'Failed'} - ID: ${data.id}`);
-              } catch (err) {
-                console.error('Dynamic test failed:', err);
-                alert('Dynamic Route Test Failed');
-              }
-            }}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-          >
-            Test Dynamic
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/test-db');
-                const data = await response.json();
-                console.log('DB test:', data);
-                alert(`DB Test: ${data.success ? 'Working' : 'Failed'} - Count: ${data.invoiceCount}`);
-              } catch (err) {
-                console.error('DB test failed:', err);
-                alert('DB Test Failed');
-              }
-            }}
-            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
-          >
-            Test DB
-          </button>
-          <button
-            onClick={() => navigate("/invoices/add")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            + New Invoice
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/invoices/add")}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          + New Invoice
+        </button>
       </div>
 
       <div className="mb-6 bg-blue-gray-200/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg shadow-md p-6 border border-white/20 dark:border-gray-700/50">

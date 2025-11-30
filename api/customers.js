@@ -75,10 +75,12 @@ export default async function handler(req, res) {
   const { method, query } = req;
   const { id } = query;
 
-  // Handle specific customer operations
-  if (id && method === 'GET') {
+  // Handle specific customer operations (for both Express and Vercel routing)
+  const customerId = id || req.params?.id;
+  
+  if (customerId && method === 'GET') {
     try {
-      const customer = await Customer.findById(id);
+      const customer = await Customer.findById(customerId);
       if (!customer) {
         return res.status(404).json({ message: 'Customer not found' });
       }
@@ -88,9 +90,9 @@ export default async function handler(req, res) {
     }
   }
 
-  if (id && method === 'PUT') {
+  if (customerId && method === 'PUT') {
     try {
-      const customer = await Customer.findByIdAndUpdate(id, req.body, { new: true });
+      const customer = await Customer.findByIdAndUpdate(customerId, req.body, { new: true });
       if (!customer) {
         return res.status(404).json({ message: 'Customer not found' });
       }

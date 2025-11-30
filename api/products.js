@@ -28,13 +28,17 @@ export default async function handler(req, res) {
 
   const { method, query } = req;
   const { id, action } = query;
+  
+  // Handle both Express params and Vercel query params
+  const productId = id || req.params?.id;
+  const productAction = action || req.params?.action;
 
   // Handle specific product operations
-  if (id && method === 'PUT') {
+  if (productId && method === 'PUT') {
     try {
-      if (action === 'adjust-stock') {
+      if (productAction === 'adjust-stock') {
         const { adjustment, reason } = req.body;
-        const product = await Product.findById(id);
+        const product = await Product.findById(productId);
         if (!product) {
           return res.status(404).json({ message: 'Product not found' });
         }
@@ -55,13 +59,13 @@ export default async function handler(req, res) {
 
         return res.json({ success: true, product });
       } else {
-        const product = await Product.findById(id);
+        const product = await Product.findById(productId);
         if (!product) {
           return res.status(404).json({ message: 'Product not found' });
         }
 
         const previousStock = product.stock;
-        const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
+        const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, { new: true });
 
         if (previousStock !== updatedProduct.stock) {
           await InventoryHistory.create({
@@ -82,10 +86,10 @@ export default async function handler(req, res) {
     }
   }
 
-  if (id && method === 'DELETE') {
+  if (productId && method === 'DELETE') {
     try {
       await runMiddleware(req, res, adminOnly);
-      await Product.findByIdAndUpdate(id, { isActive: false });
+      await Product.findByIdAndUpdate(productId, { isActive: false });
       return res.json({ success: true, message: 'Product deleted successfully' });
     } catch (error) {
       return res.status(500).json({ message: error.message });
