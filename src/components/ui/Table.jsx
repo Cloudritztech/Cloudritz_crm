@@ -4,8 +4,8 @@ import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 
 const Table = ({ children, className, ...props }) => (
   <div className={clsx('table-container', className)} {...props}>
-    <div className="mobile-scroll">
-      <table className="min-w-full divide-y divide-secondary-200">
+    <div className="w-full overflow-x-auto">
+      <table className="w-full max-w-full divide-y divide-gray-200 break-words whitespace-normal">
         {children}
       </table>
     </div>
@@ -13,13 +13,13 @@ const Table = ({ children, className, ...props }) => (
 );
 
 const TableHeader = ({ children, className, ...props }) => (
-  <thead className={clsx('bg-secondary-50', className)} {...props}>
+  <thead className={clsx('bg-gray-50', className)} {...props}>
     {children}
   </thead>
 );
 
 const TableBody = ({ children, className, ...props }) => (
-  <tbody className={clsx('bg-white divide-y divide-secondary-100', className)} {...props}>
+  <tbody className={clsx('bg-white divide-y divide-gray-100', className)} {...props}>
     {children}
   </tbody>
 );
@@ -48,24 +48,24 @@ const TableHead = ({
 }) => (
   <th 
     className={clsx(
-      'table-cell font-semibold text-secondary-900 text-left',
-      sortable && 'cursor-pointer hover:bg-secondary-100 select-none',
+      'table-cell font-semibold text-gray-900 text-left break-words whitespace-normal',
+      sortable && 'cursor-pointer hover:bg-gray-100 select-none',
       className
     )}
     onClick={sortable ? onSort : undefined}
     {...props}
   >
     <div className="flex items-center space-x-1">
-      <span>{children}</span>
+      <span className="truncate">{children}</span>
       {sortable && (
         <div className="flex flex-col">
           <ChevronUp className={clsx(
             'h-3 w-3',
-            sortDirection === 'asc' ? 'text-primary-600' : 'text-secondary-400'
+            sortDirection === 'asc' ? 'text-blue-600' : 'text-gray-400'
           )} />
           <ChevronDown className={clsx(
             'h-3 w-3 -mt-1',
-            sortDirection === 'desc' ? 'text-primary-600' : 'text-secondary-400'
+            sortDirection === 'desc' ? 'text-blue-600' : 'text-gray-400'
           )} />
         </div>
       )}
@@ -74,7 +74,7 @@ const TableHead = ({
 );
 
 const TableCell = ({ children, className, ...props }) => (
-  <td className={clsx('table-cell', className)} {...props}>
+  <td className={clsx('table-cell break-words whitespace-normal', className)} {...props}>
     {children}
   </td>
 );
@@ -93,7 +93,7 @@ const ResponsiveTable = ({
       <div className={clsx('table-container', className)}>
         <div className="p-8 text-center">
           <div className="loading-spinner h-8 w-8 mx-auto mb-4"></div>
-          <p className="text-secondary-500">Loading...</p>
+          <p className="text-gray-500 break-words whitespace-normal">Loading...</p>
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ const ResponsiveTable = ({
     return (
       <div className={clsx('table-container', className)}>
         <div className="p-8 text-center">
-          <p className="text-secondary-500">{emptyMessage}</p>
+          <p className="text-gray-500 break-words whitespace-normal">{emptyMessage}</p>
         </div>
       </div>
     );
@@ -163,12 +163,12 @@ const ResponsiveTable = ({
               return (
                 <div key={colIndex} className={clsx(
                   'flex justify-between items-center',
-                  colIndex > 0 && 'mt-3 pt-3 border-t border-secondary-100'
+                  colIndex > 0 && 'mt-3 pt-3 border-t border-gray-100'
                 )}>
-                  <span className="text-sm font-medium text-secondary-600">
+                  <span className="text-sm font-medium text-gray-600 break-words whitespace-normal">
                     {column.header}
                   </span>
-                  <span className="text-sm text-secondary-900 text-right">
+                  <span className="text-sm text-gray-900 text-right break-words whitespace-normal">
                     {column.render ? column.render(row, index) : row[column.key]}
                   </span>
                 </div>
@@ -222,9 +222,9 @@ export const TableActions = ({ actions = [], row, index }) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="p-1 rounded-lg hover:bg-secondary-100 transition-colors"
+        className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
       >
-        <MoreHorizontal className="h-4 w-4 text-secondary-500" />
+        <MoreHorizontal className="h-4 w-4 text-gray-500" />
       </button>
 
       {isOpen && (
@@ -233,7 +233,7 @@ export const TableActions = ({ actions = [], row, index }) => {
             className="fixed inset-0 z-10" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-8 z-20 w-48 bg-white rounded-xl shadow-strong border border-secondary-200 py-2">
+          <div className="absolute right-0 top-8 z-20 w-48 bg-white rounded-xl shadow-strong border border-gray-200 py-2">
             {actions.map((action, actionIndex) => (
               <button
                 key={actionIndex}
@@ -243,10 +243,10 @@ export const TableActions = ({ actions = [], row, index }) => {
                   setIsOpen(false);
                 }}
                 className={clsx(
-                  'w-full flex items-center px-4 py-2 text-sm text-left transition-colors',
+                  'w-full flex items-center px-4 py-2 text-sm text-left transition-colors break-words whitespace-normal',
                   action.variant === 'danger' 
-                    ? 'text-danger-600 hover:bg-danger-50' 
-                    : 'text-secondary-700 hover:bg-secondary-50'
+                    ? 'text-red-600 hover:bg-red-50' 
+                    : 'text-gray-700 hover:bg-gray-50'
                 )}
               >
                 {action.icon && (

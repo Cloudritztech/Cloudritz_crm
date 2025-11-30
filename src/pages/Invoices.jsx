@@ -72,10 +72,10 @@ const InvoiceManagement = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <div className="h-8 bg-secondary-200 rounded w-48 mb-2"></div>
-            <div className="h-4 bg-secondary-200 rounded w-64"></div>
+            <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-64"></div>
           </div>
-          <div className="h-10 bg-secondary-200 rounded w-32"></div>
+          <div className="h-10 bg-gray-200 rounded w-32"></div>
         </div>
         <div className="card">
           <Loading text="Loading invoices..." />
@@ -89,7 +89,7 @@ const InvoiceManagement = () => {
       key: 'invoiceNumber',
       header: 'Invoice #',
       render: (invoice) => (
-        <div className="font-medium text-secondary-900">
+        <div className="font-medium text-gray-900 truncate">
           {invoice.invoiceNumber}
         </div>
       )
@@ -99,10 +99,10 @@ const InvoiceManagement = () => {
       header: 'Customer',
       render: (invoice) => (
         <div>
-          <div className="font-medium text-secondary-900">
+          <div className="font-medium text-gray-900 truncate">
             {invoice.customer?.name || 'N/A'}
           </div>
-          <div className="text-sm text-secondary-500">
+          <div className="text-sm text-gray-500 truncate">
             {invoice.customer?.phone}
           </div>
         </div>
@@ -113,10 +113,10 @@ const InvoiceManagement = () => {
       header: 'Date',
       render: (invoice) => (
         <div>
-          <div className="text-sm text-secondary-900">
+          <div className="text-sm text-gray-900 truncate">
             {new Date(invoice.createdAt).toLocaleDateString('en-IN')}
           </div>
-          <div className="text-xs text-secondary-500">
+          <div className="text-xs text-gray-500 truncate">
             {new Date(invoice.createdAt).toLocaleTimeString('en-IN', {
               hour: '2-digit',
               minute: '2-digit'
@@ -137,7 +137,7 @@ const InvoiceManagement = () => {
       key: 'total',
       header: 'Amount',
       render: (invoice) => (
-        <div className="font-semibold text-secondary-900">
+        <div className="font-semibold text-gray-900 truncate">
           ₹{invoice.total?.toLocaleString('en-IN')}
         </div>
       )
@@ -181,8 +181,8 @@ const InvoiceManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Invoice Management</h1>
-          <p className="text-secondary-600 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 break-words whitespace-normal">Invoice Management</h1>
+          <p className="text-gray-600 mt-1 break-words whitespace-normal">
             Manage and track all your invoices
           </p>
         </div>
@@ -220,14 +220,14 @@ const InvoiceManagement = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="card bg-danger-50 border-danger-200">
+        <div className="card bg-red-50 border-red-200">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-danger-100 rounded-xl">
-              <AlertTriangle className="h-5 w-5 text-danger-600" />
+            <div className="p-2 bg-red-100 rounded-xl">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-danger-800">Error Loading Invoices</h3>
-              <p className="text-danger-700">{error}</p>
+              <h3 className="font-semibold text-red-800 break-words whitespace-normal">Error Loading Invoices</h3>
+              <p className="text-red-700 break-words whitespace-normal">{error}</p>
             </div>
           </div>
         </div>
