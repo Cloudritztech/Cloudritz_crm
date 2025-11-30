@@ -10,6 +10,7 @@ import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
+import SalesReports from './pages/SalesReports';
 import Toast from './components/ui/Toast';
 
 const ProtectedRoute = ({ children }) => {
@@ -74,6 +75,7 @@ function App() {
                         <Route path="/invoices" element={<Invoices />} />
                         <Route path="/invoices/add" element={<AddInvoice />} />
                         <Route path="/invoices/view/:id" element={<ViewInvoice />} />
+                        <Route path="/sales-reports" element={<SalesReports />} />
                       </Routes>
                     </Layout>
                   </ProtectedRoute>

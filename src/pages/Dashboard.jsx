@@ -6,20 +6,19 @@ import {
   Package, 
   AlertTriangle,
   FileText,
-  Wallet,
   Clock,
   RefreshCw,
   Plus,
-  ArrowUpRight
+  ArrowUpRight,
+  ShoppingCart
 } from 'lucide-react';
 import { StatCard } from '../components/ui/Card';
 import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
 import Button from '../components/ui/Button';
-import SalesReportsPanel from '../components/SalesReportsPanel';
+import SalesSummaryCard from '../components/SalesSummaryCard';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
-  const [salesData, setSalesData] = useState({ totalAmount: 0, totalOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -39,11 +38,6 @@ const Dashboard = () => {
       
       if (dashboardRes.data?.success && dashboardRes.data?.stats) {
         setStats(dashboardRes.data.stats);
-        // Initialize with today's sales
-        setSalesData({
-          totalAmount: dashboardRes.data.stats.todaySales?.total || 0,
-          totalOrders: dashboardRes.data.stats.todaySales?.count || 0
-        });
       }
       
       setLastUpdated(new Date());
@@ -55,30 +49,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleDateRangeChange = async (startDate, endDate, period) => {
-    try {
-      // Calculate sales for the selected period from existing data
-      if (stats?.recentInvoices) {
-        const filteredInvoices = stats.recentInvoices.filter(invoice => {
-          const invoiceDate = new Date(invoice.createdAt);
-          return invoiceDate >= startDate && invoiceDate <= endDate;
-        });
-
-        const totalAmount = filteredInvoices.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
-        const totalOrders = filteredInvoices.length;
-
-        setSalesData({ totalAmount, totalOrders });
-      }
-    } catch (error) {
-      console.error('Error filtering sales data:', error);
-    }
-  };
-
   window.refreshDashboard = fetchAllData;
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
             <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
@@ -87,15 +62,8 @@ const Dashboard = () => {
           <div className="h-10 bg-gray-200 rounded w-24"></div>
         </div>
         <SkeletonStats count={4} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <SkeletonCard className="h-96" />
-          </div>
-          <div className="space-y-6">
-            <SkeletonCard className="h-64" />
-            <SkeletonCard className="h-48" />
-          </div>
-        </div>
+        <SkeletonCard className="h-64" />
+        <SkeletonCard className="h-96" />
       </div>
     );
   }
@@ -124,7 +92,8 @@ const Dashboard = () => {
     );
   }
 
-  const statCards = [
+  // Row 1: Main metrics
+  const mainMetrics = [
     {
       title: 'Total Customers',
       value: stats?.totalCustomers || 0,
@@ -156,16 +125,16 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 break-words whitespace-normal">CRM Dashboard</h1>
-          <p className="text-gray-600 break-words whitespace-normal">Anvi Tiles & Decorhub - Complete Business Overview</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">CRM Dashboard</h1>
+          <p className="text-gray-600">Anvi Tiles & Decorhub - Complete Business Overview</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           {lastUpdated && (
-            <p className="text-sm text-gray-500 break-words whitespace-normal">
+            <p className="text-sm text-gray-500">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
@@ -180,15 +149,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Sales & Reports Panel */}
-      <SalesReportsPanel 
-        salesData={salesData}
-        onDateRangeChange={handleDateRangeChange}
-      />
-
-      {/* Stats Grid */}
+      {/* Row 1: Main Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {statCards.map((stat, index) => (
+        {mainMetrics.map((stat, index) => (
           <StatCard
             key={index}
             icon={stat.icon}
@@ -202,35 +165,37 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Invoices */}
-        <div className="lg:col-span-2 card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900 break-words whitespace-normal">Recent Invoices</h3>
-            <Link 
-              to="/invoices" 
-              className="flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              View All 
-              <ArrowUpRight className="h-4 w-4 ml-1" />
-            </Link>
-          </div>
-          
+      {/* Row 2: Sales Summary */}
+      <SalesSummaryCard stats={stats} />
+
+      {/* Row 3: Recent Invoices (Full Width) */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-900">Recent Invoices</h3>
+          <Link 
+            to="/invoices" 
+            className="flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          >
+            View All 
+            <ArrowUpRight className="h-4 w-4 ml-1" />
+          </Link>
+        </div>
+        
+        <div className="w-full overflow-x-auto">
           <div className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin">
             {stats?.recentInvoices?.length > 0 ? (
               stats.recentInvoices.slice(0, 10).map((invoice) => (
                 <div 
                   key={invoice._id} 
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all cursor-pointer"
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all cursor-pointer break-words"
                   onClick={() => window.open(`/invoices/view/${invoice._id}`, '_blank')}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-semibold text-gray-900 truncate">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                      <p className="font-semibold text-gray-900 truncate mb-1 sm:mb-0">
                         {invoice.invoiceNumber}
                       </p>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full self-start sm:self-auto ${
                         invoice.status === 'paid' ? 'badge-success' :
                         invoice.status === 'pending' ? 'badge-warning' :
                         'badge-danger'
@@ -241,7 +206,7 @@ const Dashboard = () => {
                     <p className="text-sm text-gray-600 mb-1 truncate">
                       {invoice.customer?.name}
                     </p>
-                    <p className="text-xs text-gray-500 break-words whitespace-normal">
+                    <p className="text-xs text-gray-500 break-words">
                       {new Date(invoice.createdAt).toLocaleDateString('en-IN')} • 
                       {new Date(invoice.createdAt).toLocaleTimeString('en-IN', { 
                         hour: '2-digit', 
@@ -249,8 +214,8 @@ const Dashboard = () => {
                       })}
                     </p>
                   </div>
-                  <div className="text-right ml-4">
-                    <p className="font-bold text-lg text-gray-900 truncate">
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-lg text-gray-900">
                       ₹{(invoice.total || 0).toLocaleString('en-IN')}
                     </p>
                   </div>
@@ -264,89 +229,102 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Top Selling Products */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 break-words whitespace-normal">Top Products</h3>
-            <div className="space-y-4">
-              {stats?.topProducts?.length > 0 ? (
-                stats.topProducts.slice(0, 5).map((product, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-blue-600">{index + 1}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {product.name}
-                      </p>
-                      <p className="text-xs text-gray-500 capitalize truncate">
-                        {product.category?.replace('_', ' ')}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {product.totalQuantity}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        ₹{(product.totalRevenue || 0).toLocaleString('en-IN')}
-                      </p>
-                    </div>
+      {/* Row 4: Top Products + Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products</h3>
+          <div className="space-y-4">
+            {stats?.topProducts?.length > 0 ? (
+              stats.topProducts.slice(0, 5).map((product, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-blue-600">{index + 1}</span>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No sales data</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {product.name}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize truncate">
+                      {product.category?.replace('_', ' ')}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {product.totalQuantity} sold
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      ₹{(product.totalRevenue || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No sales data</p>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Quick Actions */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 break-words whitespace-normal">Quick Actions</h3>
-            <div className="space-y-3">
-              <Link 
-                to="/invoices/add" 
-                className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
-              >
-                <div className="p-2 bg-blue-100 rounded-xl mr-4 group-hover:bg-blue-200 transition-colors">
-                  <Plus className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Create Invoice</p>
-                  <p className="text-sm text-gray-500">Generate new bill</p>
-                </div>
-              </Link>
-              
-              <Link 
-                to="/products" 
-                className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
-              >
-                <div className="p-2 bg-cyan-100 rounded-xl mr-4 group-hover:bg-cyan-200 transition-colors">
-                  <Package className="h-5 w-5 text-cyan-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Manage Products</p>
-                  <p className="text-sm text-gray-500">Inventory control</p>
-                </div>
-              </Link>
-              
-              <Link 
-                to="/customers" 
-                className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
-              >
-                <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
-                  <Users className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Manage Customers</p>
-                  <p className="text-sm text-gray-500">Customer database</p>
-                </div>
-              </Link>
-            </div>
+        {/* Quick Actions */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="space-y-3">
+            <Link 
+              to="/invoices/add" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-blue-100 rounded-xl mr-4 group-hover:bg-blue-200 transition-colors">
+                <Plus className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Create Invoice</p>
+                <p className="text-sm text-gray-500">Generate new bill</p>
+              </div>
+            </Link>
+            
+            <Link 
+              to="/products" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-cyan-100 rounded-xl mr-4 group-hover:bg-cyan-200 transition-colors">
+                <Package className="h-5 w-5 text-cyan-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Manage Products</p>
+                <p className="text-sm text-gray-500">Inventory control</p>
+              </div>
+            </Link>
+            
+            <Link 
+              to="/customers" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
+                <Users className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Manage Customers</p>
+                <p className="text-sm text-gray-500">Customer database</p>
+              </div>
+            </Link>
+
+            <Link 
+              to="/sales-reports" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-purple-100 rounded-xl mr-4 group-hover:bg-purple-200 transition-colors">
+                <ShoppingCart className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Sales Reports</p>
+                <p className="text-sm text-gray-500">Detailed analytics</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
@@ -359,20 +337,20 @@ const Dashboard = () => {
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-red-800 break-words whitespace-normal">Low Stock Alerts</h3>
-              <p className="text-sm text-red-600 break-words whitespace-normal">{stats.lowStockItems.length} items need restocking</p>
+              <h3 className="text-lg font-semibold text-red-800">Low Stock Alerts</h3>
+              <p className="text-sm text-red-600">{stats.lowStockItems.length} items need restocking</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.lowStockItems.map((item, index) => (
               <div key={index} className="bg-white p-4 rounded-xl border border-red-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-gray-900 text-sm break-words whitespace-normal">{item.name}</p>
+                  <p className="font-medium text-gray-900 text-sm break-words">{item.name}</p>
                   <span className="badge-danger text-xs">
                     Low Stock
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-2 capitalize break-words whitespace-normal">
+                <p className="text-sm text-gray-600 mb-2 capitalize break-words">
                   {item.category?.replace('_', ' ')}
                 </p>
                 <div className="flex items-center justify-between text-sm">
