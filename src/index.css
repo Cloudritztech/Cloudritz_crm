@@ -74,7 +74,7 @@
   
   /* Navigation */
   .nav-link {
-    @apply flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group;
+    @apply flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200;
   }
   
   .nav-link-active {
