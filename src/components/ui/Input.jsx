@@ -23,13 +23,13 @@ const Input = forwardRef(({
   const sizes = {
     sm: 'input-field-sm',
     md: 'input-field',
-    lg: 'px-4 py-4 text-base border border-secondary-200 rounded-xl bg-white text-secondary-900 placeholder-secondary-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300',
+    lg: 'px-4 py-4 text-base border border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300',
   };
   
   const variants = {
     default: '',
-    error: 'border-danger-300 focus:border-danger-500 focus:ring-danger-500',
-    success: 'border-success-300 focus:border-success-500 focus:ring-success-500',
+    error: 'border-red-300 focus:border-red-500 focus:ring-red-500',
+    success: 'border-green-300 focus:border-green-500 focus:ring-green-500',
   };
   
   const currentVariant = error ? 'error' : success ? 'success' : variant;
@@ -37,16 +37,16 @@ const Input = forwardRef(({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-secondary-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
-          {required && <span className="text-danger-500 ml-1">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       
       <div className="relative">
         {LeftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <LeftIcon className="h-5 w-5 text-secondary-400" />
+            <LeftIcon className="h-5 w-5 text-gray-400" />
           </div>
         )}
         
@@ -68,7 +68,7 @@ const Input = forwardRef(({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-secondary-400 hover:text-secondary-600 focus:outline-none"
+              className="text-gray-400 hover:text-gray-600 focus:outline-none"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -79,15 +79,15 @@ const Input = forwardRef(({
           )}
           
           {!isPassword && error && (
-            <AlertCircle className="h-5 w-5 text-danger-500" />
+            <AlertCircle className="h-5 w-5 text-red-500" />
           )}
           
           {!isPassword && success && (
-            <CheckCircle className="h-5 w-5 text-success-500" />
+            <CheckCircle className="h-5 w-5 text-green-500" />
           )}
           
           {!isPassword && !error && !success && RightIcon && (
-            <RightIcon className="h-5 w-5 text-secondary-400" />
+            <RightIcon className="h-5 w-5 text-gray-400" />
           )}
         </div>
       </div>
@@ -95,7 +95,7 @@ const Input = forwardRef(({
       {(error || success || helperText) && (
         <p className={clsx(
           'mt-2 text-sm',
-          error ? 'text-danger-600' : success ? 'text-success-600' : 'text-secondary-500'
+          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
         )}>
           {error || success || helperText}
         </p>
@@ -120,16 +120,16 @@ export const Textarea = forwardRef(({
   
   const variants = {
     default: 'input-field',
-    error: 'input-field border-danger-300 focus:border-danger-500 focus:ring-danger-500',
-    success: 'input-field border-success-300 focus:border-success-500 focus:ring-success-500',
+    error: 'input-field border-red-300 focus:border-red-500 focus:ring-red-500',
+    success: 'input-field border-green-300 focus:border-green-500 focus:ring-green-500',
   };
   
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-secondary-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
-          {required && <span className="text-danger-500 ml-1">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       
@@ -147,7 +147,7 @@ export const Textarea = forwardRef(({
       {(error || success || helperText) && (
         <p className={clsx(
           'mt-2 text-sm',
-          error ? 'text-danger-600' : success ? 'text-success-600' : 'text-secondary-500'
+          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
         )}>
           {error || success || helperText}
         </p>
@@ -173,16 +173,16 @@ export const Select = forwardRef(({
   
   const variants = {
     default: 'select-field',
-    error: 'select-field border-danger-300 focus:border-danger-500 focus:ring-danger-500',
-    success: 'select-field border-success-300 focus:border-success-500 focus:ring-success-500',
+    error: 'select-field border-red-300 focus:border-red-500 focus:ring-red-500',
+    success: 'select-field border-green-300 focus:border-green-500 focus:ring-green-500',
   };
   
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-secondary-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
-          {required && <span className="text-danger-500 ml-1">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       
@@ -205,7 +205,7 @@ export const Select = forwardRef(({
       {(error || success || helperText) && (
         <p className={clsx(
           'mt-2 text-sm',
-          error ? 'text-danger-600' : success ? 'text-success-600' : 'text-secondary-500'
+          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
         )}>
           {error || success || helperText}
         </p>
