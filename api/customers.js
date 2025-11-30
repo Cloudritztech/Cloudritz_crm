@@ -1,7 +1,6 @@
-import connectDB from '../../lib/mongodb.js';
-import Customer from '../../lib/models/Customer.js';
-import { auth } from '../../lib/middleware/auth.js';
-import { handleCors } from '../../lib/cors.js';
+import connectDB from '../lib/mongodb.js';
+import Customer from '../lib/models/Customer.js';
+import { auth } from '../lib/middleware/auth.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -14,52 +13,6 @@ async function runMiddleware(req, res, fn) {
   });
 }
 
-async function handler(req, res) {
-  await connectDB();
-  await runMiddleware(req, res, auth);
-
-  const { method } = req;
-
-  switch (method) {
-    case 'GET':
-      try {
-        const { search } = req.query;
-        let query = { isActive: true };
-        
-        if (search) {
-          query.$or = [
-            { name: { $regex: search, $options: 'i' } },
-            { phone: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } }
-          ];
-        }
-
-        const customers = await Customer.find(query).sort({ createdAt: -1 });
-        res.json({ success: true, customers });
-      } catch (error) {
-        res.status(500).json({ message: error.message });
-      }
-      break;
-
-    case 'POST':
-      try {
-        const customer = await Customer.create(req.body);
-        res.status(201).json({ success: true, customer });
-      } catch (error) {
-        if (error.code === 11000) {
-          res.status(400).json({ message: 'Phone number already exists' });
-        } else {
-          res.status(500).json({ message: error.message });
-        }
-      }
-      break;
-
-    default:
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${method} Not Allowed`);
-  }
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -69,73 +22,119 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  await connectDB();
-  await runMiddleware(req, res, auth);
+  try {
+    console.log('👥 Customer API called:', req.method);
+    await connectDB();
+    console.log('✅ Database connected');
+    
+    await runMiddleware(req, res, auth);
+    console.log('✅ Authentication passed');
 
-  const { method, query } = req;
-  const { id } = query;
-
-  // Handle specific customer operations (for both Express and Vercel routing)
-  const customerId = id || req.params?.id;
-  
-  if (customerId && method === 'GET') {
-    try {
-      const customer = await Customer.findById(customerId);
-      if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
-      }
-      return res.json({ success: true, customer });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
-  }
-
-  if (customerId && method === 'PUT') {
-    try {
-      const customer = await Customer.findByIdAndUpdate(customerId, req.body, { new: true });
-      if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
-      }
-      return res.json({ success: true, customer });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
-  }
-
-  // Handle customer list operations
-  switch (method) {
-    case 'GET':
+    const { method, query } = req;
+    const { id } = query;
+    
+    // Handle both Express params and Vercel query params
+    const customerId = id || req.params?.id;
+    
+    if (customerId && method === 'GET') {
       try {
-        const { search } = query;
-        let queryObj = { isActive: true };
-        
-        if (search) {
-          queryObj.$or = [
-            { name: { $regex: search, $options: 'i' } },
-            { phone: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } }
-          ];
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+          return res.status(404).json({ 
+            success: false,
+            message: 'Customer not found' 
+          });
+        }
+        return res.json({ success: true, customer });
+      } catch (error) {
+        console.error('❌ Error fetching customer:', error);
+        return res.status(500).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+    }
+
+    if (customerId && method === 'PUT') {
+      try {
+        const customer = await Customer.findByIdAndUpdate(customerId, req.body, { new: true });
+        if (!customer) {
+          return res.status(404).json({ 
+            success: false,
+            message: 'Customer not found' 
+          });
+        }
+        return res.json({ success: true, customer });
+      } catch (error) {
+        console.error('❌ Error updating customer:', error);
+        return res.status(500).json({ 
+          success: false,
+          message: error.message 
+        });
+      }
+    }
+
+    // Handle customer list operations
+    switch (method) {
+      case 'GET':
+        try {
+          const { search } = query;
+          let queryObj = { isActive: true };
+          
+          if (search) {
+            queryObj.$or = [
+              { name: { $regex: search, $options: 'i' } },
+              { phone: { $regex: search, $options: 'i' } },
+              { email: { $regex: search, $options: 'i' } }
+            ];
+          }
+
+          console.log('🔍 Fetching customers with query:', queryObj);
+          const customers = await Customer.find(queryObj).sort({ createdAt: -1 });
+          console.log(`✅ Found ${customers.length} customers`);
+          
+          return res.json({ success: true, customers });
+        } catch (error) {
+          console.error('❌ Error fetching customers:', error);
+          return res.status(500).json({ 
+            success: false,
+            message: error.message 
+          });
         }
 
-        const customers = await Customer.find(queryObj).sort({ createdAt: -1 });
-        return res.json({ success: true, customers });
-      } catch (error) {
-        return res.status(500).json({ message: error.message });
-      }
-
-    case 'POST':
-      try {
-        const customer = await Customer.create(req.body);
-        return res.status(201).json({ success: true, customer });
-      } catch (error) {
-        if (error.code === 11000) {
-          return res.status(400).json({ message: 'Phone number already exists' });
-        } else {
-          return res.status(500).json({ message: error.message });
+      case 'POST':
+        try {
+          console.log('📝 Creating customer:', req.body);
+          const customer = await Customer.create(req.body);
+          console.log('✅ Customer created:', customer.name);
+          return res.status(201).json({ success: true, customer });
+        } catch (error) {
+          console.error('❌ Error creating customer:', error);
+          if (error.code === 11000) {
+            return res.status(400).json({ 
+              success: false,
+              message: 'Phone number already exists' 
+            });
+          } else {
+            return res.status(500).json({ 
+              success: false,
+              message: error.message 
+            });
+          }
         }
-      }
 
-    default:
-      return res.status(405).json({ message: 'Method not allowed' });
+      default:
+        return res.status(405).json({ 
+          success: false,
+          message: 'Method not allowed' 
+        });
+    }
+  } catch (error) {
+    console.error('❌ Customer handler error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
 }
