@@ -70,8 +70,8 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
+  login: (credentials) => api.post('/auth?action=login', credentials),
+  register: (userData) => api.post('/auth?action=register', userData),
   getProfile: () => api.get('/auth/profile'),
 };
 
@@ -79,19 +79,19 @@ export const authAPI = {
 export const productsAPI = {
   getAll: (params) => api.get('/products', { params }),
   create: (product) => api.post('/products', product),
-  update: (id, product) => api.put(`/products/${id}`, product),
-  delete: (id) => api.delete(`/products/${id}`),
-  getLowStock: () => api.get('/products/low-stock'),
-  adjustStock: (id, adjustment, reason) => api.put(`/products/${id}/adjust-stock`, { adjustment, reason }),
+  update: (id, product) => api.put(`/products?id=${id}`, product),
+  delete: (id) => api.delete(`/products?id=${id}`),
+  getLowStock: () => api.get('/products?lowStock=true'),
+  adjustStock: (id, adjustment, reason) => api.put(`/products?id=${id}&action=adjust-stock`, { adjustment, reason }),
 };
 
 // Customers API
 export const customersAPI = {
   getAll: (params) => api.get('/customers', { params }),
-  getById: (id) => api.get(`/customers/${id}`),
+  getById: (id) => api.get(`/customers?id=${id}`),
   create: (customer) => api.post('/customers', customer),
-  update: (id, customer) => api.put(`/customers/${id}`, customer),
-  getPurchaseHistory: (id) => api.get(`/customers/${id}/purchases`),
+  update: (id, customer) => api.put(`/customers?id=${id}`, customer),
+  getPurchaseHistory: (id) => api.get(`/customers?id=${id}&action=purchases`),
 };
 
 // Invoices API
@@ -113,10 +113,10 @@ export const invoicesAPI = {
 
 // Reports API
 export const reportsAPI = {
-  getSales: (params) => api.get('/reports/sales', { params }),
-  getProfit: (params) => api.get('/reports/profit', { params }),
-  getTopProducts: (params) => api.get('/reports/top-products', { params }),
-  getDashboard: () => api.get('/reports/dashboard'),
+  getSales: (params) => api.get('/reports?action=sales', { params }),
+  getProfit: (params) => api.get('/reports?action=profit', { params }),
+  getTopProducts: (params) => api.get('/reports?action=top-products', { params }),
+  getDashboard: () => api.get('/reports'),
 };
 
 export default api;
