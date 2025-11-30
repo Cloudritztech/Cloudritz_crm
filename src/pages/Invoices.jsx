@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { invoicesAPI } from '../services/api';
+import { ResponsiveTable, StatusBadge, TableActions } from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Loading from '../components/ui/Loading';
+import { Search, Plus, Eye, Download, Trash2, Filter } from 'lucide-react';
 
 const InvoiceManagement = () => {
   const navigate = useNavigate();
@@ -62,105 +67,180 @@ const InvoiceManagement = () => {
       inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="h-8 bg-secondary-200 rounded w-48 mb-2"></div>
+            <div className="h-4 bg-secondary-200 rounded w-64"></div>
+          </div>
+          <div className="h-10 bg-secondary-200 rounded w-32"></div>
+        </div>
+        <div className="card">
+          <Loading text="Loading invoices..." />
+        </div>
+      </div>
+    );
+  }
+
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      header: 'Invoice #',
+      render: (invoice) => (
+        <div className="font-medium text-secondary-900">
+          {invoice.invoiceNumber}
+        </div>
+      )
+    },
+    {
+      key: 'customer',
+      header: 'Customer',
+      render: (invoice) => (
+        <div>
+          <div className="font-medium text-secondary-900">
+            {invoice.customer?.name || 'N/A'}
+          </div>
+          <div className="text-sm text-secondary-500">
+            {invoice.customer?.phone}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (invoice) => (
+        <div>
+          <div className="text-sm text-secondary-900">
+            {new Date(invoice.createdAt).toLocaleDateString('en-IN')}
+          </div>
+          <div className="text-xs text-secondary-500">
+            {new Date(invoice.createdAt).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
+      ),
+      hideOnMobile: true
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (invoice) => (
+        <StatusBadge status={invoice.status || 'paid'} />
+      )
+    },
+    {
+      key: 'total',
+      header: 'Amount',
+      render: (invoice) => (
+        <div className="font-semibold text-secondary-900">
+          ₹{invoice.total?.toLocaleString('en-IN')}
+        </div>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (invoice, index) => (
+        <TableActions
+          actions={[
+            {
+              label: 'View Details',
+              icon: Eye,
+              onClick: () => navigate(`/invoices/view/${invoice._id}`)
+            },
+            {
+              label: 'Download PDF',
+              icon: Download,
+              onClick: () => {
+                // Add PDF download logic
+                console.log('Download PDF for:', invoice._id);
+              }
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => handleDelete(invoice._id)
+            }
+          ]}
+          row={invoice}
+          index={index}
+        />
+      ),
+      hideOnMobile: true
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Invoice Management
-        </h2>
-        <button
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold text-secondary-900">Invoice Management</h1>
+          <p className="text-secondary-600 mt-1">
+            Manage and track all your invoices
+          </p>
+        </div>
+        <Button
           onClick={() => navigate("/invoices/add")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          variant="primary"
+          icon={Plus}
         >
-          + New Invoice
-        </button>
+          New Invoice
+        </Button>
       </div>
 
-      <div className="mb-6 bg-blue-gray-200/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg shadow-md p-6 border border-white/20 dark:border-gray-700/50">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search by invoice number or customer name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-3 py-2 pl-10 border border-white/20 dark:border-gray-700/50 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      {/* Search and Filters */}
+      <div className="card">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Search by invoice number or customer name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              leftIcon={Search}
+              className="w-full"
+            />
           </div>
+          <Button
+            variant="outline"
+            icon={Filter}
+            className="sm:w-auto"
+          >
+            Filters
+          </Button>
         </div>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 text-red-700 bg-red-100 rounded-lg border border-red-200">
-          {error}
+        <div className="card bg-danger-50 border-danger-200">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-danger-100 rounded-xl">
+              <AlertTriangle className="h-5 w-5 text-danger-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-danger-800">Error Loading Invoices</h3>
+              <p className="text-danger-700">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="bg-blue-gray-200/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg shadow-md border border-white/20 dark:border-gray-700/50">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            All Invoices
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          {filtered.length > 0 ? (
-            <table className="min-w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Invoice #</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                {filtered.map((inv) => (
-                  <tr key={inv._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white cursor-pointer" onClick={() => navigate(`/invoices/view/${inv._id}`)}>
-                      {inv.invoiceNumber}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white cursor-pointer" onClick={() => navigate(`/invoices/view/${inv._id}`)}>
-                      {inv.customer?.name || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white cursor-pointer" onClick={() => navigate(`/invoices/view/${inv._id}`)}>
-                      {new Date(inv.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400 cursor-pointer" onClick={() => navigate(`/invoices/view/${inv._id}`)}>
-                      ₹ {inv.total}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex gap-2">
-                        <Link
-                          to={`/invoices/view/${inv._id}`}
-                          className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full hover:bg-green-200 dark:hover:bg-green-800"
-                        >
-                          View
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(inv._id)}
-                          className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full hover:bg-red-200 dark:hover:bg-red-800"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">No invoices found</p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Invoices Table */}
+      <ResponsiveTable
+        data={filtered}
+        columns={columns}
+        onRowClick={(invoice) => navigate(`/invoices/view/${invoice._id}`)}
+        loading={loading}
+        emptyMessage="No invoices found. Create your first invoice to get started."
+      />
     </div>
   );
 };

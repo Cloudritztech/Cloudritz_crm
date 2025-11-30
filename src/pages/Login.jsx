@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -36,61 +39,125 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Anvi Tiles & Decorhub
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your CRM account
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <input
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
+    <div className="min-h-screen flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-primary relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+              <span className="text-2xl font-bold">A</span>
             </div>
-            <div>
-              <input
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
-                Register here
-              </Link>
+            <h1 className="text-4xl font-bold mb-4">
+              Anvi Tiles & Decorhub
+            </h1>
+            <p className="text-xl text-white/90 mb-8">
+              Complete CRM solution for tiles, sanitary products, and home decor business
             </p>
           </div>
-        </form>
+          
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="text-white/90">Inventory Management</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="text-white/90">Customer Database</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="text-white/90">GST Compliant Invoicing</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="text-white/90">Sales Analytics</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Decorative Elements */}
+        <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full"></div>
+        <div className="absolute bottom-20 right-32 w-20 h-20 bg-white/10 rounded-full"></div>
+        <div className="absolute top-1/2 right-10 w-16 h-16 bg-white/10 rounded-full"></div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-secondary-50">
+        <div className="max-w-md w-full">
+          <div className="card">
+            {/* Mobile Logo */}
+            <div className="lg:hidden text-center mb-8">
+              <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <h2 className="text-2xl font-bold text-secondary-900">
+                Anvi Tiles & Decorhub
+              </h2>
+            </div>
+
+            <div className="text-center mb-8">
+              <h2 className="hidden lg:block text-3xl font-bold text-secondary-900 mb-2">
+                Welcome Back
+              </h2>
+              <p className="text-secondary-600">
+                Sign in to your CRM account
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <Input
+                name="email"
+                type="email"
+                label="Email Address"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                leftIcon={Mail}
+                required
+              />
+
+              <Input
+                name="password"
+                type="password"
+                label="Password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                leftIcon={Lock}
+                required
+              />
+
+              <Button
+                type="submit"
+                loading={loading}
+                fullWidth
+                size="lg"
+                icon={ArrowRight}
+                iconPosition="right"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-secondary-600">
+                Don't have an account?{' '}
+                <Link 
+                  to="/register" 
+                  className="font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  Register here
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-secondary-500">
+            <p>© 2024 Anvi Tiles & Decorhub. All rights reserved.</p>
+          </div>
+        </div>
       </div>
     </div>
   );
