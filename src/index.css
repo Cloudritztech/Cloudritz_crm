@@ -4,9 +4,6 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   
   body {
     @apply bg-secondary-50 text-secondary-900 font-sans antialiased;
