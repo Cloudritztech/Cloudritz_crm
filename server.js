@@ -27,8 +27,7 @@ const customers = (await import('./api/customers.js')).default;
 const products = (await import('./api/products.js')).default;
 const reports = (await import('./api/reports.js')).default;
 const invoices = (await import('./api/invoices/index.js')).default;
-const invoiceById = (await import('./api/invoices/[id].js')).default;
-const invoicePdf = (await import('./api/invoices/[id]/pdf.js')).default;
+const invoice = (await import('./api/invoice.js')).default;
 
 // API Routes
 app.all('/api/auth', auth);
@@ -49,14 +48,7 @@ app.all('/api/products/:id/:action', (req, res) => {
 });
 app.all('/api/reports', reports);
 app.all('/api/invoices', invoices);
-app.all('/api/invoices/:id', (req, res) => {
-  req.query = { ...req.query, id: req.params.id };
-  invoiceById(req, res);
-});
-app.all('/api/invoices/:id/pdf', (req, res) => {
-  req.query = { ...req.query, id: req.params.id };
-  invoicePdf(req, res);
-});
+app.all('/api/invoice', invoice);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
