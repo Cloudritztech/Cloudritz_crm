@@ -2,35 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsAPI } from '../services/api';
 import { 
-  DollarSign, 
   Users, 
   Package, 
   AlertTriangle,
   FileText,
   Wallet,
-  TrendingUp,
-  Calendar,
   Clock,
   RefreshCw,
-  ExternalLink,
   Plus,
-  ArrowUpRight,
-  ArrowDownRight
+  ArrowUpRight
 } from 'lucide-react';
-import { StatCard, LoadingCard } from '../components/ui/Card';
-import Loading, { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
+import { StatCard } from '../components/ui/Card';
+import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
 import Button from '../components/ui/Button';
+import SalesReportsPanel from '../components/SalesReportsPanel';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
-  const [salesData, setSalesData] = useState(null);
+  const [salesData, setSalesData] = useState({ totalAmount: 0, totalOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     fetchAllData();
-    // Auto-refresh every 5 minutes
     const interval = setInterval(fetchAllData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -38,19 +33,17 @@ const Dashboard = () => {
   const fetchAllData = async () => {
     try {
       setError(null);
-      console.log('📊 Fetching comprehensive dashboard data...');
+      console.log('📊 Fetching dashboard data...');
       
-      const [dashboardRes, salesRes] = await Promise.all([
-        reportsAPI.getDashboard(),
-        reportsAPI.getSalesAnalytics()
-      ]);
+      const dashboardRes = await reportsAPI.getDashboard();
       
       if (dashboardRes.data?.success && dashboardRes.data?.stats) {
         setStats(dashboardRes.data.stats);
-      }
-      
-      if (salesRes.data?.success) {
-        setSalesData(salesRes.data);
+        // Initialize with today's sales
+        setSalesData({
+          totalAmount: dashboardRes.data.stats.todaySales?.total || 0,
+          totalOrders: dashboardRes.data.stats.todaySales?.count || 0
+        });
       }
       
       setLastUpdated(new Date());
@@ -62,7 +55,25 @@ const Dashboard = () => {
     }
   };
 
-  // Refresh data after invoice creation (called from parent)
+  const handleDateRangeChange = async (startDate, endDate, period) => {
+    try {
+      // Calculate sales for the selected period from existing data
+      if (stats?.recentInvoices) {
+        const filteredInvoices = stats.recentInvoices.filter(invoice => {
+          const invoiceDate = new Date(invoice.createdAt);
+          return invoiceDate >= startDate && invoiceDate <= endDate;
+        });
+
+        const totalAmount = filteredInvoices.reduce((sum, invoice) => sum + (invoice.total || 0), 0);
+        const totalOrders = filteredInvoices.length;
+
+        setSalesData({ totalAmount, totalOrders });
+      }
+    } catch (error) {
+      console.error('Error filtering sales data:', error);
+    }
+  };
+
   window.refreshDashboard = fetchAllData;
 
   if (loading) {
@@ -75,7 +86,7 @@ const Dashboard = () => {
           </div>
           <div className="h-10 bg-gray-200 rounded w-24"></div>
         </div>
-        <SkeletonStats count={8} />
+        <SkeletonStats count={4} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <SkeletonCard className="h-96" />
@@ -98,7 +109,7 @@ const Dashboard = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-red-800 mb-2">Dashboard Error</h3>
-            <p className="text-red-700 mb-4">{error}</p>
+            <p className="text-red-700 mb-4 break-words whitespace-normal">{error}</p>
             <Button 
               onClick={fetchAllData}
               variant="danger"
@@ -115,38 +126,6 @@ const Dashboard = () => {
 
   const statCards = [
     {
-      title: "Today's Sales",
-      value: `₹${stats?.todaySales?.total?.toLocaleString() || 0}`,
-      subtitle: `${stats?.todaySales?.count || 0} orders`,
-      icon: DollarSign,
-      color: 'success',
-      trend: salesData?.todayVsYesterday ? {
-        type: salesData.todayVsYesterday.percentChange > 0 ? 'up' : 'down',
-        value: `${salesData.todayVsYesterday.percentChange}%`
-      } : null
-    },
-    {
-      title: 'Weekly Sales',
-      value: `₹${stats?.weeklySales?.total?.toLocaleString() || 0}`,
-      subtitle: `${stats?.weeklySales?.count || 0} orders`,
-      icon: Calendar,
-      color: 'primary'
-    },
-    {
-      title: 'Monthly Sales',
-      value: `₹${stats?.monthlySales?.total?.toLocaleString() || 0}`,
-      subtitle: `${stats?.monthlySales?.count || 0} orders`,
-      icon: TrendingUp,
-      color: 'info'
-    },
-    {
-      title: 'Total Revenue',
-      value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`,
-      subtitle: 'All time',
-      icon: Wallet,
-      color: 'warning'
-    },
-    {
       title: 'Total Customers',
       value: stats?.totalCustomers || 0,
       subtitle: 'Active customers',
@@ -154,15 +133,15 @@ const Dashboard = () => {
       color: 'primary'
     },
     {
-      title: 'Total Tiles Sold',
-      value: stats?.totalTilesSold || 0,
-      subtitle: 'All categories',
+      title: 'Total Products',
+      value: stats?.totalProducts || 0,
+      subtitle: 'In inventory',
       icon: Package,
       color: 'info'
     },
     {
       title: 'Pending Payments',
-      value: `₹${stats?.pendingPayments?.toLocaleString() || 0}`,
+      value: `₹${(stats?.pendingPayments || 0).toLocaleString('en-IN')}`,
       subtitle: `${stats?.pendingCount || 0} invoices`,
       icon: Clock,
       color: 'warning'
@@ -181,12 +160,12 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">CRM Dashboard</h1>
-          <p className="text-gray-600">Anvi Tiles & Decorhub - Complete Business Overview</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 break-words whitespace-normal">CRM Dashboard</h1>
+          <p className="text-gray-600 break-words whitespace-normal">Anvi Tiles & Decorhub - Complete Business Overview</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           {lastUpdated && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 break-words whitespace-normal">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
@@ -201,6 +180,12 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Sales & Reports Panel */}
+      <SalesReportsPanel 
+        salesData={salesData}
+        onDateRangeChange={handleDateRangeChange}
+      />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {statCards.map((stat, index) => (
@@ -210,7 +195,6 @@ const Dashboard = () => {
             title={stat.title}
             value={stat.value}
             subtitle={stat.subtitle}
-            trend={stat.trend}
             color={stat.color}
             className="animate-slide-up"
             style={{ animationDelay: `${index * 0.1}s` }}
@@ -223,7 +207,7 @@ const Dashboard = () => {
         {/* Recent Invoices */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Recent Invoices</h3>
+            <h3 className="text-xl font-semibold text-gray-900 break-words whitespace-normal">Recent Invoices</h3>
             <Link 
               to="/invoices" 
               className="flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -235,7 +219,7 @@ const Dashboard = () => {
           
           <div className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin">
             {stats?.recentInvoices?.length > 0 ? (
-              stats.recentInvoices.slice(0, 10).map((invoice, index) => (
+              stats.recentInvoices.slice(0, 10).map((invoice) => (
                 <div 
                   key={invoice._id} 
                   className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all cursor-pointer"
@@ -257,7 +241,7 @@ const Dashboard = () => {
                     <p className="text-sm text-gray-600 mb-1 truncate">
                       {invoice.customer?.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 break-words whitespace-normal">
                       {new Date(invoice.createdAt).toLocaleDateString('en-IN')} • 
                       {new Date(invoice.createdAt).toLocaleTimeString('en-IN', { 
                         hour: '2-digit', 
@@ -266,8 +250,8 @@ const Dashboard = () => {
                     </p>
                   </div>
                   <div className="text-right ml-4">
-                    <p className="font-bold text-lg text-gray-900">
-                      ₹{invoice.total?.toLocaleString('en-IN')}
+                    <p className="font-bold text-lg text-gray-900 truncate">
+                      ₹{(invoice.total || 0).toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
@@ -285,7 +269,7 @@ const Dashboard = () => {
         <div className="space-y-6">
           {/* Top Selling Products */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 break-words whitespace-normal">Top Products</h3>
             <div className="space-y-4">
               {stats?.topProducts?.length > 0 ? (
                 stats.topProducts.slice(0, 5).map((product, index) => (
@@ -297,7 +281,7 @@ const Dashboard = () => {
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {product.name}
                       </p>
-                      <p className="text-xs text-gray-500 capitalize">
+                      <p className="text-xs text-gray-500 capitalize truncate">
                         {product.category?.replace('_', ' ')}
                       </p>
                     </div>
@@ -305,8 +289,8 @@ const Dashboard = () => {
                       <p className="text-sm font-semibold text-gray-900">
                         {product.totalQuantity}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        ₹{product.totalRevenue?.toLocaleString('en-IN')}
+                      <p className="text-xs text-gray-500 truncate">
+                        ₹{(product.totalRevenue || 0).toLocaleString('en-IN')}
                       </p>
                     </div>
                   </div>
@@ -322,7 +306,7 @@ const Dashboard = () => {
 
           {/* Quick Actions */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 break-words whitespace-normal">Quick Actions</h3>
             <div className="space-y-3">
               <Link 
                 to="/invoices/add" 
@@ -375,20 +359,20 @@ const Dashboard = () => {
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-red-800">Low Stock Alerts</h3>
-              <p className="text-sm text-red-600">{stats.lowStockItems.length} items need restocking</p>
+              <h3 className="text-lg font-semibold text-red-800 break-words whitespace-normal">Low Stock Alerts</h3>
+              <p className="text-sm text-red-600 break-words whitespace-normal">{stats.lowStockItems.length} items need restocking</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.lowStockItems.map((item, index) => (
               <div key={index} className="bg-white p-4 rounded-xl border border-red-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-gray-900 text-sm">{item.name}</p>
+                  <p className="font-medium text-gray-900 text-sm break-words whitespace-normal">{item.name}</p>
                   <span className="badge-danger text-xs">
                     Low Stock
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-2 capitalize">
+                <p className="text-sm text-gray-600 mb-2 capitalize break-words whitespace-normal">
                   {item.category?.replace('_', ' ')}
                 </p>
                 <div className="flex items-center justify-between text-sm">
