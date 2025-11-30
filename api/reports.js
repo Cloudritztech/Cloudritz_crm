@@ -2,6 +2,7 @@ import connectDB from '../lib/mongodb.js';
 import Invoice from '../lib/models/Invoice.js';
 import Customer from '../lib/models/Customer.js';
 import Product from '../lib/models/Product.js';
+import User from '../lib/models/User.js';
 import { auth } from '../lib/middleware/auth.js';
 
 async function runMiddleware(req, res, fn) {

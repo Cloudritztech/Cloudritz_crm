@@ -1,5 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Product from '../lib/models/Product.js';
+import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { auth, adminOnly } from '../lib/middleware/auth.js';
 

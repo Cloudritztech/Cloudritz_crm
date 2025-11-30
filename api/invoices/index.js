@@ -2,6 +2,7 @@ import connectDB from '../../lib/mongodb.js';
 import Invoice from '../../lib/models/Invoice.js';
 import Product from '../../lib/models/Product.js';
 import Customer from '../../lib/models/Customer.js';
+import User from '../../lib/models/User.js';
 import InventoryHistory from '../../lib/models/InventoryHistory.js';
 import { auth } from '../../lib/middleware/auth.js';
 import { numberToWords } from '../../lib/numberToWords.js';
