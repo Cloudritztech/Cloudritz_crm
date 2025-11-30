@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { reportsAPI } from '../services/api';
-import { TrendingUp, Calendar, ArrowLeft, Download, Filter } from 'lucide-react';
+import { TrendingUp, Calendar, ArrowLeft, Download, Filter, AlertTriangle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { StatCard } from '../components/ui/Card';
@@ -13,8 +13,14 @@ const SalesReports = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('today');
   const [customStartDate, setCustomStartDate] = useState(searchParams.get('start') || '');
   const [customEndDate, setCustomEndDate] = useState(searchParams.get('end') || '');
-  const [salesData, setSalesData] = useState({ totalAmount: 0, totalOrders: 0 });
+  const [salesData, setSalesData] = useState({
+    totalAmount: 0,
+    totalOrders: 0,
+    averageOrder: 0,
+    growthRate: '0.0'
+  });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const quickFilters = [
     { key: 'today', label: 'Today' },
@@ -29,80 +35,57 @@ const SalesReports = () => {
   useEffect(() => {
     if (customStartDate && customEndDate) {
       setSelectedPeriod('custom');
-      handleDateRangeChange(new Date(customStartDate), new Date(customEndDate));
+      fetchSalesData('custom', customStartDate, customEndDate);
     } else {
-      handlePeriodChange('today');
+      fetchSalesData('today');
     }
   }, []);
 
-  const getDateRange = (period) => {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-
-    switch (period) {
-      case 'today':
-        return { start: startOfDay, end: endOfDay };
-      case 'yesterday':
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        return { 
-          start: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate()),
-          end: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59)
-        };
-      case 'last7days':
-        const last7Days = new Date(today);
-        last7Days.setDate(last7Days.getDate() - 7);
-        return { start: last7Days, end: endOfDay };
-      case 'thisMonth':
-        return { 
-          start: new Date(today.getFullYear(), today.getMonth(), 1),
-          end: endOfDay
-        };
-      case 'lastMonth':
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
-        return { start: lastMonth, end: lastMonthEnd };
-      case 'thisYear':
-        return { 
-          start: new Date(today.getFullYear(), 0, 1),
-          end: endOfDay
-        };
-      default:
-        return { start: startOfDay, end: endOfDay };
+  const fetchSalesData = async (period, startDate = null, endDate = null) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('📊 Fetching sales data for period:', period);
+      
+      const params = { period };
+      if (period === 'custom' && startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
+      
+      const response = await reportsAPI.getSalesReports(params);
+      
+      if (response.data?.success && response.data?.data) {
+        setSalesData(response.data.data);
+        console.log('✅ Sales data fetched:', response.data.data);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching sales data:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to fetch sales data');
+      setSalesData({
+        totalAmount: 0,
+        totalOrders: 0,
+        averageOrder: 0,
+        growthRate: '0.0'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePeriodChange = (period) => {
     setSelectedPeriod(period);
     if (period !== 'custom') {
-      const range = getDateRange(period);
-      handleDateRangeChange(range.start, range.end);
-    }
-  };
-
-  const handleDateRangeChange = async (startDate, endDate) => {
-    setLoading(true);
-    try {
-      // Simulate API call - replace with actual API when available
-      const mockSalesData = {
-        totalAmount: Math.floor(Math.random() * 100000) + 10000,
-        totalOrders: Math.floor(Math.random() * 50) + 5
-      };
-      setSalesData(mockSalesData);
-    } catch (error) {
-      console.error('Error fetching sales data:', error);
-    } finally {
-      setLoading(false);
+      fetchSalesData(period);
     }
   };
 
   const handleCustomRangeApply = () => {
     if (customStartDate && customEndDate) {
-      const start = new Date(customStartDate);
-      const end = new Date(customEndDate);
-      end.setHours(23, 59, 59);
-      handleDateRangeChange(start, end);
+      fetchSalesData('custom', customStartDate, customEndDate);
     }
   };
 
@@ -136,6 +119,21 @@ const SalesReports = () => {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="card bg-red-50 border-red-200">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-red-100 rounded-xl">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-red-800">Error Loading Sales Data</h3>
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Filters */}
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Time Period</h3>
@@ -146,6 +144,7 @@ const SalesReports = () => {
               variant={selectedPeriod === filter.key ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handlePeriodChange(filter.key)}
+              disabled={loading}
             >
               {filter.label}
             </Button>
@@ -172,7 +171,7 @@ const SalesReports = () => {
                 <Button
                   variant="primary"
                   onClick={handleCustomRangeApply}
-                  disabled={!customStartDate || !customEndDate}
+                  disabled={!customStartDate || !customEndDate || loading}
                   className="w-full"
                 >
                   Apply Range
@@ -205,16 +204,16 @@ const SalesReports = () => {
           <StatCard
             icon={TrendingUp}
             title="Average Order"
-            value={formatCurrency(salesData.totalOrders > 0 ? salesData.totalAmount / salesData.totalOrders : 0)}
+            value={formatCurrency(salesData.averageOrder)}
             subtitle="Per order value"
             color="info"
           />
           <StatCard
             icon={Calendar}
             title="Growth Rate"
-            value="+12.5%"
+            value={`${salesData.growthRate > 0 ? '+' : ''}${salesData.growthRate}%`}
             subtitle="vs previous period"
-            color="success"
+            color={salesData.growthRate >= 0 ? 'success' : 'danger'}
           />
         </div>
       )}

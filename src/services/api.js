@@ -118,6 +118,7 @@ export const reportsAPI = {
   getTopProducts: (params) => api.get('/reports?action=top-products', { params }),
   getDashboard: () => api.get('/reports'),
   getSalesAnalytics: () => api.get('/reports?action=sales-analytics'),
+  getSalesReports: (params) => api.get('/reports?action=sales-reports', { params }),
 };
 
 export default api;

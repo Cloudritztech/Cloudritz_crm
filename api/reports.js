@@ -42,6 +42,10 @@ export default async function handler(req, res) {
       return await handleSalesAnalytics(req, res);
     }
 
+    if (action === 'sales-reports') {
+      return await handleSalesReports(req, res);
+    }
+
     console.log('📊 Fetching comprehensive dashboard statistics...');
 
     const now = new Date();
@@ -172,6 +176,118 @@ export default async function handler(req, res) {
       success: false,
       message: 'Failed to fetch dashboard data',
       error: error.message 
+    });
+  }
+}
+
+async function handleSalesReports(req, res) {
+  try {
+    console.log('📊 Fetching sales reports with filters...');
+    
+    const { period, startDate, endDate } = req.query;
+    
+    // Get IST timezone offset (+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const now = new Date(Date.now() + istOffset);
+    
+    let filterStartDate, filterEndDate;
+    
+    if (period === 'custom' && startDate && endDate) {
+      filterStartDate = new Date(startDate + 'T00:00:00.000Z');
+      filterEndDate = new Date(endDate + 'T23:59:59.999Z');
+    } else {
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (period) {
+        case 'today':
+          filterStartDate = today;
+          filterEndDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        case 'yesterday':
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          filterStartDate = yesterday;
+          filterEndDate = new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        case 'last7days':
+          filterStartDate = new Date(today);
+          filterStartDate.setDate(filterStartDate.getDate() - 7);
+          filterEndDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        case 'thisMonth':
+          filterStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          filterEndDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        case 'lastMonth':
+          filterStartDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          filterEndDate = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
+          break;
+        case 'thisYear':
+          filterStartDate = new Date(today.getFullYear(), 0, 1);
+          filterEndDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        default:
+          filterStartDate = today;
+          filterEndDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+      }
+    }
+    
+    console.log('📅 Date filter:', { period, filterStartDate, filterEndDate });
+    
+    const [salesData, previousPeriodData] = await Promise.all([
+      // Current period sales
+      Invoice.aggregate([
+        { $match: { createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $group: { 
+          _id: null, 
+          totalAmount: { $sum: "$total" }, 
+          totalOrders: { $sum: 1 },
+          averageOrder: { $avg: "$total" }
+        }}
+      ]),
+      // Previous period for growth calculation
+      Invoice.aggregate([
+        { $match: { 
+          createdAt: { 
+            $gte: new Date(filterStartDate.getTime() - (filterEndDate.getTime() - filterStartDate.getTime())),
+            $lt: filterStartDate
+          }
+        }},
+        { $group: { _id: null, totalAmount: { $sum: "$total" } }}
+      ])
+    ]);
+    
+    const currentData = salesData[0] || { totalAmount: 0, totalOrders: 0, averageOrder: 0 };
+    const previousData = previousPeriodData[0] || { totalAmount: 0 };
+    
+    const growthRate = previousData.totalAmount > 0 
+      ? ((currentData.totalAmount - previousData.totalAmount) / previousData.totalAmount * 100)
+      : 0;
+    
+    const result = {
+      totalAmount: currentData.totalAmount,
+      totalOrders: currentData.totalOrders,
+      averageOrder: currentData.averageOrder || 0,
+      growthRate: growthRate.toFixed(1),
+      period: period || 'today',
+      dateRange: {
+        start: filterStartDate,
+        end: filterEndDate
+      }
+    };
+    
+    console.log('✅ Sales reports result:', result);
+    
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('❌ Sales reports error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch sales reports',
+      error: error.message
     });
   }
 }

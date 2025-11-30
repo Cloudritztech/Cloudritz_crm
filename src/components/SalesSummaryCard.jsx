@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { TrendingUp, Calendar, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { reportsAPI } from '../services/api';
 import Button from './ui/Button';
 import Input from './ui/Input';
 
@@ -8,8 +9,32 @@ const SalesSummaryCard = ({ stats }) => {
   const navigate = useNavigate();
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [yearlyData, setYearlyData] = useState({ total: 0, count: 0 });
+  const [loading, setLoading] = useState(false);
 
   const formatCurrency = (amount) => `₹${(amount || 0).toLocaleString('en-IN')}`;
+
+  // Fetch yearly data on component mount
+  useEffect(() => {
+    fetchYearlyData();
+  }, []);
+
+  const fetchYearlyData = async () => {
+    setLoading(true);
+    try {
+      const response = await reportsAPI.getSalesReports({ period: 'thisYear' });
+      if (response.data?.success && response.data?.data) {
+        setYearlyData({
+          total: response.data.data.totalAmount,
+          count: response.data.data.totalOrders
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching yearly data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const salesMetrics = [
     {
@@ -29,8 +54,8 @@ const SalesSummaryCard = ({ stats }) => {
     },
     {
       label: 'This Year',
-      amount: stats?.yearlySales?.total || stats?.totalRevenue || 0,
-      orders: stats?.yearlySales?.count || stats?.totalOrders || 0
+      amount: yearlyData.total,
+      orders: yearlyData.count
     }
   ];
 
