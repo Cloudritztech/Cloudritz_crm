@@ -13,7 +13,8 @@ import {
   Search,
   Settings,
   ChevronDown,
-  Building2
+  Building2,
+  Upload
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -26,6 +27,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, description: 'Overview & Analytics' },
     { name: 'Products', href: '/products', icon: Package, description: 'Inventory Management' },
+    { name: 'Excel Sync', href: '/excel-sync', icon: Upload, description: 'Import Inventory' },
     { name: 'Customers', href: '/customers', icon: Users, description: 'Customer Database' },
     { name: 'Invoices', href: '/invoices', icon: FileText, description: 'Billing & Sales' },
     { name: 'Business Profile', href: '/business-profile', icon: Building2, description: 'Business Settings' },
