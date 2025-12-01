@@ -219,27 +219,37 @@ const ViewInvoice = () => {
                 <tr>
                   <th className="border-r border-black p-1 sm:p-2 text-left w-8 sm:w-12">S</th>
                   <th className="border-r border-black p-1 sm:p-2 text-left">Item</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-16 sm:w-20">HSN</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-16 sm:w-24">Rate</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-12 sm:w-16">Qty</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-20 sm:w-28">Taxable</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-16 sm:w-24">Tax</th>
-                  <th className="p-1 sm:p-2 text-left w-20 sm:w-28">Amount</th>
+                  <th className="border-r border-black p-1 sm:p-2 text-center w-16 sm:w-20">HSN</th>
+                  <th className="border-r border-black p-1 sm:p-2 text-right w-16 sm:w-24">Rate</th>
+                  <th className="border-r border-black p-1 sm:p-2 text-center w-12 sm:w-16">Qty</th>
+                  <th className="border-r border-black p-1 sm:p-2 text-right w-20 sm:w-28">Taxable</th>
+                  <th className="border-r border-black p-1 sm:p-2 text-right w-16 sm:w-24">GST</th>
+                  <th className="p-1 sm:p-2 text-right w-20 sm:w-28">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                {invoice.items?.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-300">
-                    <td className="border-r border-black p-1 sm:p-2 text-center">{index + 1}</td>
-                    <td className="border-r border-black p-1 sm:p-2" style={{overflowWrap: 'break-word', wordBreak: 'break-word'}}>{item.product?.name || 'Product'}</td>
-                    <td className="border-r border-black p-1 sm:p-2 text-center">Tiles</td>
-                    <td className="border-r border-black p-1 sm:p-2 text-right">₹{item.price}</td>
-                    <td className="border-r border-black p-1 sm:p-2 text-center">{item.quantity}</td>
-                    <td className="border-r border-black p-1 sm:p-2 text-right">₹{item.total}</td>
-                    <td className="border-r border-black p-1 sm:p-2 text-right">₹{(item.total * 0.18).toFixed(2)}</td>
-                    <td className="p-1 sm:p-2 text-right">₹{item.total}</td>
-                  </tr>
-                ))}
+                {invoice.items?.map((item, index) => {
+                  const taxableValue = item.taxableValue || (item.quantity * item.price);
+                  const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
+                  const totalAmount = taxableValue + gstAmount;
+                  
+                  return (
+                    <tr key={index} className="border-b border-gray-300">
+                      <td className="border-r border-black p-1 sm:p-2 text-center">{index + 1}</td>
+                      <td className="border-r border-black p-1 sm:p-2" style={{overflowWrap: 'break-word', wordBreak: 'break-word'}}>
+                        {item.product?.name || 'Product'}
+                      </td>
+                      <td className="border-r border-black p-1 sm:p-2 text-center">
+                        {item.product?.hsnCode || '6907'}
+                      </td>
+                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{parseFloat(item.price).toFixed(2)}</td>
+                      <td className="border-r border-black p-1 sm:p-2 text-center">{item.quantity}</td>
+                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{taxableValue.toFixed(2)}</td>
+                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{gstAmount.toFixed(2)}</td>
+                      <td className="p-1 sm:p-2 text-right">₹{totalAmount.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -247,11 +257,44 @@ const ViewInvoice = () => {
           {/* Totals */}
           <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
             <div className="flex flex-col sm:flex-row justify-between">
-              <div className="text-right space-y-1">
-                <p className="break-words whitespace-normal"><strong>Taxable Amount: ₹{invoice.subtotal}</strong></p>
-                <p className="break-words whitespace-normal">CGST 9%: ₹{(invoice.subtotal * 0.09).toFixed(2)}</p>
-                <p className="break-words whitespace-normal">SGST 9%: ₹{(invoice.subtotal * 0.09).toFixed(2)}</p>
-                <p className="text-lg font-bold break-words whitespace-normal">Total: ₹{invoice.total}</p>
+              <div className="flex-1"></div>
+              <div className="text-right space-y-1 min-w-[250px]">
+                <div className="flex justify-between border-b pb-1">
+                  <span>Item Total:</span>
+                  <span>₹{(invoice.subtotal + (invoice.discount || 0)).toFixed(2)}</span>
+                </div>
+                {invoice.discount > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Total Discount:</span>
+                    <span>-₹{parseFloat(invoice.discount).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold border-b pb-1">
+                  <span>Taxable Amount:</span>
+                  <span>₹{parseFloat(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-blue-700">
+                  <span>CGST @ 9%:</span>
+                  <span>₹{parseFloat(invoice.totalCgst || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-blue-700">
+                  <span>SGST @ 9%:</span>
+                  <span>₹{parseFloat(invoice.totalSgst || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span>Total GST:</span>
+                  <span>₹{(parseFloat(invoice.totalCgst || 0) + parseFloat(invoice.totalSgst || 0)).toFixed(2)}</span>
+                </div>
+                {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
+                  <div className="flex justify-between">
+                    <span>Round Off:</span>
+                    <span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{parseFloat(invoice.roundOff).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold text-green-700 border-t-2 pt-2">
+                  <span>Grand Total:</span>
+                  <span>₹{parseFloat(invoice.grandTotal || invoice.total).toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>

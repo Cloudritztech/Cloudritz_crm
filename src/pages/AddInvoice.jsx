@@ -402,8 +402,8 @@ const AddInvoice = () => {
         <div>
           <h3 className="text-lg font-medium mb-4">Items</h3>
           {formData.items.map((item, index) => (
-            <div key={index} className="border rounded-lg p-4 mb-4 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-9 gap-4">
+            <div key={index} className="border rounded-lg p-4 mb-4 bg-gray-50 relative">
+              <div className="grid grid-cols-1 md:grid-cols-9 gap-4 items-end">
                 {/* Product Search/Select */}
                 <div className="md:col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
@@ -431,7 +431,7 @@ const AddInvoice = () => {
                     
                     {/* Search Results Dropdown */}
                     {showSuggestions[index] && productSearch[index] && (
-                      <div className="suggestions-dropdown absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                      <div className="suggestions-dropdown absolute z-[100] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
                         {/* Existing Products */}
                         {searchProducts(productSearch[index]).map(product => (
                           <div
