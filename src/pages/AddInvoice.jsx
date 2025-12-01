@@ -197,6 +197,8 @@ const AddInvoice = () => {
       const invoiceData = {
         customer: formData.customer,
         items: validItems,
+        applyGST: formData.applyGST || false,
+        reverseGST: formData.reverseGST || false,
         discount: formData.discount || 0,
         discountType: formData.discountType,
         paymentMethod: formData.paymentMethod || 'cash',
@@ -210,7 +212,8 @@ const AddInvoice = () => {
         terms: formData.terms
       };
       
-      console.log('Sending invoice data:', invoiceData);
+      console.log('📤 Sending invoice data:', invoiceData);
+      console.log('📊 Calculated totals:', totals);
       
       const response = await invoicesAPI.create(invoiceData);
       
@@ -228,9 +231,11 @@ const AddInvoice = () => {
         throw new Error(response.data?.message || 'Failed to create invoice');
       }
     } catch (err) {
-      console.error('Invoice creation error:', err);
+      console.error('❌ Invoice creation error:', err);
+      console.error('Error response:', err.response?.data);
       const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
-      alert(`Failed to create invoice: ${errorMessage}`);
+      const errorDetails = err.response?.data?.error || '';
+      alert(`Failed to create invoice: ${errorMessage}${errorDetails ? '\n\nDetails: ' + errorDetails : ''}`);
     } finally {
       setLoading(false);
     }

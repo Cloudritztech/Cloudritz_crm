@@ -86,174 +86,236 @@ export default async function handler(req, res) {
 
       case 'POST':
         try {
-          const { customer, items, discount, discountType, paymentMethod, deliveryNote, referenceNo, buyerOrderNo, destination, buyerDetails, notes, dueDate, terms } = req.body;
+          const { 
+            customer, 
+            items, 
+            discount = 0, 
+            discountType = 'amount', 
+            paymentMethod = 'cash',
+            applyGST = false,
+            reverseGST = false,
+            deliveryNote, 
+            referenceNo, 
+            buyerOrderNo, 
+            destination, 
+            buyerDetails, 
+            notes, 
+            dueDate, 
+            terms 
+          } = req.body;
           
-          console.log('📝 Creating invoice for customer:', customer);
+          console.log('📝 Invoice creation request:', { customer, itemsCount: items?.length, discount, applyGST, reverseGST });
           
-          if (!customer || !items || !Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ 
-              success: false,
-              message: 'Customer and items are required' 
-            });
+          // Validation
+          if (!customer) {
+            return res.status(400).json({ success: false, message: 'Customer is required' });
           }
           
+          if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ success: false, message: 'At least one item is required' });
+          }
+          
+          // Verify customer exists
           const customerExists = await Customer.findById(customer);
           if (!customerExists) {
-            return res.status(404).json({ 
-              success: false,
-              message: 'Customer not found' 
-            });
+            return res.status(404).json({ success: false, message: 'Customer not found' });
           }
           
-          let totalTaxableAmount = 0;
-          let totalCgst = 0;
-          let totalSgst = 0;
+          // Process items and calculate totals
+          let grossAmount = 0;
+          let itemDiscountTotal = 0;
           const processedItems = [];
 
           for (const item of items) {
-            if (!item.product || !item.quantity || !item.price) {
-              return res.status(400).json({ 
-                success: false,
-                message: 'Each item must have product, quantity, and price' 
-              });
+            // Validate item fields
+            if (!item.product) {
+              return res.status(400).json({ success: false, message: 'Item product is required' });
+            }
+            if (!item.quantity || item.quantity <= 0) {
+              return res.status(400).json({ success: false, message: 'Item quantity must be greater than 0' });
+            }
+            if (!item.price || item.price < 0) {
+              return res.status(400).json({ success: false, message: 'Item price must be valid' });
             }
             
+            // Verify product exists
             const product = await Product.findById(item.product);
             if (!product) {
-              return res.status(404).json({ 
-                success: false,
-                message: `Product not found: ${item.product}` 
-              });
+              return res.status(404).json({ success: false, message: `Product not found: ${item.product}` });
             }
             
+            // Check stock
             if (product.stock < item.quantity) {
               return res.status(400).json({ 
-                success: false,
-                message: `Insufficient stock for ${product.name}. Available: ${product.stock}` 
+                success: false, 
+                message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}` 
               });
             }
 
-            const itemDiscount = item.discount || 0;
+            // Calculate item amounts
+            const qty = parseFloat(item.quantity);
+            const price = parseFloat(item.price);
+            const itemGross = qty * price;
+            grossAmount += itemGross;
+            
+            const itemDiscount = parseFloat(item.discount) || 0;
             const itemDiscountType = item.discountType || 'amount';
             let discountAmount = 0;
             
             if (itemDiscountType === 'percentage') {
-              discountAmount = (item.quantity * item.price * itemDiscount) / 100;
+              discountAmount = (itemGross * itemDiscount) / 100;
             } else {
               discountAmount = itemDiscount;
             }
             
-            const taxableValue = (item.quantity * item.price) - discountAmount;
-            const cgstRate = 9;
-            const sgstRate = 9;
-            const cgstAmount = (taxableValue * cgstRate) / 100;
-            const sgstAmount = (taxableValue * sgstRate) / 100;
-            const itemTotal = taxableValue + cgstAmount + sgstAmount;
+            itemDiscountTotal += discountAmount;
+            const taxableValue = itemGross - discountAmount;
             
-            totalTaxableAmount += taxableValue;
-            totalCgst += cgstAmount;
-            totalSgst += sgstAmount;
+            // GST calculation (always calculate for record, but may not apply)
+            const cgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
+            const sgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
+            const itemTotal = taxableValue + cgstAmount + sgstAmount;
             
             processedItems.push({
               product: product._id,
-              quantity: parseInt(item.quantity),
-              price: parseFloat(item.price),
+              quantity: qty,
+              price: price,
               discount: itemDiscount,
               discountType: itemDiscountType,
-              taxableValue,
-              cgstRate,
-              sgstRate,
-              cgstAmount,
-              sgstAmount,
-              total: itemTotal
+              taxableValue: parseFloat(taxableValue.toFixed(2)),
+              cgstRate: 9,
+              sgstRate: 9,
+              cgstAmount: parseFloat(cgstAmount.toFixed(2)),
+              sgstAmount: parseFloat(sgstAmount.toFixed(2)),
+              total: parseFloat(itemTotal.toFixed(2))
             });
 
             // Update product stock
-            product.stock -= item.quantity;
+            product.stock -= qty;
             await product.save();
 
             // Log inventory history
-            await InventoryHistory.create({
-              product: product._id,
-              type: 'sale',
-              quantity: -item.quantity,
-              previousStock: product.stock + item.quantity,
-              newStock: product.stock,
-              updatedBy: req.user._id
-            });
+            try {
+              await InventoryHistory.create({
+                product: product._id,
+                type: 'sale',
+                quantity: -qty,
+                previousStock: product.stock + qty,
+                newStock: product.stock,
+                updatedBy: req.user?._id || null
+              });
+            } catch (invErr) {
+              console.warn('⚠️ Failed to log inventory history:', invErr.message);
+            }
           }
 
-          // Handle overall discount
-          const overallDiscountType = discountType || 'amount';
-          let overallDiscountAmount = discount || 0;
+          // Calculate taxable amount after item discounts
+          let taxableAmount = grossAmount - itemDiscountTotal;
           
-          if (overallDiscountType === 'percentage') {
-            overallDiscountAmount = (totalTaxableAmount * (discount || 0)) / 100;
+          // Apply additional discount
+          let additionalDiscount = parseFloat(discount) || 0;
+          if (discountType === 'percentage') {
+            additionalDiscount = (taxableAmount * additionalDiscount) / 100;
+          }
+          taxableAmount -= additionalDiscount;
+          
+          // Calculate GST
+          let totalCgst = 0;
+          let totalSgst = 0;
+          let totalGst = 0;
+          let autoDiscount = 0;
+          
+          if (applyGST) {
+            totalCgst = (taxableAmount * 9) / 100;
+            totalSgst = (taxableAmount * 9) / 100;
+            totalGst = totalCgst + totalSgst;
+            
+            // Reverse GST: auto-discount to nullify GST
+            if (reverseGST) {
+              autoDiscount = totalGst;
+            }
           }
           
-          const subtotalBeforeRound = totalTaxableAmount + totalCgst + totalSgst - overallDiscountAmount;
-          const roundOff = Math.round(subtotalBeforeRound) - subtotalBeforeRound;
-          const grandTotal = Math.round(subtotalBeforeRound);
+          // Calculate final total
+          let subtotal = taxableAmount + totalGst - autoDiscount;
+          const roundOff = Math.round(subtotal) - subtotal;
+          const grandTotal = Math.round(subtotal);
           const amountInWords = numberToWords(grandTotal);
           
+          console.log('💰 Calculations:', { 
+            grossAmount, 
+            itemDiscountTotal, 
+            additionalDiscount, 
+            taxableAmount, 
+            totalGst, 
+            autoDiscount, 
+            grandTotal 
+          });
+          
+          // Create invoice
           const invoice = await Invoice.create({
             customer,
             buyerDetails: {
               name: customerExists.name,
               address: buyerDetails?.street ? 
                 `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
-                'Address not provided',
+                customerExists.address?.street || 'Address not provided',
               mobile: customerExists.phone,
               gstin: buyerDetails?.gstin || 'N/A',
-              state: buyerDetails?.state || 'UTTAR PRADESH',
+              state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
               stateCode: '09'
             },
             consigneeDetails: {
               name: customerExists.name,
               address: buyerDetails?.street ? 
                 `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
-                'Address not provided',
+                customerExists.address?.street || 'Address not provided',
               mobile: customerExists.phone,
               gstin: buyerDetails?.gstin || 'N/A',
-              state: buyerDetails?.state || 'UTTAR PRADESH',
+              state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
               stateCode: '09'
             },
-            modeOfPayment: paymentMethod || 'cash',
-            destination: customerExists.address?.city || 'Gorakhpur',
-            deliveryNote,
-            referenceNo,
-            buyerOrderNo,
+            modeOfPayment: paymentMethod,
+            destination: destination || customerExists.address?.city || 'Gorakhpur',
+            deliveryNote: deliveryNote || '',
+            referenceNo: referenceNo || '',
+            buyerOrderNo: buyerOrderNo || '',
             items: processedItems,
-            totalTaxableAmount,
-            totalCgst,
-            totalSgst,
-            roundOff,
-            grandTotal,
-            amountInWords,
-            subtotal: totalTaxableAmount,
-            tax: totalCgst + totalSgst,
-            discount: discount || 0,
-            discountType: overallDiscountType,
+            subtotal: parseFloat(taxableAmount.toFixed(2)),
+            totalTaxableAmount: parseFloat(taxableAmount.toFixed(2)),
+            totalCgst: parseFloat(totalCgst.toFixed(2)),
+            totalSgst: parseFloat(totalSgst.toFixed(2)),
+            tax: parseFloat(totalGst.toFixed(2)),
+            discount: parseFloat((itemDiscountTotal + additionalDiscount + autoDiscount).toFixed(2)),
+            discountType: discountType,
+            roundOff: parseFloat(roundOff.toFixed(2)),
+            grandTotal: grandTotal,
             total: grandTotal,
-            paymentMethod: paymentMethod || 'cash',
+            amountInWords: amountInWords,
+            paymentMethod: paymentMethod,
             notes: notes || '',
             dueDate: dueDate ? new Date(dueDate) : null,
             terms: terms || 'Payment due within 30 days',
-            createdBy: req.user._id
+            createdBy: req.user?._id || null
           });
 
           // Update customer's total purchases
-          await Customer.findByIdAndUpdate(customer, {
-            $inc: { totalPurchases: grandTotal },
-            lastPurchaseDate: new Date()
-          });
+          try {
+            await Customer.findByIdAndUpdate(customer, {
+              $inc: { totalPurchases: grandTotal },
+              lastPurchaseDate: new Date()
+            });
+          } catch (custErr) {
+            console.warn('⚠️ Failed to update customer purchases:', custErr.message);
+          }
 
+          // Populate invoice
           const populatedInvoice = await Invoice.findById(invoice._id)
             .populate('customer', 'name phone address')
-            .populate('items.product', 'name category hsnCode')
+            .populate('items.product', 'name category')
             .populate('createdBy', 'name');
 
-          console.log('✅ Invoice created successfully:', populatedInvoice.invoiceNumber);
+          console.log('✅ Invoice created:', populatedInvoice.invoiceNumber);
           
           return res.status(201).json({ 
             success: true, 
@@ -261,11 +323,13 @@ export default async function handler(req, res) {
             invoice: populatedInvoice 
           });
         } catch (error) {
-          console.error('❌ Error creating invoice:', error);
+          console.error('❌ Invoice creation error:', error);
+          console.error('Stack:', error.stack);
           return res.status(500).json({ 
             success: false, 
             message: 'Failed to create invoice', 
-            error: error.message 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
           });
         }
 
@@ -277,10 +341,12 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('❌ Handler error:', error);
+    console.error('Stack:', error.stack);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
