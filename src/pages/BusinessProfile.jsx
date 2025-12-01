@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, User, MapPin, FileText, Upload, Save, AlertTriangle } from 'lucide-react';
+import { Building2, Upload, Save, AlertTriangle, Loader } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { profileAPI } from '../services/api';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 const BusinessProfile = () => {
   const [profile, setProfile] = useState({
@@ -17,11 +18,10 @@ const BusinessProfile = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState({ logo: false, signature: false });
   const [error, setError] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
-  const [signatureFile, setSignatureFile] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -53,19 +53,47 @@ const BusinessProfile = () => {
     }));
   };
 
-  const handleFileChange = (type, file) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (type === 'logo') {
-          setLogoPreview(e.target.result);
-          setLogoFile(file);
-        } else {
-          setSignaturePreview(e.target.result);
-          setSignatureFile(file);
+  // Upload image to Cloudinary and update preview
+  const handleFileChange = async (type, file) => {
+    if (!file) return;
+
+    const uploadType = type === 'logo' ? 'logo' : 'signature';
+    setUploading(prev => ({ ...prev, [uploadType]: true }));
+    setError(null);
+
+    try {
+      // Upload to Cloudinary
+      const cloudinaryUrl = await uploadToCloudinary(file, 'crm/profile/');
+      
+      // Update state with Cloudinary URL
+      if (type === 'logo') {
+        setLogoPreview(cloudinaryUrl);
+        setProfile(prev => ({ ...prev, logoUrl: cloudinaryUrl }));
+      } else {
+        setSignaturePreview(cloudinaryUrl);
+        setProfile(prev => ({ ...prev, signatureUrl: cloudinaryUrl }));
+      }
+
+      // Show success toast
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'success',
+          message: `${type === 'logo' ? 'Logo' : 'Signature'} uploaded successfully!`
         }
-      };
-      reader.readAsDataURL(file);
+      }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      const errorMessage = error.message || 'Failed to upload image';
+      setError(errorMessage);
+      
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          type: 'error',
+          message: errorMessage
+        }
+      }));
+    } finally {
+      setUploading(prev => ({ ...prev, [uploadType]: false }));
     }
   };
 
@@ -74,28 +102,10 @@ const BusinessProfile = () => {
     setError(null);
 
     try {
-      const formData = new FormData();
-      
-      // Add text fields with backend-compatible names
-      if (profile.businessName) formData.append('business_name', profile.businessName);
-      if (profile.ownerName) formData.append('owner_name', profile.ownerName);
-      if (profile.businessAddress) formData.append('address', profile.businessAddress);
-      if (profile.gstin) formData.append('gstin', profile.gstin);
-      if (profile.phone) formData.append('phone', profile.phone);
-      if (profile.email) formData.append('email', profile.email);
-
-      // Add files
-      if (logoFile) {
-        formData.append('logo', logoFile);
-      }
-      if (signatureFile) {
-        formData.append('signature', signatureFile);
-      }
-
-      const response = await profileAPI.updateProfile(formData);
+      // Send JSON data only (no files)
+      const response = await profileAPI.updateProfile(profile);
       
       if (response.data?.success) {
-        // Show success toast
         window.dispatchEvent(new CustomEvent('show-toast', {
           detail: {
             type: 'success',
@@ -103,17 +113,13 @@ const BusinessProfile = () => {
           }
         }));
         
-        // Refresh profile data
         await fetchProfile();
-        setLogoFile(null);
-        setSignatureFile(null);
       }
     } catch (error) {
       console.error('Error saving profile:', error);
       const errorMessage = error.response?.data?.message || 'Failed to save profile';
       setError(errorMessage);
       
-      // Show error toast
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: {
           type: 'error',
@@ -262,7 +268,7 @@ const BusinessProfile = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Business Logo</h3>
-                <p className="text-sm text-gray-600">Upload your business logo</p>
+                <p className="text-sm text-gray-600">Upload to Cloudinary</p>
               </div>
             </div>
 
@@ -284,15 +290,25 @@ const BusinessProfile = () => {
                   onChange={(e) => handleFileChange('logo', e.target.files[0])}
                   className="hidden"
                   id="logo-upload"
+                  disabled={uploading.logo}
                 />
                 <label
                   htmlFor="logo-upload"
-                  className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 cursor-pointer transition-colors"
+                  className={`flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 cursor-pointer transition-colors ${uploading.logo ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="text-center">
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Click to upload logo</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                    {uploading.logo ? (
+                      <>
+                        <Loader className="h-8 w-8 text-blue-600 mx-auto mb-2 animate-spin" />
+                        <p className="text-sm text-blue-600">Uploading to Cloudinary...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">Click to upload logo</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                      </>
+                    )}
                   </div>
                 </label>
               </div>
@@ -303,11 +319,11 @@ const BusinessProfile = () => {
           <div className="card">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-purple-100 rounded-xl">
-                <FileText className="h-6 w-6 text-purple-600" />
+                <Upload className="h-6 w-6 text-purple-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Digital Signature</h3>
-                <p className="text-sm text-gray-600">Upload your signature</p>
+                <p className="text-sm text-gray-600">Upload to Cloudinary</p>
               </div>
             </div>
 
@@ -329,15 +345,25 @@ const BusinessProfile = () => {
                   onChange={(e) => handleFileChange('signature', e.target.files[0])}
                   className="hidden"
                   id="signature-upload"
+                  disabled={uploading.signature}
                 />
                 <label
                   htmlFor="signature-upload"
-                  className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 cursor-pointer transition-colors"
+                  className={`flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 cursor-pointer transition-colors ${uploading.signature ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="text-center">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Click to upload signature</p>
-                    <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                    {uploading.signature ? (
+                      <>
+                        <Loader className="h-8 w-8 text-purple-600 mx-auto mb-2 animate-spin" />
+                        <p className="text-sm text-purple-600">Uploading to Cloudinary...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">Click to upload signature</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                      </>
+                    )}
                   </div>
                 </label>
               </div>

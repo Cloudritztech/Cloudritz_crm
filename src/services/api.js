@@ -121,14 +121,10 @@ export const reportsAPI = {
   getSalesReports: (params) => api.get('/reports?action=sales-reports', { params }),
 };
 
-// Profile API
+// Profile API (JSON only - no file uploads)
 export const profileAPI = {
   getProfile: () => api.get('/profile'),
-  updateProfile: (formData) => api.post('/profile', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }),
+  updateProfile: (profileData) => api.post('/profile', profileData), // JSON only
 };
 
 export default api;

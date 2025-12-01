@@ -1,9 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import BusinessProfile from '../lib/models/BusinessProfile.js';
 import { auth } from '../lib/middleware/auth.js';
-import formidable from 'formidable';
-import fs from 'fs';
-import path from 'path';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -16,15 +13,10 @@ async function runMiddleware(req, res, fn) {
   });
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
@@ -39,7 +31,7 @@ export default async function handler(req, res) {
       return await handleGetProfile(req, res);
     }
 
-    if (req.method === 'POST') {
+    if (req.method === 'POST' || req.method === 'PUT') {
       return await handleUpdateProfile(req, res);
     }
 
@@ -57,12 +49,14 @@ export default async function handler(req, res) {
   }
 }
 
+// GET /api/profile - Fetch business profile
 async function handleGetProfile(req, res) {
   try {
     console.log('📋 Fetching business profile...');
     
     let profile = await BusinessProfile.findOne();
     
+    // Create default profile if none exists
     if (!profile) {
       profile = new BusinessProfile({});
       await profile.save();
@@ -83,149 +77,73 @@ async function handleGetProfile(req, res) {
   }
 }
 
+// POST/PUT /api/profile - Update business profile (JSON only)
 async function handleUpdateProfile(req, res) {
   try {
     console.log('💾 Updating business profile...');
     
-    // Ensure upload directory exists
-    const uploadDir = './public/uploads/profile';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const form = formidable({
-      uploadDir: uploadDir,
-      keepExtensions: true,
-      maxFileSize: 5 * 1024 * 1024, // 5MB
-      allowEmptyFiles: false,
-      filter: ({ name, originalFilename, mimetype }) => {
-        // Only allow logo and signature files
-        if (name === 'logo' || name === 'signature') {
-          const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-          return allowedTypes.includes(mimetype);
-        }
-        return true; // Allow other form fields
-      }
-    });
-
-    const [fields, files] = await form.parse(req);
-    
-    // Extract form fields
-    const updateData = {
-      businessName: fields.businessName?.[0] || fields.business_name?.[0],
-      ownerName: fields.ownerName?.[0] || fields.owner_name?.[0],
-      businessAddress: fields.businessAddress?.[0] || fields.address?.[0],
-      gstin: fields.gstin?.[0],
-      phone: fields.phone?.[0],
-      email: fields.email?.[0],
-      updatedAt: new Date()
-    };
-
-    // Remove undefined fields
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
+    const {
+      businessName,
+      ownerName,
+      businessAddress,
+      gstin,
+      phone,
+      email,
+      logoUrl,
+      signatureUrl
+    } = req.body;
 
     // Validate required fields
-    if (!updateData.businessName || !updateData.ownerName || !updateData.businessAddress || !updateData.gstin) {
+    if (!businessName || !ownerName || !businessAddress || !gstin) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: business_name, owner_name, address, gstin'
+        message: 'Missing required fields: businessName, ownerName, businessAddress, gstin'
       });
     }
 
-    // Get existing profile for file handling
-    let existingProfile = await BusinessProfile.findOne();
-
-    // Handle logo upload
-    if (files.logo && files.logo[0]) {
-      try {
-        const logoFile = files.logo[0];
-        
-        // Validate file type
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-        if (!allowedTypes.includes(logoFile.mimetype)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid logo file type. Only PNG, JPG, and WebP are allowed.'
-          });
-        }
-
-        const logoExtension = path.extname(logoFile.originalFilename || logoFile.newFilename);
-        const logoNewName = `logo_${Date.now()}_${Math.random().toString(36).substring(7)}${logoExtension}`;
-        const logoNewPath = path.join(uploadDir, logoNewName);
-        
-        fs.renameSync(logoFile.filepath, logoNewPath);
-        updateData.logoUrl = `/uploads/profile/${logoNewName}`;
-        console.log('📷 Logo uploaded:', updateData.logoUrl);
-
-        // Delete old logo file if exists
-        if (existingProfile?.logoUrl) {
-          const oldLogoPath = `./public${existingProfile.logoUrl}`;
-          if (fs.existsSync(oldLogoPath)) {
-            fs.unlinkSync(oldLogoPath);
-            console.log('🗑️ Old logo deleted');
-          }
-        }
-      } catch (error) {
-        console.error('❌ Logo upload error:', error);
-        return res.status(400).json({
-          success: false,
-          message: 'Failed to upload logo file'
-        });
-      }
+    // Validate URLs if provided
+    if (logoUrl && !isValidUrl(logoUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid logo URL format'
+      });
     }
 
-    // Handle signature upload
-    if (files.signature && files.signature[0]) {
-      try {
-        const signatureFile = files.signature[0];
-        
-        // Validate file type
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-        if (!allowedTypes.includes(signatureFile.mimetype)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid signature file type. Only PNG, JPG, and WebP are allowed.'
-          });
-        }
-
-        const signatureExtension = path.extname(signatureFile.originalFilename || signatureFile.newFilename);
-        const signatureNewName = `signature_${Date.now()}_${Math.random().toString(36).substring(7)}${signatureExtension}`;
-        const signatureNewPath = path.join(uploadDir, signatureNewName);
-        
-        fs.renameSync(signatureFile.filepath, signatureNewPath);
-        updateData.signatureUrl = `/uploads/profile/${signatureNewName}`;
-        console.log('✍️ Signature uploaded:', updateData.signatureUrl);
-
-        // Delete old signature file if exists
-        if (existingProfile?.signatureUrl) {
-          const oldSignaturePath = `./public${existingProfile.signatureUrl}`;
-          if (fs.existsSync(oldSignaturePath)) {
-            fs.unlinkSync(oldSignaturePath);
-            console.log('🗑️ Old signature deleted');
-          }
-        }
-      } catch (error) {
-        console.error('❌ Signature upload error:', error);
-        return res.status(400).json({
-          success: false,
-          message: 'Failed to upload signature file'
-        });
-      }
+    if (signatureUrl && !isValidUrl(signatureUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid signature URL format'
+      });
     }
 
-    // Upsert profile (update if exists, create if not)
-    let profile;
-    if (existingProfile) {
-      Object.assign(existingProfile, updateData);
-      profile = await existingProfile.save();
+    // Prepare update data
+    const updateData = {
+      businessName,
+      ownerName,
+      businessAddress,
+      gstin,
+      phone,
+      email
+    };
+
+    // Only update URLs if provided
+    if (logoUrl !== undefined) {
+      updateData.logoUrl = logoUrl;
+    }
+    if (signatureUrl !== undefined) {
+      updateData.signatureUrl = signatureUrl;
+    }
+
+    // Upsert: Update if exists, create if not
+    let profile = await BusinessProfile.findOne();
+    
+    if (profile) {
+      Object.assign(profile, updateData);
+      await profile.save();
       console.log('✅ Business profile updated');
     } else {
       profile = new BusinessProfile(updateData);
-      profile = await profile.save();
+      await profile.save();
       console.log('✅ Business profile created');
     }
     
@@ -237,26 +155,20 @@ async function handleUpdateProfile(req, res) {
 
   } catch (error) {
     console.error('❌ Update profile error:', error);
-    
-    // Handle specific error types
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'File size too large. Maximum 5MB allowed.'
-      });
-    }
-    
-    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Unexpected file upload. Only logo and signature files are allowed.'
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: 'Failed to update profile',
       error: error.message
     });
+  }
+}
+
+// Helper function to validate URLs
+function isValidUrl(string) {
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_) {
+    return false;
   }
 }
