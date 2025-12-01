@@ -258,40 +258,49 @@ const ViewInvoice = () => {
           <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
             <div className="flex flex-col sm:flex-row justify-between">
               <div className="flex-1"></div>
-              <div className="text-right space-y-1 min-w-[250px]">
+              <div className="text-right space-y-1 min-w-[280px]">
                 <div className="flex justify-between border-b pb-1">
-                  <span>Item Total:</span>
-                  <span>₹{(invoice.subtotal + (invoice.discount || 0)).toFixed(2)}</span>
+                  <span className="font-medium">Item Total:</span>
+                  <span className="font-medium">₹{((invoice.totalTaxableAmount || invoice.subtotal) + (invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
                 </div>
-                {invoice.discount > 0 && (
+                
+                {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
                   <div className="flex justify-between text-red-600">
-                    <span>Total Discount:</span>
-                    <span>-₹{parseFloat(invoice.discount).toFixed(2)}</span>
+                    <span>Discount:</span>
+                    <span>-₹{(parseFloat(invoice.discount || 0) + parseFloat(invoice.autoDiscount || 0)).toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold border-b pb-1">
+                
+                <div className="flex justify-between font-semibold border-b pb-1 mt-1">
                   <span>Taxable Amount:</span>
                   <span>₹{parseFloat(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-blue-700">
-                  <span>CGST @ 9%:</span>
-                  <span>₹{parseFloat(invoice.totalCgst || 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-blue-700">
-                  <span>SGST @ 9%:</span>
-                  <span>₹{parseFloat(invoice.totalSgst || 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-semibold">
-                  <span>Total GST:</span>
-                  <span>₹{(parseFloat(invoice.totalCgst || 0) + parseFloat(invoice.totalSgst || 0)).toFixed(2)}</span>
-                </div>
+                
+                {(invoice.totalCgst > 0 || invoice.totalSgst > 0) && (
+                  <>
+                    <div className="flex justify-between text-blue-700 text-sm">
+                      <span>CGST @ 9%:</span>
+                      <span>₹{parseFloat(invoice.totalCgst || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-blue-700 text-sm">
+                      <span>SGST @ 9%:</span>
+                      <span>₹{parseFloat(invoice.totalSgst || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-blue-800">
+                      <span>Total GST (18%):</span>
+                      <span>₹{(parseFloat(invoice.totalCgst || 0) + parseFloat(invoice.totalSgst || 0)).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                
                 {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm">
                     <span>Round Off:</span>
                     <span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{parseFloat(invoice.roundOff).toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold text-green-700 border-t-2 pt-2">
+                
+                <div className="flex justify-between text-xl font-bold text-green-700 border-t-2 border-gray-400 pt-2 mt-2">
                   <span>Grand Total:</span>
                   <span>₹{parseFloat(invoice.grandTotal || invoice.total).toFixed(2)}</span>
                 </div>
@@ -302,7 +311,7 @@ const ViewInvoice = () => {
           {/* Amount in Words */}
           <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
             <p className="text-xs sm:text-sm break-words whitespace-normal">
-              <strong>Total amount (in words):</strong> INR {invoice.total} Only
+              <strong>Total amount (in words):</strong> {invoice.amountInWords || `Rupees ${invoice.grandTotal || invoice.total} Only`}
             </p>
           </div>
 

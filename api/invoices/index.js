@@ -209,35 +209,46 @@ export default async function handler(req, res) {
             }
           }
 
-          // Calculate taxable amount after item discounts
-          let taxableAmount = grossAmount - itemDiscountTotal;
+          // Calculate after item discounts
+          let amountAfterItemDiscount = grossAmount - itemDiscountTotal;
           
-          // Apply additional discount
+          // Apply additional discount BEFORE GST
           let additionalDiscount = parseFloat(discount) || 0;
           if (discountType === 'percentage') {
-            additionalDiscount = (taxableAmount * additionalDiscount) / 100;
+            additionalDiscount = (amountAfterItemDiscount * additionalDiscount) / 100;
           }
-          taxableAmount -= additionalDiscount;
+          
+          let totalDiscountAmount = itemDiscountTotal + additionalDiscount;
+          let amountAfterDiscount = grossAmount - totalDiscountAmount;
           
           // Calculate GST
           let totalCgst = 0;
           let totalSgst = 0;
           let totalGst = 0;
+          let taxableAmount = amountAfterDiscount;
           let autoDiscount = 0;
           
           if (applyGST) {
-            totalCgst = (taxableAmount * 9) / 100;
-            totalSgst = (taxableAmount * 9) / 100;
-            totalGst = totalCgst + totalSgst;
-            
-            // Reverse GST: auto-discount to nullify GST
             if (reverseGST) {
-              autoDiscount = totalGst;
+              // Reverse GST: Extract GST from the amount (price is inclusive of GST)
+              // Formula: GST = (Amount × GST%) / (100 + GST%)
+              const gstRate = 18; // 9% CGST + 9% SGST
+              totalGst = (amountAfterDiscount * gstRate) / (100 + gstRate);
+              totalCgst = totalGst / 2;
+              totalSgst = totalGst / 2;
+              taxableAmount = amountAfterDiscount - totalGst;
+              autoDiscount = totalGst; // Show as discount to keep total same
+            } else {
+              // Normal GST: Add GST on top of taxable amount
+              totalCgst = (amountAfterDiscount * 9) / 100;
+              totalSgst = (amountAfterDiscount * 9) / 100;
+              totalGst = totalCgst + totalSgst;
+              taxableAmount = amountAfterDiscount;
             }
           }
           
           // Calculate final total
-          let subtotal = taxableAmount + totalGst - autoDiscount;
+          let subtotal = reverseGST ? amountAfterDiscount : (taxableAmount + totalGst);
           const roundOff = Math.round(subtotal) - subtotal;
           const grandTotal = Math.round(subtotal);
           const amountInWords = numberToWords(grandTotal);
@@ -245,8 +256,13 @@ export default async function handler(req, res) {
           console.log('💰 Calculations:', { 
             grossAmount, 
             itemDiscountTotal, 
-            additionalDiscount, 
+            additionalDiscount,
+            totalDiscountAmount,
+            amountAfterDiscount,
+            reverseGST,
             taxableAmount, 
+            totalCgst,
+            totalSgst,
             totalGst, 
             autoDiscount, 
             grandTotal 
@@ -286,7 +302,8 @@ export default async function handler(req, res) {
             totalCgst: parseFloat(totalCgst.toFixed(2)),
             totalSgst: parseFloat(totalSgst.toFixed(2)),
             tax: parseFloat(totalGst.toFixed(2)),
-            discount: parseFloat((itemDiscountTotal + additionalDiscount + autoDiscount).toFixed(2)),
+            discount: parseFloat(totalDiscountAmount.toFixed(2)),
+            autoDiscount: parseFloat(autoDiscount.toFixed(2)),
             discountType: discountType,
             roundOff: parseFloat(roundOff.toFixed(2)),
             grandTotal: grandTotal,
