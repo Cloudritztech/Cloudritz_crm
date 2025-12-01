@@ -15,6 +15,10 @@ const AddInvoice = () => {
     paymentMethod: "cash",
     notes: "",
     
+    // GST Controls
+    applyGST: false,
+    reverseGST: false,
+    
     // Invoice details
     deliveryNote: "",
     referenceNo: "",
@@ -261,49 +265,70 @@ const AddInvoice = () => {
   };
 
   const calculateTotals = () => {
-    let totalTaxableAmount = 0;
-    let totalCgst = 0;
-    let totalSgst = 0;
+    // Calculate gross amount
+    let grossAmount = 0;
+    let itemDiscountTotal = 0;
     
     formData.items.forEach(item => {
       if (item.quantity > 0 && item.price > 0) {
+        grossAmount += item.quantity * item.price;
+        
         const itemDiscount = item.discount || 0;
         const discountType = item.discountType || 'amount';
-        let discountAmount = 0;
         
         if (discountType === 'percentage') {
-          discountAmount = (item.quantity * item.price * itemDiscount) / 100;
+          itemDiscountTotal += (item.quantity * item.price * itemDiscount) / 100;
         } else {
-          discountAmount = itemDiscount;
+          itemDiscountTotal += itemDiscount;
         }
-        
-        const taxableValue = (item.quantity * item.price) - discountAmount;
-        const cgstAmount = (taxableValue * 9) / 100;
-        const sgstAmount = (taxableValue * 9) / 100;
-        
-        totalTaxableAmount += taxableValue;
-        totalCgst += cgstAmount;
-        totalSgst += sgstAmount;
       }
     });
     
-    // Handle overall discount
-    let overallDiscountAmount = formData.discount || 0;
+    // Taxable amount after item discounts
+    let taxableAmount = grossAmount - itemDiscountTotal;
+    
+    // Calculate additional discount
+    let additionalDiscount = formData.discount || 0;
     if (formData.discountType === 'percentage') {
-      overallDiscountAmount = (totalTaxableAmount * (formData.discount || 0)) / 100;
+      additionalDiscount = (taxableAmount * additionalDiscount) / 100;
     }
     
-    const subtotalBeforeRound = totalTaxableAmount + totalCgst + totalSgst - overallDiscountAmount;
-    const roundOff = Math.round(subtotalBeforeRound) - subtotalBeforeRound;
-    const grandTotal = Math.round(subtotalBeforeRound);
+    // Apply additional discount to taxable amount
+    taxableAmount -= additionalDiscount;
+    
+    // Calculate GST
+    let cgst = 0;
+    let sgst = 0;
+    let totalGst = 0;
+    let autoDiscount = 0;
+    
+    if (formData.applyGST) {
+      cgst = (taxableAmount * 9) / 100;
+      sgst = (taxableAmount * 9) / 100;
+      totalGst = cgst + sgst;
+      
+      // Reverse GST: Add auto-discount to nullify GST
+      if (formData.reverseGST) {
+        autoDiscount = totalGst;
+      }
+    }
+    
+    // Calculate grand total
+    let subtotal = taxableAmount + totalGst - autoDiscount;
+    const roundOff = Math.round(subtotal) - subtotal;
+    const grandTotal = Math.round(subtotal);
     
     return {
-      totalTaxableAmount,
-      totalCgst,
-      totalSgst,
-      overallDiscountAmount,
-      roundOff,
-      grandTotal
+      grossAmount: grossAmount.toFixed(2),
+      itemDiscountTotal: itemDiscountTotal.toFixed(2),
+      taxableAmount: taxableAmount.toFixed(2),
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      totalGst: totalGst.toFixed(2),
+      additionalDiscount: additionalDiscount.toFixed(2),
+      autoDiscount: autoDiscount.toFixed(2),
+      roundOff: roundOff.toFixed(2),
+      grandTotal: grandTotal.toFixed(2)
     };
   };
   
@@ -478,21 +503,21 @@ const AddInvoice = () => {
                 </div>
                 
                 {/* Discount */}
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <input
                       type="number"
                       value={item.discount || 0}
                       onChange={(e) => updateItem(index, "discount", parseFloat(e.target.value) || 0)}
-                      className="w-16 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       step="0.01"
                       min="0"
                     />
                     <select
                       value={item.discountType || 'amount'}
                       onChange={(e) => updateItem(index, "discountType", e.target.value)}
-                      className="w-12 px-1 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                      className="w-16 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="amount">₹</option>
                       <option value="percentage">%</option>
@@ -500,39 +525,23 @@ const AddInvoice = () => {
                   </div>
                 </div>
                 
-                {/* Amount & Taxable */}
+                {/* Amount */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                  <div className="w-full px-2 py-2 border border-gray-300 rounded-md bg-gray-50 text-xs">
-                    <div>Gross: ₹{(item.quantity * item.price).toFixed(2)}</div>
-                    {(item.discount > 0) && (
-                      <div className="text-red-600">
-                        Disc: -₹{(() => {
-                          const itemDiscount = item.discount || 0;
-                          const discountType = item.discountType || 'amount';
-                          if (discountType === 'percentage') {
-                            return ((item.quantity * item.price * itemDiscount) / 100).toFixed(2);
-                          } else {
-                            return itemDiscount.toFixed(2);
-                          }
-                        })()}
-                      </div>
-                    )}
-                    <div className="font-medium text-green-700">
-                      Net: ₹{(() => {
-                        const itemDiscount = item.discount || 0;
-                        const discountType = item.discountType || 'amount';
-                        let discountAmount = 0;
-                        
-                        if (discountType === 'percentage') {
-                          discountAmount = (item.quantity * item.price * itemDiscount) / 100;
-                        } else {
-                          discountAmount = itemDiscount;
-                        }
-                        
-                        return ((item.quantity * item.price) - discountAmount).toFixed(2);
-                      })()}
-                    </div>
+                  <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 font-medium">
+                    ₹{(() => {
+                      const itemDiscount = item.discount || 0;
+                      const discountType = item.discountType || 'amount';
+                      let discountAmount = 0;
+                      
+                      if (discountType === 'percentage') {
+                        discountAmount = (item.quantity * item.price * itemDiscount) / 100;
+                      } else {
+                        discountAmount = itemDiscount;
+                      }
+                      
+                      return ((item.quantity * item.price) - discountAmount).toFixed(2);
+                    })()}
                   </div>
                 </div>
                 
@@ -542,7 +551,7 @@ const AddInvoice = () => {
                     type="button"
                     onClick={() => removeItem(index)}
                     disabled={formData.items.length === 1}
-                    className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                    className="w-full px-3 py-2 text-sm border border-red-600 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Remove
                   </button>
@@ -560,42 +569,110 @@ const AddInvoice = () => {
           </button>
         </div>
 
-        {/* GST Totals Section */}
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-medium mb-4">GST Calculation</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 bg-gray-50 p-3 rounded">
+        {/* GST & Billing Summary */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-medium mb-4">Billing Summary</h3>
+          
+          {/* GST Toggle */}
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.applyGST}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  applyGST: e.target.checked,
+                  reverseGST: e.target.checked ? formData.reverseGST : false
+                })}
+                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Apply 18% GST (9% CGST + 9% SGST)</span>
+            </label>
+            
+            {/* Reverse GST Button */}
+            {formData.applyGST && (
+              <div className="mt-3 pl-8">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, reverseGST: !formData.reverseGST })}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    formData.reverseGST 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {formData.reverseGST ? '✓ Reverse GST Applied' : 'Apply Reverse GST'}
+                </button>
+                {formData.reverseGST && (
+                  <p className="text-xs text-gray-600 mt-2">
+                    GST amount will be auto-discounted to keep final price unchanged
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Billing Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Summary Card */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-5 space-y-3">
               <div className="flex justify-between text-sm">
-                <span>Gross Amount:</span>
-                <span>₹{formData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0).toFixed(2)}</span>
+                <span className="text-gray-600">Gross Amount:</span>
+                <span className="font-medium">₹{totals.grossAmount}</span>
               </div>
-              <div className="flex justify-between text-sm text-red-600">
-                <span>Item Discounts:</span>
-                <span>-₹{formData.items.reduce((sum, item) => {
-                  const itemDiscount = item.discount || 0;
-                  const discountType = item.discountType || 'amount';
-                  if (discountType === 'percentage') {
-                    return sum + ((item.quantity * item.price * itemDiscount) / 100);
-                  } else {
-                    return sum + itemDiscount;
-                  }
-                }, 0).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-medium border-t pt-2">
+              
+              {parseFloat(totals.itemDiscountTotal) > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Item Discounts:</span>
+                  <span>-₹{totals.itemDiscountTotal}</span>
+                </div>
+              )}
+              
+              {parseFloat(totals.additionalDiscount) > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Additional Discount:</span>
+                  <span>-₹{totals.additionalDiscount}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between text-sm font-semibold border-t border-gray-300 pt-2">
                 <span>Taxable Amount:</span>
-                <span>₹{totals.totalTaxableAmount.toFixed(2)}</span>
+                <span>₹{totals.taxableAmount}</span>
               </div>
+              
+              {formData.applyGST && (
+                <>
+                  <div className="flex justify-between text-sm text-blue-700">
+                    <span>CGST @ 9%:</span>
+                    <span>₹{totals.cgst}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-blue-700">
+                    <span>SGST @ 9%:</span>
+                    <span>₹{totals.sgst}</span>
+                  </div>
+                  
+                  {formData.reverseGST && parseFloat(totals.autoDiscount) > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Auto Discount (Reverse GST):</span>
+                      <span>-₹{totals.autoDiscount}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              
               <div className="flex justify-between text-sm">
-                <span>CGST @ 9%:</span>
-                <span>₹{totals.totalCgst.toFixed(2)}</span>
+                <span>Round Off:</span>
+                <span>{parseFloat(totals.roundOff) >= 0 ? '+' : ''}₹{totals.roundOff}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>SGST @ 9%:</span>
-                <span>₹{totals.totalSgst.toFixed(2)}</span>
+              
+              <div className="flex justify-between text-xl font-bold text-green-700 border-t-2 border-gray-400 pt-3">
+                <span>Grand Total:</span>
+                <span>₹{totals.grandTotal}</span>
               </div>
             </div>
             
-            <div className="space-y-3">
+            {/* Right: Additional Discount Input */}
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Additional Discount</label>
                 <div className="flex gap-2">
@@ -603,32 +680,45 @@ const AddInvoice = () => {
                     type="number"
                     value={formData.discount}
                     onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     step="0.01"
                     min="0"
+                    placeholder="0.00"
                   />
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="amount">₹</option>
-                    <option value="percentage">%</option>
+                    <option value="amount">Amount (₹)</option>
+                    <option value="percentage">Percent (%)</option>
                   </select>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Discount: ₹{totals.overallDiscountAmount.toFixed(2)}
+                {formData.discountType === 'percentage' && formData.discount > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Discount Amount: ₹{totals.additionalDiscount}
+                  </p>
+                )}
+              </div>
+              
+              {/* Formula Display */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Calculation Formula:</h4>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>Taxable = Gross - Item Discounts - Additional Discount</p>
+                  {formData.applyGST && (
+                    <>
+                      <p>CGST = Taxable × 9%</p>
+                      <p>SGST = Taxable × 9%</p>
+                      {formData.reverseGST && (
+                        <p className="text-green-600 font-medium">Auto Discount = CGST + SGST</p>
+                      )}
+                    </>
+                  )}
+                  <p className="font-medium text-gray-800 mt-2">
+                    Total = Taxable {formData.applyGST ? '+ GST' : ''} {formData.reverseGST ? '- Auto Discount' : ''} + Round Off
+                  </p>
                 </div>
-              </div>
-              
-              <div className="flex justify-between text-sm">
-                <span>Round Off:</span>
-                <span>{totals.roundOff > 0 ? '+' : ''}₹{totals.roundOff.toFixed(2)}</span>
-              </div>
-              
-              <div className="flex justify-between text-lg font-bold text-green-700 border-t pt-2">
-                <span>Grand Total:</span>
-                <span>₹{totals.grandTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
