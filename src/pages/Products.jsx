@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { productsAPI } from '../services/api';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ProductCard from '../components/ProductCard';
 import ProductForm from '../components/forms/ProductForm';
+import * as XLSX from 'xlsx';
+import axios from 'axios';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -62,6 +65,60 @@ const Products = () => {
     }
   };
 
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        setSyncing(true);
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        const normalizeKey = (key) => key.toLowerCase().trim().replace(/\s+/g, '');
+        const columnMap = {
+          'itemname': 'name',
+          'stockcount': 'stock',
+          'currentsaleprice': 'sellingPrice',
+          'stockvalue(purchaseprice)': 'purchasePrice'
+        };
+
+        const products = rows.map(row => {
+          const mapped = {};
+          for (const [key, value] of Object.entries(row)) {
+            const normalizedKey = normalizeKey(key);
+            const mappedKey = columnMap[normalizedKey];
+            if (mappedKey) mapped[mappedKey] = value;
+          }
+          return mapped;
+        });
+
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/products/sync-excel', 
+          { products },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+
+        const { results } = response.data;
+        toast.success(`✅ Added: ${results.added}, Updated: ${results.updated}, Unchanged: ${results.unchanged}`);
+        if (results.errors.length > 0) {
+          toast.error(`⚠️ ${results.errors.length} errors found`);
+        }
+        fetchProducts();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to sync inventory');
+      } finally {
+        setSyncing(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -72,10 +129,29 @@ const Products = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-        <Button onClick={() => setShowModal(true)} className="flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".xlsx,.csv"
+              onChange={handleExcelUpload}
+              className="hidden"
+              disabled={syncing}
+            />
+            <Button disabled={syncing} className="flex items-center">
+              {syncing ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              {syncing ? 'Syncing...' : 'Import Excel'}
+            </Button>
+          </label>
+          <Button onClick={() => setShowModal(true)} className="flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

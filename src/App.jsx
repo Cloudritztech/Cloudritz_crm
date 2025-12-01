@@ -12,7 +12,6 @@ import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
 import SalesReports from './pages/SalesReports';
 import BusinessProfile from './pages/BusinessProfile';
-import ExcelSync from './pages/ExcelSync';
 import Toast from './components/ui/Toast';
 
 const ProtectedRoute = ({ children }) => {
@@ -79,7 +78,6 @@ function App() {
                         <Route path="/invoices/view/:id" element={<ViewInvoice />} />
                         <Route path="/sales-reports" element={<SalesReports />} />
                         <Route path="/business-profile" element={<BusinessProfile />} />
-                        <Route path="/excel-sync" element={<ExcelSync />} />
                       </Routes>
                     </Layout>
                   </ProtectedRoute>
