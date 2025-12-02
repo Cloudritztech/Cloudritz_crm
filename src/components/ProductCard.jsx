@@ -38,7 +38,7 @@ const ProductCard = ({ product, onStockUpdate }) => {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg truncate">{product.name}</h3>
+          <h3 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2">{product.name}</h3>
           <div className="flex flex-wrap gap-1 mt-1">
             {product.stock <= product.lowStockLimit && (
               <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded">LOW</span>
