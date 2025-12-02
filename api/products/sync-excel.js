@@ -35,11 +35,20 @@ export default async function handler(req, res) {
     }
 
     const results = { added: 0, updated: 0, unchanged: 0, errors: [] };
+    const names = products.map(p => p.name?.toString().trim()).filter(Boolean);
+    const existingProducts = await Product.find({ 
+      name: { $in: names.map(n => new RegExp(`^${n}$`, 'i')) } 
+    });
+    
+    const existingMap = new Map();
+    existingProducts.forEach(p => existingMap.set(p.name.toLowerCase(), p));
+
+    const bulkOps = [];
 
     for (let i = 0; i < products.length; i++) {
       const item = products[i];
       
-      if (!item.name || !item.stock || !item.sellingPrice || !item.purchasePrice) {
+      if (!item.name || item.stock == null || !item.sellingPrice || !item.purchasePrice) {
         results.errors.push(`Row ${i + 2}: Missing required fields`);
         continue;
       }
@@ -48,45 +57,56 @@ export default async function handler(req, res) {
       const stock = parseFloat(item.stock);
       const sellingPrice = parseFloat(item.sellingPrice);
       const purchasePrice = parseFloat(item.purchasePrice);
-      
       const stockSaleValue = stock * sellingPrice;
       const stockPurchaseValue = stock * purchasePrice;
 
-      const existingProduct = await Product.findOne({ 
-        name: { $regex: new RegExp(`^${name}$`, 'i') } 
-      });
+      const existing = existingMap.get(name.toLowerCase());
 
-      if (existingProduct) {
+      if (existing) {
         const hasChanges = 
-          existingProduct.stock !== stock ||
-          existingProduct.sellingPrice !== sellingPrice ||
-          existingProduct.purchasePrice !== purchasePrice;
+          existing.stock !== stock ||
+          existing.sellingPrice !== sellingPrice ||
+          existing.purchasePrice !== purchasePrice;
 
         if (hasChanges) {
-          existingProduct.stock = stock;
-          existingProduct.sellingPrice = sellingPrice;
-          existingProduct.purchasePrice = purchasePrice;
-          existingProduct.stockSaleValue = stockSaleValue;
-          existingProduct.stockPurchaseValue = stockPurchaseValue;
-          existingProduct.importedFromExcel = true;
-          await existingProduct.save();
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: existing._id },
+              update: { 
+                stock, 
+                sellingPrice, 
+                purchasePrice, 
+                stockSaleValue, 
+                stockPurchaseValue,
+                importedFromExcel: true 
+              }
+            }
+          });
           results.updated++;
         } else {
           results.unchanged++;
         }
       } else {
-        await Product.create({
-          name,
-          stock,
-          sellingPrice,
-          purchasePrice,
-          stockSaleValue,
-          stockPurchaseValue,
-          category: 'accessories',
-          importedFromExcel: true
+        bulkOps.push({
+          insertOne: {
+            document: {
+              name,
+              stock,
+              sellingPrice,
+              purchasePrice,
+              stockSaleValue,
+              stockPurchaseValue,
+              category: 'accessories',
+              importedFromExcel: true
+            }
+          }
         });
         results.added++;
       }
+    }
+
+    if (bulkOps.length > 0) {
+      await Product.bulkWrite(bulkOps);
     }
 
     return res.status(200).json({
