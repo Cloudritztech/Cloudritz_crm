@@ -95,10 +95,10 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
           name="purchasePrice"
           type="number"
           step="0.01"
-          label="Purchase Price (Optional)"
+          label="Purchase Price"
           value={formData.purchasePrice}
           onChange={handleChange}
-          placeholder="Auto-calculated if empty"
+          required
         />
       </div>
 

@@ -125,12 +125,14 @@ const Products = () => {
         const sheet = workbook.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(sheet);
 
-        const normalizeKey = (key) => key.toLowerCase().trim().replace(/\s+/g, '');
+        const normalizeKey = (key) => key.toLowerCase().trim().replace(/\s+/g, '').replace(/[()]/g, '');
         const columnMap = {
           'itemname': 'name',
           'stockcount': 'stock',
           'currentsaleprice': 'sellingPrice',
-          'stockvalue(purchaseprice)': 'purchasePrice'
+          'stockvaluesaleprice': 'stockSaleValue',
+          'stockvaluepurchaseprice': 'stockPurchaseValue',
+          'purchaseprice': 'purchasePrice'
         };
 
         const products = rows.map(row => {
@@ -140,10 +142,19 @@ const Products = () => {
             const mappedKey = columnMap[normalizedKey];
             if (mappedKey) mapped[mappedKey] = value;
           }
+          // Ensure purchasePrice is set
+          if (!mapped.purchasePrice && mapped.stockPurchaseValue && mapped.stock) {
+            mapped.purchasePrice = mapped.stockPurchaseValue / mapped.stock;
+          }
           return mapped;
         });
 
+        // Delete all products first
         const token = localStorage.getItem('token');
+        await axios.delete('/api/products/delete-all', 
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+
         const response = await axios.post('/api/products/sync-excel', 
           { products },
           { headers: { 'Authorization': `Bearer ${token}` } }
