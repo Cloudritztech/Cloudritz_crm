@@ -34,6 +34,40 @@ export default async function handler(req, res) {
   const productId = id || req.params?.id;
   const productAction = action || req.params?.action;
 
+  // Get single product
+  if (productId && method === 'GET' && !productAction) {
+    try {
+      const product = await Product.findById(productId);
+      if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+      return res.json({ success: true, product });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // Stock update
+  if (productId && method === 'POST' && productAction === 'stock') {
+    try {
+      const { type, qty, note } = req.body;
+      if (!type || !qty) return res.status(400).json({ success: false, message: 'Type and quantity required' });
+      
+      const product = await Product.findById(productId);
+      if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+      
+      if (type === 'OUT' && product.stock < qty) {
+        return res.status(400).json({ success: false, message: 'Insufficient stock' });
+      }
+      
+      product.stock = type === 'IN' ? product.stock + qty : product.stock - qty;
+      product.stockHistory.push({ type, qty, note, date: new Date() });
+      await product.save();
+      
+      return res.json({ success: true, product });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   // Handle specific product operations
   if (productId && method === 'PUT') {
     try {

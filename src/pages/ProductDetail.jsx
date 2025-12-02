@@ -143,14 +143,14 @@ const ProductDetail = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => { setStockAction('IN'); setShowStockModal(true); }}
-                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center"
+                className="flex-1 px-4 py-3 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Stock IN
               </button>
               <button
                 onClick={() => { setStockAction('OUT'); setShowStockModal(true); }}
-                className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center"
+                className="flex-1 px-4 py-3 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 flex items-center justify-center"
               >
                 <Minus className="h-5 w-5 mr-2" />
                 Stock OUT

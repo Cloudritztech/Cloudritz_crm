@@ -57,14 +57,14 @@ const ProductCard = ({ product, onStockUpdate }) => {
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => handleStockAction('IN')}
-          className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center text-sm"
+          className="flex-1 px-3 py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center text-sm"
         >
           <Plus className="h-4 w-4 mr-1" />
           IN
         </button>
         <button
           onClick={() => handleStockAction('OUT')}
-          className="flex-1 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center text-sm"
+          className="flex-1 px-3 py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 flex items-center justify-center text-sm"
         >
           <Minus className="h-4 w-4 mr-1" />
           OUT

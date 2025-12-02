@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { productsAPI } from '../services/api';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -11,10 +11,14 @@ import axios from 'axios';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [syncing, setSyncing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [stockFilter, setStockFilter] = useState('all');
 
   useEffect(() => {
     fetchProducts();
@@ -24,12 +28,50 @@ const Products = () => {
     try {
       const response = await productsAPI.getAll();
       setProducts(response.data.products);
+      setFilteredProducts(response.data.products);
     } catch (error) {
       toast.error('Failed to fetch products');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let result = [...products];
+
+    // Search filter
+    if (searchQuery) {
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Stock filter
+    if (stockFilter === 'low') {
+      result = result.filter(p => p.stock <= p.lowStockLimit);
+    } else if (stockFilter === 'instock') {
+      result = result.filter(p => p.stock > p.lowStockLimit);
+    }
+
+    // Sort
+    if (sortBy === 'newest') {
+      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === 'oldest') {
+      result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (sortBy === 'name') {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'price-high') {
+      result.sort((a, b) => b.sellingPrice - a.sellingPrice);
+    } else if (sortBy === 'price-low') {
+      result.sort((a, b) => a.sellingPrice - b.sellingPrice);
+    } else if (sortBy === 'stock-high') {
+      result.sort((a, b) => b.stock - a.stock);
+    } else if (sortBy === 'stock-low') {
+      result.sort((a, b) => a.stock - b.stock);
+    }
+
+    setFilteredProducts(result);
+  }, [products, searchQuery, sortBy, stockFilter]);
 
   const handleSubmit = async (formData) => {
     try {
@@ -131,9 +173,10 @@ const Products = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+          <div className="flex gap-2">
           <input
             type="file"
             id="excelUpload"
@@ -158,18 +201,61 @@ const Products = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
+          </div>
+        </div>
+
+        <div className="flex gap-3 items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="price-high">Price (High-Low)</option>
+            <option value="price-low">Price (Low-High)</option>
+            <option value="stock-high">Stock (High-Low)</option>
+            <option value="stock-low">Stock (Low-High)</option>
+          </select>
+          <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Stock</option>
+            <option value="instock">In Stock</option>
+            <option value="low">Low Stock</option>
+          </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => (
+        {filteredProducts.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-gray-500">
+            No products found
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
           <ProductCard
             key={product._id}
             product={product}
             onStockUpdate={handleStockUpdate}
           />
-        ))}
+        ))
+        )}
       </div>
+
 
       <Modal
         isOpen={showModal}
