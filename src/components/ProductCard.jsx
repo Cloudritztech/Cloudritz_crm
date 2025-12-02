@@ -7,17 +7,15 @@ import toast from 'react-hot-toast';
 const ProductCard = ({ product, onStockUpdate }) => {
   const navigate = useNavigate();
 
-  const handleStockAction = async (type) => {
-    const qty = prompt(`Enter quantity to ${type === 'IN' ? 'add' : 'remove'}:`);
-    if (!qty || qty <= 0) return;
-
+  const handleStockAction = async (type, e) => {
+    e.stopPropagation();
     try {
       await productsAPI.updateStock(product._id, {
         type,
-        qty: parseInt(qty),
-        note: type === 'IN' ? 'Quick stock in' : 'Quick stock out'
+        qty: 1,
+        note: type === 'IN' ? 'Quick add' : 'Quick remove'
       });
-      toast.success(`Stock ${type === 'IN' ? 'added' : 'removed'}`);
+      toast.success(`Stock ${type === 'IN' ? '+1' : '-1'}`);
       if (onStockUpdate) onStockUpdate();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed');
@@ -27,46 +25,57 @@ const ProductCard = ({ product, onStockUpdate }) => {
   return (
     <div 
       onClick={() => navigate(`/products/${product._id}`)}
-      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+      className="bg-white rounded-lg shadow-md p-3 sm:p-4 hover:shadow-lg transition-shadow cursor-pointer"
     >
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="font-semibold text-gray-900 text-lg">{product.name}</h3>
-        <div className="flex flex-col gap-1">
-          {product.stock <= product.lowStockLimit && (
-            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">LOW STOCK</span>
+      <div className="flex gap-3 mb-3">
+        <div className="flex-shrink-0">
+          {product.image ? (
+            <img src={product.image} alt={product.name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg" />
+          ) : (
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-400 text-xl sm:text-2xl font-bold">{product.name.charAt(0)}</span>
+            </div>
           )}
-          {product.taxIncluded && (
-            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">TAX</span>
-          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg truncate">{product.name}</h3>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {product.stock <= product.lowStockLimit && (
+              <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded">LOW</span>
+            )}
+            {product.taxIncluded && (
+              <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">TAX</span>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
+      <div className="space-y-1.5 mb-3">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Sale Price:</span>
-          <span className="text-xl font-bold text-blue-600">₹{product.sellingPrice}</span>
+          <span className="text-xs sm:text-sm text-gray-600">Sale Price:</span>
+          <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">₹{product.sellingPrice}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Stock:</span>
-          <span className={`text-lg font-semibold ${product.stock <= product.lowStockLimit ? 'text-red-600' : 'text-green-600'}`}>
+          <span className="text-xs sm:text-sm text-gray-600">Stock:</span>
+          <span className={`text-sm sm:text-base lg:text-lg font-semibold ${product.stock <= product.lowStockLimit ? 'text-red-600' : 'text-green-600'}`}>
             {product.stock} {product.unit}
           </span>
         </div>
       </div>
 
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-2">
         <button
-          onClick={() => handleStockAction('IN')}
-          className="flex-1 px-3 py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center text-sm"
+          onClick={(e) => handleStockAction('IN', e)}
+          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center text-xs sm:text-sm"
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           IN
         </button>
         <button
-          onClick={() => handleStockAction('OUT')}
-          className="flex-1 px-3 py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 flex items-center justify-center text-sm"
+          onClick={(e) => handleStockAction('OUT', e)}
+          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 flex items-center justify-center text-xs sm:text-sm"
         >
-          <Minus className="h-4 w-4 mr-1" />
+          <Minus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           OUT
         </button>
       </div>

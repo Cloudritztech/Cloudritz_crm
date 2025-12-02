@@ -10,9 +10,11 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [stockAction, setStockAction] = useState('IN');
   const [stockQty, setStockQty] = useState('');
   const [stockNote, setStockNote] = useState('');
+  const [editData, setEditData] = useState({});
 
   useEffect(() => {
     fetchProduct();
@@ -63,6 +65,32 @@ const ProductDetail = () => {
     }
   };
 
+  const handleEdit = () => {
+    setEditData({
+      name: product.name,
+      sellingPrice: product.sellingPrice,
+      purchasePrice: product.purchasePrice,
+      stock: product.stock,
+      lowStockLimit: product.lowStockLimit,
+      unit: product.unit,
+      category: product.category,
+      taxIncluded: product.taxIncluded,
+      image: product.image || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      await productsAPI.update(id, editData);
+      toast.success('Product updated');
+      setShowEditModal(false);
+      fetchProduct();
+    } catch (error) {
+      toast.error('Failed to update product');
+    }
+  };
+
   if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
   if (!product) return <div className="text-center py-8">Product not found</div>;
 
@@ -73,10 +101,16 @@ const ProductDetail = () => {
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Products
         </button>
-        <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleEdit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center">
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </button>
+          <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
@@ -93,7 +127,7 @@ const ProductDetail = () => {
 
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{product.name}</h1>
               <div className="flex gap-2 mt-2">
                 {product.taxIncluded && (
                   <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">TAX INCLUDED</span>
@@ -105,21 +139,21 @@ const ProductDetail = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Sale Price</p>
-                <p className="text-2xl font-bold text-blue-600">₹{product.sellingPrice}</p>
+              <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-600">Sale Price</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">₹{product.sellingPrice}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Purchase Price</p>
-                <p className="text-2xl font-bold text-gray-900">₹{product.purchasePrice}</p>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-600">Purchase Price</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">₹{product.purchasePrice}</p>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Stock Count</p>
-                <p className="text-2xl font-bold text-green-600">{product.stock} {product.unit}</p>
+              <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-600">Stock Count</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600">{product.stock} {product.unit}</p>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Low Stock Alert</p>
-                <p className="text-2xl font-bold text-purple-600">{product.lowStockLimit}</p>
+              <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-600">Low Stock Alert</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600">{product.lowStockLimit}</p>
               </div>
             </div>
 
@@ -189,6 +223,54 @@ const ProductDetail = () => {
           </table>
         </div>
       </div>
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4">Edit Product</h3>
+            <div className="space-y-4">
+              <input value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} placeholder="Name" className="w-full px-3 py-2 border rounded-lg" />
+              <input value={editData.image} onChange={(e) => setEditData({...editData, image: e.target.value})} placeholder="Image URL" className="w-full px-3 py-2 border rounded-lg" />
+              <div className="grid grid-cols-2 gap-4">
+                <select value={editData.unit} onChange={(e) => setEditData({...editData, unit: e.target.value})} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="piece">Piece</option>
+                  <option value="box">Box</option>
+                  <option value="set">Set</option>
+                  <option value="kg">Kg</option>
+                  <option value="meter">Meter</option>
+                  <option value="packet">Packet</option>
+                  <option value="bundle">Bundle</option>
+                  <option value="litre">Litre</option>
+                  <option value="sqft">Sq Ft</option>
+                  <option value="sqm">Sq M</option>
+                </select>
+                <select value={editData.category} onChange={(e) => setEditData({...editData, category: e.target.value})} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="tiles">Tiles</option>
+                  <option value="sanitary">Sanitary</option>
+                  <option value="wpc_doors">WPC Doors</option>
+                  <option value="accessories">Accessories</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="number" value={editData.sellingPrice} onChange={(e) => setEditData({...editData, sellingPrice: e.target.value})} placeholder="Sale Price" className="w-full px-3 py-2 border rounded-lg" />
+                <input type="number" value={editData.purchasePrice} onChange={(e) => setEditData({...editData, purchasePrice: e.target.value})} placeholder="Purchase Price" className="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="number" value={editData.stock} onChange={(e) => setEditData({...editData, stock: e.target.value})} placeholder="Stock" className="w-full px-3 py-2 border rounded-lg" />
+                <input type="number" value={editData.lowStockLimit} onChange={(e) => setEditData({...editData, lowStockLimit: e.target.value})} placeholder="Low Stock Limit" className="w-full px-3 py-2 border rounded-lg" />
+              </div>
+              <label className="flex items-center">
+                <input type="checkbox" checked={editData.taxIncluded} onChange={(e) => setEditData({...editData, taxIncluded: e.target.checked})} className="mr-2" />
+                Tax Included
+              </label>
+              <div className="flex gap-2">
+                <button onClick={handleEditSubmit} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showStockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
