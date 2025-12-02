@@ -135,23 +135,21 @@ const Products = () => {
             id="excelUpload"
             accept=".xlsx,.csv"
             onChange={handleExcelUpload}
-            className="hidden"
-            disabled={syncing}
+            style={{ display: 'none' }}
           />
-          <label htmlFor="excelUpload">
-            <button
-              type="button"
-              disabled={syncing}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {syncing ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              ) : (
-                <Upload className="h-4 w-4 mr-2" />
-              )}
-              {syncing ? 'Syncing...' : 'Import Excel'}
-            </button>
-          </label>
+          <button
+            type="button"
+            onClick={() => document.getElementById('excelUpload').click()}
+            disabled={syncing}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {syncing ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            {syncing ? 'Syncing...' : 'Import Excel'}
+          </button>
           <Button onClick={() => setShowModal(true)} className="flex items-center">
             <Plus className="h-4 w-4 mr-2" />
             Add Product
