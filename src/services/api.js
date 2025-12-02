@@ -78,11 +78,12 @@ export const authAPI = {
 // Products API
 export const productsAPI = {
   getAll: (params) => api.get('/products', { params }),
+  getById: (id) => api.get(`/products/${id}`),
   create: (product) => api.post('/products', product),
-  update: (id, product) => api.put(`/products?id=${id}`, product),
-  delete: (id) => api.delete(`/products?id=${id}`),
+  update: (id, product) => api.put(`/products/${id}`, product),
+  delete: (id) => api.delete(`/products/${id}`),
+  updateStock: (id, data) => api.post(`/products/${id}/stock`, data),
   getLowStock: () => api.get('/products?lowStock=true'),
-  adjustStock: (id, adjustment, reason) => api.put(`/products?id=${id}&action=adjust-stock`, { adjustment, reason }),
 };
 
 // Customers API

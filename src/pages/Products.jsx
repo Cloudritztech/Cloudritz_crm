@@ -65,6 +65,10 @@ const Products = () => {
     }
   };
 
+  const handleStockUpdate = () => {
+    fetchProducts();
+  };
+
   const handleExcelUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -162,9 +166,7 @@ const Products = () => {
           <ProductCard
             key={product._id}
             product={product}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onStockUpdate={fetchProducts}
+            onStockUpdate={handleStockUpdate}
           />
         ))}
       </div>

@@ -12,6 +12,7 @@ import AddInvoice from './pages/AddInvoice';
 import ViewInvoice from './pages/ViewInvoice';
 import SalesReports from './pages/SalesReports';
 import BusinessProfile from './pages/BusinessProfile';
+import ProductDetail from './pages/ProductDetail';
 import Toast from './components/ui/Toast';
 
 const ProtectedRoute = ({ children }) => {
@@ -72,6 +73,7 @@ function App() {
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/products" element={<Products />} />
+                        <Route path="/products/:id" element={<ProductDetail />} />
                         <Route path="/customers" element={<Customers />} />
                         <Route path="/invoices" element={<Invoices />} />
                         <Route path="/invoices/add" element={<AddInvoice />} />
