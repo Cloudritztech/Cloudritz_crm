@@ -68,33 +68,30 @@ const ProductDetail = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button onClick={() => navigate('/products')} className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Products
         </button>
-        <div className="flex gap-2">
-
-          <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </button>
-        </div>
+        <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="w-full h-64 object-cover rounded-lg" />
+              <img src={product.image} alt={product.name} className="w-full h-48 sm:h-64 object-cover rounded-lg" />
             ) : (
-              <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+              <div className="w-full h-48 sm:h-64 bg-gray-200 rounded-lg flex items-center justify-center">
                 <span className="text-gray-400 text-4xl">{product.name.charAt(0)}</span>
               </div>
             )}
           </div>
 
-          <div className="md:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
               <div className="flex gap-2 mt-2">
@@ -107,7 +104,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Sale Price</p>
                 <p className="text-2xl font-bold text-blue-600">₹{product.sellingPrice}</p>
@@ -126,7 +123,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="border p-3 rounded-lg">
                 <p className="text-xs text-gray-500">Stock Value (Sale)</p>
                 <p className="text-lg font-semibold">₹{product.stockSaleValue?.toFixed(2)}</p>
@@ -137,7 +134,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => { setStockAction('IN'); setShowStockModal(true); }}
                 className="flex-1 px-4 py-3 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center"
@@ -157,7 +154,7 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
         <h2 className="text-xl font-bold mb-4">Stock Movement History</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -194,8 +191,8 @@ const ProductDetail = () => {
       </div>
 
       {showStockModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-4">Stock {stockAction}</h3>
             <div className="space-y-4">
               <div>

@@ -16,69 +16,74 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   try {
     await connectDB();
     await runMiddleware(req, res, auth);
 
     const { products } = req.body;
-    
     if (!products || !Array.isArray(products)) {
       return res.status(400).json({ success: false, message: 'Invalid data format' });
     }
 
     const results = { added: 0, updated: 0, unchanged: 0, errors: [] };
-    const names = products.map(p => p.name?.toString().trim()).filter(Boolean);
-    const existingProducts = await Product.find({ 
-      name: { $in: names.map(n => new RegExp(`^${n}$`, 'i')) } 
-    });
     
+    // Fetch all existing products once
+    const existingProducts = await Product.find({});
     const existingMap = new Map();
-    existingProducts.forEach(p => existingMap.set(p.name.toLowerCase(), p));
+    existingProducts.forEach(p => existingMap.set(p.name.toLowerCase().trim(), p));
 
     const bulkOps = [];
 
     for (let i = 0; i < products.length; i++) {
       const item = products[i];
       
-      if (!item.name || item.stock == null || !item.sellingPrice || !item.purchasePrice) {
-        results.errors.push(`Row ${i + 2}: Missing required fields`);
+      // Validate required fields
+      if (!item.name) {
+        results.errors.push(`Row ${i + 2}: Missing product name`);
         continue;
       }
 
       const name = item.name.toString().trim();
-      const stock = parseFloat(item.stock);
-      const sellingPrice = parseFloat(item.sellingPrice);
-      const purchasePrice = parseFloat(item.purchasePrice);
+      const stock = parseFloat(item.stock) || 0;
+      const sellingPrice = parseFloat(item.sellingPrice) || 0;
+      let purchasePrice = parseFloat(item.purchasePrice) || 0;
+
+      // Auto-calculate purchase price if missing
+      if (!purchasePrice && item.stockPurchaseValue && stock > 0) {
+        purchasePrice = parseFloat(item.stockPurchaseValue) / stock;
+      }
+      if (!purchasePrice) {
+        purchasePrice = sellingPrice * 0.7; // Default 30% margin
+      }
+
       const stockSaleValue = stock * sellingPrice;
       const stockPurchaseValue = stock * purchasePrice;
 
       const existing = existingMap.get(name.toLowerCase());
 
       if (existing) {
+        // Check if any field changed
         const hasChanges = 
-          existing.stock !== stock ||
-          existing.sellingPrice !== sellingPrice ||
-          existing.purchasePrice !== purchasePrice;
+          Math.abs(existing.stock - stock) > 0.01 ||
+          Math.abs(existing.sellingPrice - sellingPrice) > 0.01 ||
+          Math.abs(existing.purchasePrice - purchasePrice) > 0.01;
 
         if (hasChanges) {
           bulkOps.push({
             updateOne: {
               filter: { _id: existing._id },
               update: { 
-                stock, 
-                sellingPrice, 
-                purchasePrice, 
-                stockSaleValue, 
-                stockPurchaseValue,
-                importedFromExcel: true 
+                $set: {
+                  stock, 
+                  sellingPrice, 
+                  purchasePrice, 
+                  stockSaleValue, 
+                  stockPurchaseValue,
+                  importedFromExcel: true
+                }
               }
             }
           });
@@ -87,6 +92,7 @@ export default async function handler(req, res) {
           results.unchanged++;
         }
       } else {
+        // New product
         bulkOps.push({
           insertOne: {
             document: {
@@ -96,8 +102,12 @@ export default async function handler(req, res) {
               purchasePrice,
               stockSaleValue,
               stockPurchaseValue,
+              unit: 'piece',
               category: 'accessories',
-              importedFromExcel: true
+              lowStockLimit: 5,
+              taxIncluded: false,
+              importedFromExcel: true,
+              stockHistory: []
             }
           }
         });
@@ -105,15 +115,14 @@ export default async function handler(req, res) {
       }
     }
 
+    // Execute bulk operations
     if (bulkOps.length > 0) {
-      await Product.bulkWrite(bulkOps);
+      await Product.bulkWrite(bulkOps, { ordered: false });
     }
 
     return res.status(200).json({
       success: true,
-      message: results.added === 0 && results.updated === 0 
-        ? 'Inventory already up-to-date' 
-        : 'Inventory synced successfully',
+      message: `✅ Sync complete: ${results.added} added, ${results.updated} updated, ${results.unchanged} unchanged`,
       results
     });
 

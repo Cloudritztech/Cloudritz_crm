@@ -149,12 +149,7 @@ const Products = () => {
           return mapped;
         });
 
-        // Delete all products first
         const token = localStorage.getItem('token');
-        await axios.delete('/api/products/delete-all', 
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-
         const response = await axios.post('/api/products/sync-excel', 
           { products },
           { headers: { 'Authorization': `Bearer ${token}` } }
