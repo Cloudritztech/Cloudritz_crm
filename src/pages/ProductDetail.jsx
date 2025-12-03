@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { productsAPI } from '../services/api';
 import { ArrowLeft, Edit, Trash2, Plus, Minus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Modal from '../components/ui/Modal';
+import ProductForm from '../components/forms/ProductForm';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -14,7 +16,6 @@ const ProductDetail = () => {
   const [stockAction, setStockAction] = useState('IN');
   const [stockQty, setStockQty] = useState('');
   const [stockNote, setStockNote] = useState('');
-  const [editData, setEditData] = useState({});
 
   useEffect(() => {
     fetchProduct();
@@ -66,24 +67,13 @@ const ProductDetail = () => {
   };
 
   const handleEdit = () => {
-    setEditData({
-      name: product.name,
-      sellingPrice: product.sellingPrice,
-      purchasePrice: product.purchasePrice,
-      stock: product.stock,
-      lowStockLimit: product.lowStockLimit,
-      unit: product.unit,
-      category: product.category,
-      taxIncluded: product.taxIncluded,
-      image: product.image || ''
-    });
     setShowEditModal(true);
   };
 
-  const handleEditSubmit = async () => {
+  const handleEditSubmit = async (formData) => {
     try {
-      await productsAPI.update(id, editData);
-      toast.success('Product updated');
+      await productsAPI.update(id, formData);
+      toast.success('Product updated successfully');
       setShowEditModal(false);
       fetchProduct();
     } catch (error) {
@@ -224,53 +214,17 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4">Edit Product</h3>
-            <div className="space-y-4">
-              <input value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} placeholder="Name" className="w-full px-3 py-2 border rounded-lg" />
-              <input value={editData.image} onChange={(e) => setEditData({...editData, image: e.target.value})} placeholder="Image URL" className="w-full px-3 py-2 border rounded-lg" />
-              <div className="grid grid-cols-2 gap-4">
-                <select value={editData.unit} onChange={(e) => setEditData({...editData, unit: e.target.value})} className="w-full px-3 py-2 border rounded-lg">
-                  <option value="piece">Piece</option>
-                  <option value="box">Box</option>
-                  <option value="set">Set</option>
-                  <option value="kg">Kg</option>
-                  <option value="meter">Meter</option>
-                  <option value="packet">Packet</option>
-                  <option value="bundle">Bundle</option>
-                  <option value="litre">Litre</option>
-                  <option value="sqft">Sq Ft</option>
-                  <option value="sqm">Sq M</option>
-                </select>
-                <select value={editData.category} onChange={(e) => setEditData({...editData, category: e.target.value})} className="w-full px-3 py-2 border rounded-lg">
-                  <option value="tiles">Tiles</option>
-                  <option value="sanitary">Sanitary</option>
-                  <option value="wpc_doors">WPC Doors</option>
-                  <option value="accessories">Accessories</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input type="number" value={editData.sellingPrice} onChange={(e) => setEditData({...editData, sellingPrice: e.target.value})} placeholder="Sale Price" className="w-full px-3 py-2 border rounded-lg" />
-                <input type="number" value={editData.purchasePrice} onChange={(e) => setEditData({...editData, purchasePrice: e.target.value})} placeholder="Purchase Price" className="w-full px-3 py-2 border rounded-lg" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input type="number" value={editData.stock} onChange={(e) => setEditData({...editData, stock: e.target.value})} placeholder="Stock" className="w-full px-3 py-2 border rounded-lg" />
-                <input type="number" value={editData.lowStockLimit} onChange={(e) => setEditData({...editData, lowStockLimit: e.target.value})} placeholder="Low Stock Limit" className="w-full px-3 py-2 border rounded-lg" />
-              </div>
-              <label className="flex items-center">
-                <input type="checkbox" checked={editData.taxIncluded} onChange={(e) => setEditData({...editData, taxIncluded: e.target.checked})} className="mr-2" />
-                Tax Included
-              </label>
-              <div className="flex gap-2">
-                <button onClick={handleEditSubmit} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
-                <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Product"
+      >
+        <ProductForm
+          product={product}
+          onSubmit={handleEditSubmit}
+          onCancel={() => setShowEditModal(false)}
+        />
+      </Modal>
 
       {showStockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

@@ -349,29 +349,29 @@ const AddInvoice = () => {
   const totals = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Create Invoice</h2>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Create Invoice</h2>
         <button
           onClick={() => navigate("/invoices")}
-          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium w-full sm:w-auto"
         >
           Back
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 space-y-6">
         {/* Customer Section */}
-        <div className="border-b pb-4">
-          <h3 className="text-lg font-medium mb-4">Customer Information</h3>
+        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Customer Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Customer</label>
               <div className="flex gap-2">
                 <select
                   value={formData.customer}
                   onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   required
                 >
                   <option value="">Select Customer</option>
@@ -384,7 +384,7 @@ const AddInvoice = () => {
                 <button
                   type="button"
                   onClick={() => setShowQuickCustomer(true)}
-                  className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                  className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium whitespace-nowrap"
                 >
                   + Quick Add
                 </button>
@@ -392,11 +392,11 @@ const AddInvoice = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
               <select
                 value={formData.paymentMethod}
                 onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
@@ -409,13 +409,13 @@ const AddInvoice = () => {
 
         {/* Items Section */}
         <div>
-          <h3 className="text-lg font-medium mb-4">Items</h3>
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Items</h3>
           {formData.items.map((item, index) => (
-            <div key={index} className="border rounded-lg p-4 mb-4 bg-gray-50 relative">
+            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 mb-4 bg-gray-50 dark:bg-gray-900 relative">
               <div className="grid grid-cols-1 md:grid-cols-9 gap-4 items-end">
                 {/* Product Search/Select */}
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -435,12 +435,12 @@ const AddInvoice = () => {
                           }, 150);
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     />
                     
                     {/* Search Results Dropdown */}
                     {showSuggestions[index] && productSearch[index] && (
-                      <div className="suggestions-dropdown absolute z-[100] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                      <div className="suggestions-dropdown absolute z-[100] w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg">
                         {/* Existing Products */}
                         {searchProducts(productSearch[index]).map(product => (
                           <div
@@ -449,10 +449,10 @@ const AddInvoice = () => {
                               e.preventDefault();
                               selectProduct(index, product);
                             }}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
+                            className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                           >
-                            <div className="font-medium">{product.name}</div>
-                            <div className="text-gray-500 text-xs">₹{product.sellingPrice} - {product.category}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">{product.name}</div>
+                            <div className="text-gray-500 dark:text-gray-400 text-xs">₹{product.sellingPrice} - {product.category}</div>
                           </div>
                         ))}
                         
@@ -492,12 +492,12 @@ const AddInvoice = () => {
                 
                 {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Qty</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qty</label>
                   <input
                     type="number"
                     value={item.quantity}
                     onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     min="1"
                     required
                   />
@@ -505,12 +505,12 @@ const AddInvoice = () => {
                 
                 {/* Price */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rate</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rate</label>
                   <input
                     type="number"
                     value={item.price}
                     onChange={(e) => updateItem(index, "price", parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     step="0.01"
                     required
                   />
@@ -518,20 +518,20 @@ const AddInvoice = () => {
                 
                 {/* Discount */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       value={item.discount || 0}
                       onChange={(e) => updateItem(index, "discount", parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                       step="0.01"
                       min="0"
                     />
                     <select
                       value={item.discountType || 'amount'}
                       onChange={(e) => updateItem(index, "discountType", e.target.value)}
-                      className="w-16 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     >
                       <option value="amount">₹</option>
                       <option value="percentage">%</option>
@@ -541,8 +541,8 @@ const AddInvoice = () => {
                 
                 {/* Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                  <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 font-medium">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                  <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-white text-sm">
                     ₹{(() => {
                       const itemDiscount = item.discount || 0;
                       const discountType = item.discountType || 'amount';
@@ -565,7 +565,7 @@ const AddInvoice = () => {
                     type="button"
                     onClick={() => removeItem(index)}
                     disabled={formData.items.length === 1}
-                    className="w-full px-3 py-2 text-sm border border-red-600 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 text-sm border border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Remove
                   </button>
@@ -577,18 +577,18 @@ const AddInvoice = () => {
           <button
             type="button"
             onClick={addItem}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
           >
             + Add Item
           </button>
         </div>
 
         {/* GST & Billing Summary */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium mb-4">Billing Summary</h3>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Billing Summary</h3>
           
           {/* GST Toggle */}
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -600,7 +600,7 @@ const AddInvoice = () => {
                 })}
                 className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="font-medium text-gray-900">Apply 18% GST (9% CGST + 9% SGST)</span>
+              <span className="font-medium text-gray-900 dark:text-white">Apply 18% GST (9% CGST + 9% SGST)</span>
             </label>
             
             {/* Reverse GST Button */}
@@ -609,16 +609,16 @@ const AddInvoice = () => {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, reverseGST: !formData.reverseGST })}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     formData.reverseGST 
                       ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   {formData.reverseGST ? '✓ Reverse GST Applied' : 'Apply Reverse GST'}
                 </button>
                 {formData.reverseGST && (
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                     GST amount will be auto-discounted to keep final price unchanged
                   </p>
                 )}
@@ -629,35 +629,35 @@ const AddInvoice = () => {
           {/* Billing Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: Summary Card */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-5 space-y-2">
-              <div className="flex justify-between text-sm border-b pb-2">
-                <span className="font-medium">Item Total:</span>
-                <span className="font-medium">₹{totals.grossAmount}</span>
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-2">
+              <div className="flex justify-between text-sm border-b border-gray-300 dark:border-gray-600 pb-2">
+                <span className="font-medium text-gray-900 dark:text-white">Item Total:</span>
+                <span className="font-medium text-gray-900 dark:text-white">₹{totals.grossAmount}</span>
               </div>
               
               {parseFloat(totals.totalDiscountAmount) > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
+                <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
                   <span>Discount:</span>
                   <span>-₹{totals.totalDiscountAmount}</span>
                 </div>
               )}
               
-              <div className="flex justify-between text-sm font-semibold border-t border-gray-300 pt-2 mt-2">
-                <span>Taxable Amount:</span>
-                <span>₹{totals.taxableAmount}</span>
+              <div className="flex justify-between text-sm font-semibold border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
+                <span className="text-gray-900 dark:text-white">Taxable Amount:</span>
+                <span className="text-gray-900 dark:text-white">₹{totals.taxableAmount}</span>
               </div>
               
               {formData.applyGST && parseFloat(totals.totalGst) > 0 && (
                 <>
-                  <div className="flex justify-between text-xs text-blue-700">
+                  <div className="flex justify-between text-xs text-blue-700 dark:text-blue-400">
                     <span>CGST @ 9%:</span>
                     <span>₹{totals.cgst}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-blue-700">
+                  <div className="flex justify-between text-xs text-blue-700 dark:text-blue-400">
                     <span>SGST @ 9%:</span>
                     <span>₹{totals.sgst}</span>
                   </div>
-                  <div className="flex justify-between text-sm font-semibold text-blue-800">
+                  <div className="flex justify-between text-sm font-semibold text-blue-800 dark:text-blue-300">
                     <span>Total GST (18%):</span>
                     <span>₹{totals.totalGst}</span>
                   </div>
@@ -665,13 +665,13 @@ const AddInvoice = () => {
               )}
               
               {parseFloat(totals.roundOff) !== 0 && (
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300">
                   <span>Round Off:</span>
                   <span>{parseFloat(totals.roundOff) >= 0 ? '+' : ''}₹{totals.roundOff}</span>
                 </div>
               )}
               
-              <div className="flex justify-between text-xl font-bold text-green-700 border-t-2 border-gray-400 pt-3 mt-2">
+              <div className="flex justify-between text-xl font-bold text-green-700 dark:text-green-400 border-t-2 border-gray-400 dark:border-gray-600 pt-3 mt-2">
                 <span>Grand Total:</span>
                 <span>₹{totals.grandTotal}</span>
               </div>
@@ -680,7 +680,7 @@ const AddInvoice = () => {
             {/* Right: Additional Discount Input */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Discount</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Discount</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -708,9 +708,9 @@ const AddInvoice = () => {
               </div>
               
               {/* Formula Display */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Calculation Formula:</h4>
-                <div className="text-xs text-gray-600 space-y-1">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Calculation Formula:</h4>
+                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                   {formData.applyGST && formData.reverseGST ? (
                     <>
                       <p className="font-medium text-blue-700">Reverse GST Mode:</p>
@@ -741,8 +741,8 @@ const AddInvoice = () => {
         </div>
 
         {/* Customer Address Section */}
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-medium mb-4">Customer Address (Optional)</h3>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Customer Address (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
@@ -798,8 +798,8 @@ const AddInvoice = () => {
         </div>
 
         {/* Invoice Details Section */}
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-medium mb-4">Invoice Details (Optional)</h3>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Invoice Details (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
@@ -833,11 +833,11 @@ const AddInvoice = () => {
         </div>
 
         {/* Additional Details */}
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-medium mb-4">Additional Details</h3>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Additional Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
               <input
                 type="date"
                 value={formData.dueDate}
@@ -846,7 +846,7 @@ const AddInvoice = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Terms</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Terms</label>
               <select
                 value={formData.terms}
                 onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
@@ -861,11 +861,11 @@ const AddInvoice = () => {
             </div>
           </div>
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               rows="3"
               placeholder="Additional notes or instructions..."
             />
@@ -873,18 +873,18 @@ const AddInvoice = () => {
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
           >
             {loading ? "Creating..." : "Create Invoice"}
           </button>
           <button
             type="button"
             onClick={() => navigate("/invoices")}
-            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            className="flex-1 px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
           >
             Cancel
           </button>
@@ -893,30 +893,30 @@ const AddInvoice = () => {
 
       {/* Quick Add Customer Modal */}
       {showQuickCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h3 className="text-lg font-semibold mb-4">Quick Add Customer</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Add Customer</h3>
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Customer Name *"
                 value={quickCustomer.name}
                 onChange={(e) => setQuickCustomer({ ...quickCustomer, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <input
                 type="tel"
                 placeholder="Phone Number *"
                 value={quickCustomer.phone}
                 onChange={(e) => setQuickCustomer({ ...quickCustomer, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
-            <div className="flex gap-2 mt-6">
+            <div className="flex flex-col sm:flex-row gap-2 mt-6">
               <button
                 onClick={handleQuickAddCustomer}
                 disabled={!quickCustomer.name || !quickCustomer.phone}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
               >
                 Add Customer
               </button>
@@ -925,7 +925,7 @@ const AddInvoice = () => {
                   setShowQuickCustomer(false);
                   setQuickCustomer({ name: "", phone: "" });
                 }}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
               >
                 Cancel
               </button>
