@@ -59,10 +59,12 @@ api.interceptors.response.use(
       data: error.response?.data
     });
     
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

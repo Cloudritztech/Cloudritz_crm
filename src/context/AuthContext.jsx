@@ -19,8 +19,18 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
+    console.log('Auth init - token:', !!token, 'userData:', !!userData);
+    
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      try {
+        const parsedUser = JSON.parse(userData);
+        console.log('Setting user:', parsedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
@@ -28,7 +38,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
+      console.log('Login response:', response.data);
       const { token, user } = response.data;
+      
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -36,9 +51,10 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+        message: error.response?.data?.message || error.message || 'Login failed' 
       };
     }
   };

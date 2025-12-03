@@ -23,12 +23,13 @@ const Login = () => {
     
     if (result.success) {
       toast.success('Login successful!');
-      navigate('/');
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
     } else {
       toast.error(result.message);
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleChange = (e) => {
