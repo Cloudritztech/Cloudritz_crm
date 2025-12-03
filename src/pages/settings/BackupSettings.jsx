@@ -21,11 +21,22 @@ const BackupSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('/api/settings/backup?action=export', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const [products, customers, invoices] = await Promise.all([
+        axios.get('/api/products', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/api/customers', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/api/invoices', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
       
-      const dataStr = JSON.stringify(response.data.backup, null, 2);
+      const backup = {
+        exportDate: new Date(),
+        data: {
+          products: products.data.products,
+          customers: customers.data.customers,
+          invoices: invoices.data.invoices
+        }
+      };
+      
+      const dataStr = JSON.stringify(backup, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
@@ -50,23 +61,8 @@ const BackupSettings = () => {
     const file = e.target.files[0];
     if (!file) return;
     
-    setLoading(true);
-    try {
-      const text = await file.text();
-      const backup = JSON.parse(text);
-      
-      const token = localStorage.getItem('token');
-      await axios.post('/api/settings/backup?action=import', backup, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      toast.success('Data imported successfully!');
-    } catch (error) {
-      toast.error('Failed to import data');
-    } finally {
-      setLoading(false);
-      e.target.value = '';
-    }
+    toast.info('Import feature requires manual data restoration');
+    e.target.value = '';
   };
 
   return (
