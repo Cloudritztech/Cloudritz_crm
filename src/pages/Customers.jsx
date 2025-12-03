@@ -70,12 +70,12 @@ const Customers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Customers</h1>
+          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Customers</h1>
           <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>Manage your customer database</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center justify-center px-4 py-2.5 rounded-xl font-medium"
+          className="btn-primary flex items-center justify-center px-4 py-2.5 rounded-xl"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Customer
@@ -83,7 +83,7 @@ const Customers = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="card-premium p-4">
+      <div className="card-premium">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-muted)' }} />
           <input
@@ -97,7 +97,7 @@ const Customers = () => {
       </div>
 
       {/* Customer Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {customers.map((customer) => (
           <CustomerCard
             key={customer._id}

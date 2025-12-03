@@ -34,14 +34,14 @@ const ModernLayout = ({ children }) => {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-light)' }} className="h-full flex flex-col">
+        <div style={{ background: 'var(--bg-secondary)' }} className="h-full flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--border-light)' }}>
+        <div className="h-16 flex items-center justify-between px-6">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Anvi CRM</span>
+            <span className="text-xl" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Anvi CRM</span>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 rounded-lg transition-colors" style={{ color: 'var(--text-muted)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
             <X className="h-5 w-5" />
@@ -72,7 +72,7 @@ const ModernLayout = ({ children }) => {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 h-16 glass-effect" style={{ borderBottom: '1px solid var(--border-light)' }}>
+        <header className="sticky top-0 z-30 h-16 glass-effect">
           <div className="h-full px-4 sm:px-6 flex items-center justify-between">
             {/* Left: Mobile Menu + Search */}
             <div className="flex items-center space-x-4 flex-1">

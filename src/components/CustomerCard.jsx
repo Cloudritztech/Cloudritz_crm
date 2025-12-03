@@ -3,7 +3,7 @@ import { User, Phone, MapPin, Edit, Mail } from 'lucide-react';
 
 const CustomerCard = ({ customer, onEdit }) => {
   return (
-    <div className="card-premium p-4 sm:p-5">
+    <div className="card-premium">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -11,7 +11,7 @@ const CustomerCard = ({ customer, onEdit }) => {
             <User className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base truncate" style={{ color: 'var(--text-primary)' }}>{customer.name}</h3>
+            <h3 className="text-sm sm:text-base truncate" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{customer.name}</h3>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Customer</p>
           </div>
         </div>
@@ -40,10 +40,10 @@ const CustomerCard = ({ customer, onEdit }) => {
       </div>
 
       {/* Stats */}
-      <div className="rounded-xl p-3 mb-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-xl p-3 mb-4" style={{ background: 'var(--bg-hover)' }}>
         <div className="flex items-center justify-between">
           <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Total Purchases</span>
-          <span className="text-sm font-bold" style={{ color: 'var(--accent-green)' }}>₹{customer.totalPurchases || 0}</span>
+          <span className="text-sm" style={{ color: 'var(--accent-green)', fontWeight: 600 }}>₹{customer.totalPurchases || 0}</span>
         </div>
         {customer.lastPurchaseDate && (
           <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -55,8 +55,8 @@ const CustomerCard = ({ customer, onEdit }) => {
       {/* Edit Button */}
       <button
         onClick={() => onEdit(customer)}
-        className="w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all text-sm"
-        style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)' }}
+        className="w-full flex items-center justify-center px-4 py-2 rounded-lg transition-all text-sm"
+        style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 500 }}
         onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
         onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
       >
