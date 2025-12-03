@@ -12,13 +12,23 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white rounded-lg p-6 w-full ${sizes[size]} max-h-[90vh] overflow-y-auto mx-4`}>
+    <div className="fixed inset-0 flex items-center justify-center z-modal p-4" style={{ background: 'rgba(0,0,0,0.6)' }}>
+      <div 
+        className={`w-full ${sizes[size]} max-h-[90vh] overflow-y-auto rounded-xl`}
+        style={{ 
+          background: 'var(--bg-elevated)', 
+          padding: '24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
+        }}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-xl" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <X className="h-6 w-6" />
           </button>

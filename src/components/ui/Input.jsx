@@ -6,7 +6,6 @@ const Input = forwardRef(({
   className, 
   type = 'text',
   size = 'md',
-  variant = 'default',
   error,
   success,
   helperText,
@@ -20,33 +19,19 @@ const Input = forwardRef(({
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
   
-  const sizes = {
-    sm: 'input-field-sm',
-    md: 'input-field',
-    lg: 'px-4 py-4 text-base border border-gray-200 rounded-xl bg-white text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300',
-  };
-  
-  const variants = {
-    default: '',
-    error: 'border-red-300 focus:border-red-500 focus:ring-red-500',
-    success: 'border-green-300 focus:border-green-500 focus:ring-green-500',
-  };
-  
-  const currentVariant = error ? 'error' : success ? 'success' : variant;
-  
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span style={{ color: 'var(--danger)' }} className="ml-1">*</span>}
         </label>
       )}
       
       <div className="relative">
         {LeftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <LeftIcon className="h-5 w-5 text-gray-400" />
+            <LeftIcon className="h-5 w-5" style={{ color: 'var(--text-muted)' }} />
           </div>
         )}
         
@@ -54,8 +39,7 @@ const Input = forwardRef(({
           ref={ref}
           type={inputType}
           className={clsx(
-            sizes[size],
-            variants[currentVariant],
+            'input-field w-full',
             LeftIcon && 'pl-10',
             (RightIcon || isPassword || error || success) && 'pr-10',
             className
@@ -68,35 +52,21 @@ const Input = forwardRef(({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="focus:outline-none"
+              style={{ color: 'var(--text-muted)' }}
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           )}
           
-          {!isPassword && error && (
-            <AlertCircle className="h-5 w-5 text-red-500" />
-          )}
-          
-          {!isPassword && success && (
-            <CheckCircle className="h-5 w-5 text-green-500" />
-          )}
-          
-          {!isPassword && !error && !success && RightIcon && (
-            <RightIcon className="h-5 w-5 text-gray-400" />
-          )}
+          {!isPassword && error && <AlertCircle className="h-5 w-5" style={{ color: 'var(--danger)' }} />}
+          {!isPassword && success && <CheckCircle className="h-5 w-5" style={{ color: 'var(--success)' }} />}
+          {!isPassword && !error && !success && RightIcon && <RightIcon className="h-5 w-5" style={{ color: 'var(--text-muted)' }} />}
         </div>
       </div>
       
       {(error || success || helperText) && (
-        <p className={clsx(
-          'mt-2 text-sm',
-          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
-        )}>
+        <p className="mt-2 text-sm" style={{ color: error ? 'var(--danger)' : success ? 'var(--success)' : 'var(--text-muted)' }}>
           {error || success || helperText}
         </p>
       )}
@@ -116,39 +86,24 @@ export const Textarea = forwardRef(({
   required,
   ...props 
 }, ref) => {
-  const variant = error ? 'error' : success ? 'success' : 'default';
-  
-  const variants = {
-    default: 'input-field',
-    error: 'input-field border-red-300 focus:border-red-500 focus:ring-red-500',
-    success: 'input-field border-green-300 focus:border-green-500 focus:ring-green-500',
-  };
-  
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span style={{ color: 'var(--danger)' }} className="ml-1">*</span>}
         </label>
       )}
       
       <textarea
         ref={ref}
         rows={rows}
-        className={clsx(
-          variants[variant],
-          'resize-none',
-          className
-        )}
+        className={clsx('input-field w-full resize-none', className)}
         {...props}
       />
       
       {(error || success || helperText) && (
-        <p className={clsx(
-          'mt-2 text-sm',
-          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
-        )}>
+        <p className="mt-2 text-sm" style={{ color: error ? 'var(--danger)' : success ? 'var(--success)' : 'var(--text-muted)' }}>
           {error || success || helperText}
         </p>
       )}
@@ -169,44 +124,26 @@ export const Select = forwardRef(({
   placeholder,
   ...props 
 }, ref) => {
-  const variant = error ? 'error' : success ? 'success' : 'default';
-  
-  const variants = {
-    default: 'select-field',
-    error: 'select-field border-red-300 focus:border-red-500 focus:ring-red-500',
-    success: 'select-field border-green-300 focus:border-green-500 focus:ring-green-500',
-  };
-  
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span style={{ color: 'var(--danger)' }} className="ml-1">*</span>}
         </label>
       )}
       
       <select
         ref={ref}
-        className={clsx(
-          variants[variant],
-          className
-        )}
+        className={clsx('input-field w-full', className)}
         {...props}
       >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
+        {placeholder && <option value="" disabled>{placeholder}</option>}
         {children}
       </select>
       
       {(error || success || helperText) && (
-        <p className={clsx(
-          'mt-2 text-sm',
-          error ? 'text-red-600' : success ? 'text-green-600' : 'text-gray-500'
-        )}>
+        <p className="mt-2 text-sm" style={{ color: error ? 'var(--danger)' : success ? 'var(--success)' : 'var(--text-muted)' }}>
           {error || success || helperText}
         </p>
       )}

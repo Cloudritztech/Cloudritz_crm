@@ -326,18 +326,17 @@
     height: 6px;
   }
   
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: #f3f4f6;
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.06);
     border-radius: 9999px;
   }
   
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 9999px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.1);
   }
 }
 
@@ -352,5 +351,37 @@
   
   .bg-gradient-secondary {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+  
+  /* Force Dark Mode Overrides */
+  .dark * {
+    border-color: var(--border-subtle) !important;
+  }
+  
+  .dark .bg-white {
+    background: var(--bg-card) !important;
+  }
+  
+  .dark .bg-gray-50,
+  .dark .bg-gray-100 {
+    background: var(--bg-hover) !important;
+  }
+  
+  .dark .text-gray-900 {
+    color: var(--text-primary) !important;
+  }
+  
+  .dark .text-gray-600,
+  .dark .text-gray-700 {
+    color: var(--text-secondary) !important;
+  }
+  
+  .dark .text-gray-500 {
+    color: var(--text-muted) !important;
+  }
+  
+  .dark .border-gray-200,
+  .dark .border-gray-300 {
+    border-color: var(--border-subtle) !important;
   }
 }
