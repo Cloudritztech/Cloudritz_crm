@@ -37,11 +37,6 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
-    }
-
     setUploading(true);
     try {
       const imageUrl = await uploadToCloudinary(file, 'crm/products/');
@@ -140,7 +135,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
           )}
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          PNG, JPG, WebP up to 5MB
+          PNG, JPG, WebP
         </p>
       </div>
 

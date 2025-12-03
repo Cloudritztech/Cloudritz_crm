@@ -38,11 +38,6 @@ const Profile = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image size must be less than 2MB');
-      return;
-    }
-
     setUploading(true);
     try {
       const imageUrl = await uploadToCloudinary(file, 'crm/profiles/');
@@ -117,7 +112,7 @@ const Profile = () => {
           </div>
           <div>
             <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{uploading ? 'Uploading...' : 'Click on image to change'}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, PNG. Max 2MB</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, PNG</p>
           </div>
         </div>
       </div>
