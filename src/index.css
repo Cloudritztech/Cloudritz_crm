@@ -81,8 +81,8 @@
 @layer components {
   /* Premium Card */
   .card-premium {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    @apply bg-white dark:bg-[#191B1F];
+    @apply border border-gray-100 dark:border-[rgba(255,255,255,0.04)];
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
     padding: 20px;
@@ -90,25 +90,22 @@
   }
   
   .card-premium:hover {
-    background: var(--bg-hover);
+    @apply dark:bg-[#1F2226];
     transform: translateY(-2px);
   }
   
   /* Form Components */
   .input-field {
-    background: #1E2024;
-    border: 1px solid rgba(255,255,255,0.04);
-    color: var(--text-primary);
     @apply w-full px-4 py-3 transition-all duration-150 focus:outline-none;
+    @apply bg-white dark:bg-[#1E2024];
+    @apply border border-gray-200 dark:border-[rgba(255,255,255,0.04)];
+    @apply text-gray-900 dark:text-white;
+    @apply placeholder-gray-400 dark:placeholder-gray-600;
     border-radius: 10px;
   }
   
-  .input-field::placeholder {
-    color: var(--text-muted);
-  }
-  
   .input-field:focus {
-    border-color: var(--accent-blue);
+    @apply border-blue-500 dark:border-blue-500;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
   
@@ -122,8 +119,8 @@
   
   /* Card Components */
   .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    @apply bg-white dark:bg-[#191B1F];
+    @apply border border-gray-100 dark:border-[rgba(255,255,255,0.04)];
     border-radius: var(--radius-lg);
     padding: 20px;
     box-shadow: var(--shadow-soft);
@@ -131,7 +128,7 @@
   }
   
   .card:hover {
-    background: var(--bg-hover);
+    @apply dark:bg-[#1F2226];
     transform: translateY(-2px);
   }
   
@@ -353,17 +350,7 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   }
   
-  /* Force Dark Mode Overrides */
-  .dark * {
-    border-color: var(--border-subtle) !important;
-  }
-  
-  .dark select,
-  .dark select option {
-    background: var(--bg-card) !important;
-    color: var(--text-primary) !important;
-  }
-  
+  /* Dark Mode Overrides */
   .dark .bg-white {
     background: var(--bg-card) !important;
   }
@@ -388,17 +375,21 @@
   }
   
   .dark .border-gray-200,
-  .dark .border-gray-300,
-  .dark .border {
+  .dark .border-gray-300 {
     border-color: var(--border-subtle) !important;
   }
   
-  .dark input,
+  .dark input:not([type="file"]),
   .dark textarea,
   .dark select {
     background: #1E2024 !important;
     color: var(--text-primary) !important;
     border-color: var(--border-subtle) !important;
+  }
+  
+  .dark select option {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
   }
   
   .dark input::placeholder,

@@ -70,8 +70,8 @@ const Customers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Customers</h1>
-          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>Manage your customer database</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Customers</h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">Manage your customer database</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -85,7 +85,7 @@ const Customers = () => {
       {/* Search Bar */}
       <div className="card-premium">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-muted)' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search customers by name or phone..."
@@ -110,11 +110,11 @@ const Customers = () => {
       {/* Empty State */}
       {customers.length === 0 && (
         <div className="card-premium p-12 text-center">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--bg-hover)' }}>
-            <User className="h-8 w-8" style={{ color: 'var(--text-muted)' }} />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-gray-100 dark:bg-gray-800">
+            <User className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No customers found</h3>
-          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>Get started by adding your first customer</p>
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">No customers found</h3>
+          <p className="mb-6 text-gray-600 dark:text-gray-400">Get started by adding your first customer</p>
           <button
             onClick={() => setShowModal(true)}
             className="btn-primary inline-flex items-center px-4 py-2 rounded-lg font-medium"

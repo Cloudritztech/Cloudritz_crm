@@ -181,7 +181,7 @@ const Products = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Products</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Products</h1>
           <div className="flex gap-2">
           <input
             type="file"
@@ -212,7 +212,7 @@ const Products = () => {
 
         <div className="flex gap-3 items-center">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-muted)' }} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search products by name..."
@@ -225,32 +225,30 @@ const Products = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="input-field"
-            style={{ color: 'var(--text-primary)' }}
           >
-            <option value="newest" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Newest First</option>
-            <option value="oldest" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Oldest First</option>
-            <option value="name" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Name (A-Z)</option>
-            <option value="price-high" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Price (High-Low)</option>
-            <option value="price-low" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Price (Low-High)</option>
-            <option value="stock-high" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Stock (High-Low)</option>
-            <option value="stock-low" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Stock (Low-High)</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="price-high">Price (High-Low)</option>
+            <option value="price-low">Price (Low-High)</option>
+            <option value="stock-high">Stock (High-Low)</option>
+            <option value="stock-low">Stock (Low-High)</option>
           </select>
           <select
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value)}
             className="input-field"
-            style={{ color: 'var(--text-primary)' }}
           >
-            <option value="all" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>All Stock</option>
-            <option value="instock" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>In Stock</option>
-            <option value="low" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Low Stock</option>
+            <option value="all">All Stock</option>
+            <option value="instock">In Stock</option>
+            <option value="low">Low Stock</option>
           </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.length === 0 ? (
-          <div className="col-span-full text-center py-12" style={{ color: 'var(--text-muted)' }}>
+          <div className="col-span-full text-center py-12 text-gray-500">
             No products found
           </div>
         ) : (
