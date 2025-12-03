@@ -117,7 +117,7 @@ const ProductDetail = () => {
 
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{product.name}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{product.name}</h1>
               <div className="flex gap-2 mt-2">
                 {product.taxIncluded && (
                   <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">TAX INCLUDED</span>
@@ -129,32 +129,32 @@ const ProductDetail = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
-                <p className="text-xs sm:text-sm text-gray-600">Sale Price</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">₹{product.sellingPrice}</p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Sale Price</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 dark:text-blue-400">₹{product.sellingPrice}</p>
               </div>
-              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                <p className="text-xs sm:text-sm text-gray-600">Purchase Price</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">₹{product.purchasePrice}</p>
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Purchase Price</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">₹{product.purchasePrice}</p>
               </div>
-              <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
-                <p className="text-xs sm:text-sm text-gray-600">Stock Count</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600">{product.stock} {product.unit}</p>
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg border border-green-100 dark:border-green-800">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Stock Count</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400">{product.stock} {product.unit}</p>
               </div>
-              <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
-                <p className="text-xs sm:text-sm text-gray-600">Low Stock Alert</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600">{product.lowStockLimit}</p>
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-3 sm:p-4 rounded-lg border border-purple-100 dark:border-purple-800">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Low Stock Alert</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 dark:text-purple-400">{product.lowStockLimit}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="border p-3 rounded-lg">
-                <p className="text-xs text-gray-500">Stock Value (Sale)</p>
-                <p className="text-lg font-semibold">₹{product.stockSaleValue?.toFixed(2)}</p>
+              <div className="border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-white dark:bg-gray-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Stock Value (Sale)</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">₹{product.stockSaleValue?.toFixed(2)}</p>
               </div>
-              <div className="border p-3 rounded-lg">
-                <p className="text-xs text-gray-500">Stock Value (Purchase)</p>
-                <p className="text-lg font-semibold">₹{product.stockPurchaseValue?.toFixed(2)}</p>
+              <div className="border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-white dark:bg-gray-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Stock Value (Purchase)</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">₹{product.stockPurchaseValue?.toFixed(2)}</p>
               </div>
             </div>
 

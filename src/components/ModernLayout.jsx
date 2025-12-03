@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Package, Users, FileText, Search, Bell, Menu, X } from 'lucide-react';
 import UserMenu from './UserMenu';
@@ -7,6 +7,24 @@ import BottomNav from './BottomNav';
 const ModernLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [businessName, setBusinessName] = useState('Anvi CRM');
+
+  useEffect(() => {
+    const fetchBusinessName = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.profile?.businessName) {
+            setBusinessName(data.profile.businessName);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch business name:', error);
+      }
+    };
+    fetchBusinessName();
+  }, []);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -30,7 +48,7 @@ const ModernLayout = ({ children }) => {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Anvi CRM</span>
+            <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
           </div>
 
           {/* Navigation */}
@@ -67,7 +85,7 @@ const ModernLayout = ({ children }) => {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
                 <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="text-xl font-semibold text-gray-900 dark:text-white">Anvi CRM</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
             </div>
 
             {/* Desktop: Empty space to push right items */}

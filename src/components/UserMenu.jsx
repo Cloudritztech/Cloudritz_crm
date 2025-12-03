@@ -58,7 +58,7 @@ const UserMenu = () => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm overflow-hidden" style={{ background: logoUrl ? 'transparent' : 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
           {logoUrl ? (
@@ -66,10 +66,6 @@ const UserMenu = () => {
           ) : (
             <span className="text-white font-bold text-sm">A</span>
           )}
-        </div>
-        <div className="hidden md:block text-left">
-          <div className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{user?.role}</div>
         </div>
       </button>
 
