@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, Lock, Camera, Shield } from 'lucide-react';
+import { User, Mail, Phone, Lock, Camera, Upload } from 'lucide-react';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { user } = useAuth();
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -13,6 +16,9 @@ const Profile = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [uploading, setUploading] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +34,27 @@ const Profile = () => {
     toast.success('Password changed successfully');
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadToCloudinary(file, 'crm/profiles/');
+      setProfileImage(imageUrl);
+      toast.success('Profile picture updated!');
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -40,18 +67,57 @@ const Profile = () => {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile Picture</h2>
         <div className="flex items-center space-x-6">
           <div className="relative">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {user?.name?.charAt(0)?.toUpperCase()}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+            <div 
+              onClick={() => !uploading && setShowOptions(!showOptions)}
+              className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
+            >
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0)?.toUpperCase()
+              )}
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-white dark:bg-gray-700 rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-              <Camera className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-            </button>
+            {showOptions && (
+              <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20 min-w-[160px]">
+                <button
+                  type="button"
+                  onClick={() => { fileInputRef.current?.click(); setShowOptions(false); }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { cameraInputRef.current?.click(); setShowOptions(false); }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <Camera className="h-4 w-4" />
+                  Take Photo
+                </button>
+              </div>
+            )}
           </div>
           <div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-              Upload Photo
-            </button>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">JPG, PNG or GIF. Max 2MB</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{uploading ? 'Uploading...' : 'Click on image to change'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, PNG. Max 2MB</p>
           </div>
         </div>
       </div>

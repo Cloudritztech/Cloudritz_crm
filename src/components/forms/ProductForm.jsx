@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Camera } from 'lucide-react';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 import toast from 'react-hot-toast';
 
 const ProductForm = ({ product, onSubmit, onCancel }) => {
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: product?.name || '',
     image: product?.image || '',
@@ -19,6 +21,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
   });
   const [imagePreview, setImagePreview] = useState(product?.image || '');
   const [uploading, setUploading] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -64,48 +67,70 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           Product Image
         </label>
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-[#0F1113] overflow-hidden relative">
-              {imagePreview ? (
-                <>
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </>
-              ) : (
-                <ImageIcon className="h-12 w-12 text-gray-400" />
-              )}
+        <div className="relative">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            onChange={handleImageUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleImageUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          <div 
+            onClick={() => !uploading && setShowOptions(!showOptions)}
+            className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-[#0F1113] overflow-hidden relative cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+          >
+            {imagePreview ? (
+              <>
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); removeImage(); }}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 z-10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <div className="text-center">
+                <ImageIcon className="h-12 w-12 text-gray-400 mx-auto" />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{uploading ? 'Uploading...' : 'Click to add'}</p>
+              </div>
+            )}
+          </div>
+          {showOptions && !imagePreview && (
+            <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20 min-w-[160px]">
+              <button
+                type="button"
+                onClick={() => { fileInputRef.current?.click(); setShowOptions(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Upload Image
+              </button>
+              <button
+                type="button"
+                onClick={() => { cameraInputRef.current?.click(); setShowOptions(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Take Photo
+              </button>
             </div>
-          </div>
-          <div className="flex-1">
-            <input
-              type="file"
-              id="product-image"
-              accept="image/png,image/jpeg,image/jpg,image/webp"
-              onChange={handleImageUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-            <label
-              htmlFor="product-image"
-              className={`inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors text-sm ${
-                uploading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Upload Image'}
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              PNG, JPG, WebP up to 5MB
-            </p>
-          </div>
+          )}
         </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          PNG, JPG, WebP up to 5MB
+        </p>
       </div>
 
       <Input
