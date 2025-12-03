@@ -86,19 +86,30 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
             disabled={uploading}
           />
           <div 
-            onClick={() => !uploading && setShowOptions(!showOptions)}
+            onClick={() => !uploading && !imagePreview && setShowOptions(!showOptions)}
             className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-[#0F1113] overflow-hidden relative cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
           >
             {imagePreview ? (
               <>
                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); removeImage(); }}
-                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 z-10"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setShowOptions(!showOptions); }}
+                    className="opacity-0 hover:opacity-100 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-opacity"
+                    title="Change image"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeImage(); }}
+                    className="opacity-0 hover:opacity-100 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-opacity"
+                    title="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </>
             ) : (
               <div className="text-center">
@@ -107,7 +118,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
               </div>
             )}
           </div>
-          {showOptions && !imagePreview && (
+          {showOptions && (
             <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20 min-w-[160px]">
               <button
                 type="button"

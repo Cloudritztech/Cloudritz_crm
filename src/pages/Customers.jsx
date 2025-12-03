@@ -75,7 +75,7 @@ const Customers = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center justify-center px-4 py-2.5 rounded-xl"
+          className="btn-primary flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Customer

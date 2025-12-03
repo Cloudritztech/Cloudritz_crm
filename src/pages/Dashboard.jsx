@@ -129,12 +129,12 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">CRM Dashboard</h1>
-          <p className="text-gray-600">Anvi Tiles & Decorhub - Complete Business Overview</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">CRM Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">Anvi Tiles & Decorhub - Complete Business Overview</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
           {lastUpdated && (
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
@@ -143,6 +143,7 @@ const Dashboard = () => {
             variant="primary"
             size="sm"
             icon={RefreshCw}
+            className="w-full sm:w-auto"
           >
             Refresh
           </Button>

@@ -181,7 +181,7 @@ const InvoiceManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 break-words whitespace-normal">Invoice Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 break-words whitespace-normal">Invoice Management</h1>
           <p className="text-gray-600 mt-1 break-words whitespace-normal">
             Manage and track all your invoices
           </p>
@@ -190,6 +190,7 @@ const InvoiceManagement = () => {
           onClick={() => navigate("/invoices/add")}
           variant="primary"
           icon={Plus}
+          className="w-full sm:w-auto"
         >
           New Invoice
         </Button>

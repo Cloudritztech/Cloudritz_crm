@@ -180,9 +180,9 @@ const Products = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Products</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <input
             type="file"
             id="excelUpload"
@@ -194,7 +194,7 @@ const Products = () => {
             type="button"
             onClick={() => document.getElementById('excelUpload').click()}
             disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm font-medium transition-colors"
           >
             {syncing ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -203,7 +203,7 @@ const Products = () => {
             )}
             {syncing ? 'Syncing...' : 'Import Excel'}
           </button>
-          <Button onClick={() => setShowModal(true)} className="flex items-center">
+          <Button onClick={() => setShowModal(true)} className="flex items-center justify-center">
             <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
