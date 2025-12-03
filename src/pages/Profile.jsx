@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, Lock, Camera, Upload } from 'lucide-react';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { User, Mail, Phone, Lock } from 'lucide-react';
+import { profileAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
-  const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
+  const { user } = useAuth();
+  const [logoUrl, setLogoUrl] = useState('');
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -16,13 +15,20 @@ const Profile = () => {
     newPassword: '',
     confirmPassword: ''
   });
-  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
-  
+
   useEffect(() => {
-    setProfileImage(user?.profileImage || '');
-  }, [user]);
-  const [uploading, setUploading] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+    const fetchLogo = async () => {
+      try {
+        const response = await profileAPI.getProfile();
+        if (response.data?.profile?.logoUrl) {
+          setLogoUrl(response.data.profile.logoUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch logo:', error);
+      }
+    };
+    fetchLogo();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,39 +44,7 @@ const Profile = () => {
     toast.success('Password changed successfully');
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    setUploading(true);
-    try {
-      const imageUrl = await uploadToCloudinary(file, 'crm/profiles/');
-      setProfileImage(imageUrl);
-      
-      // Save to database
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth?action=update-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ profileImage: imageUrl })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        updateUser(data.user);
-        toast.success('Profile picture updated!');
-      } else {
-        toast.error('Failed to save profile picture');
-      }
-    } catch (error) {
-      toast.error('Failed to upload image');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -79,62 +53,20 @@ const Profile = () => {
         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your personal information</p>
       </div>
 
-      {/* Profile Picture */}
+      {/* Profile Picture - Using Logo */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile Picture</h2>
         <div className="flex items-center space-x-6">
-          <div className="relative">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              onChange={handleImageUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={handleImageUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-            <div 
-              onClick={() => !uploading && setShowOptions(!showOptions)}
-              className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
-            >
-              {profileImage ? (
-                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                user?.name?.charAt(0)?.toUpperCase()
-              )}
-            </div>
-            {showOptions && (
-              <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20 min-w-[160px]">
-                <button
-                  type="button"
-                  onClick={() => { fileInputRef.current?.click(); setShowOptions(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload Photo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { cameraInputRef.current?.click(); setShowOptions(false); }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <Camera className="h-4 w-4" />
-                  Take Photo
-                </button>
-              </div>
+          <div className="w-24 h-24 rounded-lg flex items-center justify-center shadow-sm overflow-hidden" style={{ background: logoUrl ? 'transparent' : 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Company Logo" className="w-full h-full object-contain" />
+            ) : (
+              <span className="text-white font-bold text-4xl">A</span>
             )}
           </div>
           <div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{uploading ? 'Uploading...' : 'Click on image to change'}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, PNG</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Company Logo</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your profile uses the business logo from Business Profile</p>
           </div>
         </div>
       </div>

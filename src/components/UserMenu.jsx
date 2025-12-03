@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { profileAPI } from '../services/api';
 import {
   User, Building2, Palette, Settings, Bell, HelpCircle, LogOut,
   ChevronRight, Sun, Moon, Monitor
@@ -13,6 +14,7 @@ const UserMenu = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const menuRef = useRef(null);
+  const [logoUrl, setLogoUrl] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -22,6 +24,20 @@ const UserMenu = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const response = await profileAPI.getProfile();
+        if (response.data?.profile?.logoUrl) {
+          setLogoUrl(response.data.profile.logoUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch logo:', error);
+      }
+    };
+    fetchLogo();
   }, []);
 
   const menuItems = [
@@ -44,13 +60,11 @@ const UserMenu = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm overflow-hidden">
-          {user?.profileImage ? (
-            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm overflow-hidden" style={{ background: logoUrl ? 'transparent' : 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
           ) : (
-            <span className="text-white font-semibold text-sm">
-              {user?.name?.charAt(0)?.toUpperCase()}
-            </span>
+            <span className="text-white font-bold text-sm">A</span>
           )}
         </div>
         <div className="hidden md:block text-left">
@@ -64,11 +78,11 @@ const UserMenu = () => {
           {/* User Info */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
-                {user?.profileImage ? (
-                  <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-sm overflow-hidden" style={{ background: logoUrl ? 'transparent' : 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-white font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                  <span className="text-white font-bold text-xl">A</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">

@@ -19,21 +19,24 @@ export default async function handler(req, res) {
   // Update user profile (PUT /api/auth?action=update-profile)
   if (action === 'update-profile' && req.method === 'PUT') {
     try {
-      const authResult = await authenticate(req);
-      if (!authResult.success) {
-        return res.status(401).json({ message: authResult.message });
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'No token provided' });
       }
 
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const { profileImage } = req.body;
       
       const user = await User.findByIdAndUpdate(
-        authResult.userId,
+        decoded.userId,
         { profileImage },
         { new: true }
       );
 
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(404).json({ success: false, message: 'User not found' });
       }
 
       return res.json({
@@ -46,7 +49,8 @@ export default async function handler(req, res) {
         }
       });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error' });
+      console.error('Update profile error:', error);
+      return res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
   }
 
