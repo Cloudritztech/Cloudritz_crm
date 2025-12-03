@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Layout from './components/Layout';
+import { ThemeProvider } from './context/ThemeContext';
+import ModernLayout from './components/ModernLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -13,6 +14,8 @@ import ViewInvoice from './pages/ViewInvoice';
 import SalesReports from './pages/SalesReports';
 import BusinessProfile from './pages/BusinessProfile';
 import ProductDetail from './pages/ProductDetail';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import Toast from './components/ui/Toast';
 
 const ProtectedRoute = ({ children }) => {
@@ -45,10 +48,11 @@ const PublicRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider>
-        <Router>
-          <div className="App">
-            <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+          <Router>
+            <div className="App">
+              <Routes>
               <Route 
                 path="/login" 
                 element={
@@ -69,7 +73,7 @@ function App() {
                 path="/*" 
                 element={
                   <ProtectedRoute>
-                    <Layout>
+                    <ModernLayout>
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/products" element={<Products />} />
@@ -80,16 +84,19 @@ function App() {
                         <Route path="/invoices/view/:id" element={<ViewInvoice />} />
                         <Route path="/sales-reports" element={<SalesReports />} />
                         <Route path="/business-profile" element={<BusinessProfile />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/settings" element={<Settings />} />
                       </Routes>
-                    </Layout>
+                    </ModernLayout>
                   </ProtectedRoute>
                 } 
               />
-            </Routes>
-            <Toast />
-          </div>
-        </Router>
-    </AuthProvider>
+              </Routes>
+              <Toast />
+            </div>
+          </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
