@@ -26,7 +26,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
         {children}
       </div>
     </div>
-  );}
+  );
 };
 
 export default Modal;
