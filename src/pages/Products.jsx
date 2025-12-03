@@ -150,7 +150,7 @@ const Products = () => {
         });
 
         const token = localStorage.getItem('token');
-        const response = await axios.post('/api/products/sync-excel', 
+        const response = await axios.post('/api/products?action=sync-excel', 
           { products },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );

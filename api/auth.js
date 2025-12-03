@@ -1,6 +1,7 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../lib/models/User.js';
 import jwt from 'jsonwebtoken';
+import { authenticate } from '../lib/middleware/auth.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,6 +15,40 @@ export default async function handler(req, res) {
   await connectDB();
 
   const { action } = req.query;
+
+  // Update user profile (PUT /api/auth?action=update-profile)
+  if (action === 'update-profile' && req.method === 'PUT') {
+    try {
+      const authResult = await authenticate(req);
+      if (!authResult.success) {
+        return res.status(401).json({ message: authResult.message });
+      }
+
+      const { profileImage } = req.body;
+      
+      const user = await User.findByIdAndUpdate(
+        authResult.userId,
+        { profileImage },
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      return res.json({
+        success: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          profileImage: user.profileImage || ''
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error' });
+    }
+  }
 
   if (action === 'login' && req.method === 'POST') {
     try {

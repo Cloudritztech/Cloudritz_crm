@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, Lock, Camera, Upload } from 'lucide-react';
 import { uploadToCloudinary } from '../utils/cloudinary';
@@ -49,7 +49,7 @@ const Profile = () => {
       
       // Save to database
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/user', {
+      const response = await fetch('/api/auth?action=update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

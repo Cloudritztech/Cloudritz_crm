@@ -85,6 +85,7 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products?id=${id}`),
   updateStock: (id, data) => api.post(`/products?id=${id}&action=stock`, data),
   getLowStock: () => api.get('/products?lowStock=true'),
+  syncExcel: (products) => api.post('/products?action=sync-excel', { products }),
 };
 
 // Customers API
