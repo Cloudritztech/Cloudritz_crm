@@ -21,6 +21,8 @@ import Toast from './components/ui/Toast';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
+  console.log('ProtectedRoute - isAuthenticated:', isAuthenticated, 'loading:', loading);
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -29,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 const PublicRoute = ({ children }) => {

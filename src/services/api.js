@@ -44,25 +44,24 @@ api.interceptors.request.use(
 // Response interceptor to handle auth errors and logging
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ API Response:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data
-    });
     return response;
   },
   (error) => {
     console.error('❌ API Error:', {
       url: error.config?.url,
       status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      data: error.response?.data
+      message: error.response?.data?.message || error.message
     });
     
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
+    // Only handle 401 for protected routes, not auth endpoints
+    if (error.response?.status === 401) {
+      const isAuthEndpoint = error.config?.url?.includes('/auth');
+      const isLoginPage = window.location.pathname === '/login';
+      
+      if (!isAuthEndpoint && !isLoginPage) {
+        console.log('Unauthorized - clearing auth and redirecting');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }
