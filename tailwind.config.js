@@ -8,6 +8,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        'bg-main': '#0F1113',
+        'bg-panel': '#14161A',
+        'bg-card': '#191B1F',
+        'bg-hover': '#1F2226',
+        'text-primary': '#E6EEF6',
+        'text-secondary': '#A8B0BF',
+        'text-muted': '#7A838D',
+        'accent-blue': '#3B82F6',
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -63,6 +71,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'lg': '12px',
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
