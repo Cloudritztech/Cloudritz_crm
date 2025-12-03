@@ -45,7 +45,8 @@ export default async function handler(req, res) {
         user: {
           id: user._id,
           name: user.name,
-          email: user.email
+          email: user.email,
+          profileImage: user.profileImage || ''
         }
       });
     } catch (error) {
@@ -78,7 +79,8 @@ export default async function handler(req, res) {
         user: {
           id: user._id,
           name: user.name,
-          email: user.email
+          email: user.email,
+          profileImage: user.profileImage || ''
         }
       });
     } catch (error) {

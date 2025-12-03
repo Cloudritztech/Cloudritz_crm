@@ -44,10 +44,14 @@ const UserMenu = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-          <span className="text-white font-semibold text-sm">
-            {user?.name?.charAt(0)?.toUpperCase()}
-          </span>
+        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm overflow-hidden">
+          {user?.profileImage ? (
+            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white font-semibold text-sm">
+              {user?.name?.charAt(0)?.toUpperCase()}
+            </span>
+          )}
         </div>
         <div className="hidden md:block text-left">
           <div className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</div>
@@ -60,8 +64,12 @@ const UserMenu = () => {
           {/* User Info */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                {user?.profileImage ? (
+                  <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-gray-900 dark:text-white truncate">{user?.name}</div>

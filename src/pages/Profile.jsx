@@ -5,7 +5,7 @@ import { uploadToCloudinary } from '../utils/cloudinary';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -17,6 +17,10 @@ const Profile = () => {
     confirmPassword: ''
   });
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  
+  useEffect(() => {
+    setProfileImage(user?.profileImage || '');
+  }, [user]);
   const [uploading, setUploading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -42,7 +46,25 @@ const Profile = () => {
     try {
       const imageUrl = await uploadToCloudinary(file, 'crm/profiles/');
       setProfileImage(imageUrl);
-      toast.success('Profile picture updated!');
+      
+      // Save to database
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ profileImage: imageUrl })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        updateUser(data.user);
+        toast.success('Profile picture updated!');
+      } else {
+        toast.error('Failed to save profile picture');
+      }
     } catch (error) {
       toast.error('Failed to upload image');
     } finally {
