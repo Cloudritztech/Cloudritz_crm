@@ -2,7 +2,7 @@ import connectDB from '../lib/mongodb.js';
 import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
-import { auth, adminOnly } from '../lib/middleware/auth.js';
+import { auth } from '../lib/middleware/auth.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -123,8 +123,7 @@ export default async function handler(req, res) {
 
   if (productId && method === 'DELETE') {
     try {
-      await runMiddleware(req, res, adminOnly);
-      await Product.findByIdAndUpdate(productId, { isActive: false });
+      await Product.findByIdAndDelete(productId);
       return res.json({ success: true, message: 'Product deleted successfully' });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -136,7 +135,7 @@ export default async function handler(req, res) {
     case 'GET':
       try {
         const { category, lowStock, search } = query;
-        let queryObj = { isActive: true };
+        let queryObj = {};
         
         if (category) queryObj.category = category;
         if (lowStock === 'true') queryObj.$expr = { $lte: ['$stock', '$minStock'] };

@@ -93,21 +93,21 @@ export default async function handler(req, res) {
         { $group: { _id: null, total: { $sum: "$total" } } }
       ]),
       // Total customers
-      Customer.countDocuments({ isActive: true }),
+      Customer.countDocuments(),
       // Low stock count
-      Product.countDocuments({ isActive: true, $expr: { $lte: ["$stock", "$minStock"] } }),
+      Product.countDocuments({ $expr: { $lte: ["$stock", "$minStock"] } }),
       // Low stock items details
-      Product.find({ isActive: true, $expr: { $lte: ["$stock", "$minStock"] } })
+      Product.find({ $expr: { $lte: ["$stock", "$minStock"] } })
         .select('name category stock minStock')
         .limit(10)
         .lean(),
       // Total products
-      Product.countDocuments({ isActive: true }),
+      Product.countDocuments(),
       // Total invoices
       Invoice.countDocuments(),
       // Inventory value
       Product.aggregate([
-        { $match: { isActive: true } },
+
         { $group: { _id: null, totalValue: { $sum: { $multiply: ["$stock", "$purchasePrice"] } } } }
       ]),
       // Recent invoices
