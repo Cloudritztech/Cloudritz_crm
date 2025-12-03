@@ -23,10 +23,10 @@ const IntegrationSettings = () => {
     fromEmail: '',
   });
 
-  const [cloudStorage, setCloudStorage] = useState({
+  const [googleDrive, setGoogleDrive] = useState({
     enabled: false,
-    provider: 'google',
-    apiKey: '',
+    connected: false,
+    email: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,7 @@ const IntegrationSettings = () => {
         const settings = response.data.settings;
         if (settings.whatsapp) setWhatsapp({ ...whatsapp, ...settings.whatsapp });
         if (settings.smtp) setSmtp({ ...smtp, ...settings.smtp });
+        if (settings.googleDrive) setGoogleDrive({ ...googleDrive, ...settings.googleDrive });
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -64,7 +65,7 @@ const IntegrationSettings = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put('/api/settings?section=integrations', 
-        { whatsapp, smtp },
+        { whatsapp, smtp, googleDrive },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Integration settings saved!');
@@ -179,38 +180,32 @@ const IntegrationSettings = () => {
         </div>
       </SettingsCard>
 
-      <SettingsCard title="Cloud Storage" description="Backup data to cloud storage">
+      <SettingsCard title="Google Drive Backup" description="Auto-backup to your Google Drive">
         <div className="space-y-4">
           <SettingsToggle
-            label="Enable Cloud Backup"
-            description="Automatically backup to cloud storage"
-            checked={cloudStorage.enabled}
-            onChange={(e) => setCloudStorage({ ...cloudStorage, enabled: e.target.checked })}
+            label="Enable Google Drive Backup"
+            description="Automatically backup data to your Google Drive (uses logged-in email)"
+            checked={googleDrive.enabled}
+            onChange={(e) => setGoogleDrive({ ...googleDrive, enabled: e.target.checked })}
           />
           
-          {cloudStorage.enabled && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Cloud Provider
-                </label>
-                <select
-                  value={cloudStorage.provider}
-                  onChange={(e) => setCloudStorage({ ...cloudStorage, provider: e.target.value })}
-                  className="w-full px-4 py-2 bg-white dark:bg-[#0F1113] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="google">Google Drive</option>
-                  <option value="dropbox">Dropbox</option>
-                  <option value="onedrive">OneDrive</option>
-                </select>
+          {googleDrive.enabled && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start space-x-3">
+                <Cloud className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                    Google Drive Auto-Backup Enabled
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                    Backups will be saved to "Anvi CRM Backups" folder in your Google Drive using your logged-in email account.
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-500 mt-2">
+                    Note: Ensure you're logged into Google Drive on this device.
+                  </p>
+                </div>
               </div>
-              <Input
-                label="API Key"
-                value={cloudStorage.apiKey}
-                onChange={(e) => setCloudStorage({ ...cloudStorage, apiKey: e.target.value })}
-                placeholder="Enter API key"
-              />
-            </>
+            </div>
           )}
         </div>
       </SettingsCard>

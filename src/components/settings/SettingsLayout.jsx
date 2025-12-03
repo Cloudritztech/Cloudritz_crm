@@ -11,10 +11,8 @@ const SettingsLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
-    { id: 'appearance', name: 'Appearance', icon: Palette, path: '/settings/appearance' },
     { id: 'invoice', name: 'Invoice', icon: FileText, path: '/settings/invoice' },
     { id: 'product', name: 'Product', icon: Package, path: '/settings/product' },
-    { id: 'notifications', name: 'Notifications', icon: Bell, path: '/settings/notifications' },
     { id: 'backup', name: 'Data Backup', icon: Database, path: '/settings/backup' },
     { id: 'integrations', name: 'Integrations', icon: Plug, path: '/settings/integrations' },
   ];

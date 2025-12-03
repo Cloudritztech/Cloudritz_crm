@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, Download } from 'lucide-react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import SettingsCard from '../../components/settings/SettingsCard';
 import SettingsToggle from '../../components/settings/SettingsToggle';
 import Input from '../../components/ui/Input';
@@ -18,6 +19,7 @@ const ProductSettings = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -59,6 +61,41 @@ const ProductSettings = () => {
       toast.error('Failed to save settings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportProducts = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/products', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const products = response.data.products.map(p => ({
+        'Product Name': p.name,
+        'Category': p.category,
+        'Unit': p.unit,
+        'Selling Price': p.sellingPrice,
+        'Purchase Price': p.purchasePrice,
+        'Stock': p.stock,
+        'Stock Sale Value': p.stockSaleValue,
+        'Stock Purchase Value': p.stockPurchaseValue,
+        'Low Stock Limit': p.lowStockLimit,
+        'Tax Included': p.taxIncluded ? 'Yes' : 'No',
+        'Created Date': new Date(p.createdAt).toLocaleDateString('en-IN')
+      }));
+      
+      const ws = XLSX.utils.json_to_sheet(products);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Products');
+      XLSX.writeFile(wb, `products-${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+      toast.success('Products exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export products');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -125,7 +162,10 @@ const ProductSettings = () => {
         </div>
       </SettingsCard>
 
-      <div className="flex items-center justify-end sticky bottom-4 bg-white dark:bg-[#141619] p-4 rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.04)] shadow-lg">
+      <div className="flex items-center justify-between sticky bottom-4 bg-white dark:bg-[#141619] p-4 rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.04)] shadow-lg">
+        <Button type="button" variant="outline" onClick={handleExportProducts} loading={exporting} icon={Download}>
+          Export Products to Excel
+        </Button>
         <Button type="submit" loading={loading} icon={Save}>
           Save Changes
         </Button>
