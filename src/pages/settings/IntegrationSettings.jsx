@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Save, MessageCircle, Mail, Cloud, Send } from 'lucide-react';
 import SettingsCard from '../../components/settings/SettingsCard';
 import SettingsToggle from '../../components/settings/SettingsToggle';
@@ -30,6 +31,26 @@ const IntegrationSettings = () => {
 
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/settings?section=integrations', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.settings) {
+        const settings = response.data.settings;
+        if (settings.whatsapp) setWhatsapp({ ...whatsapp, ...settings.whatsapp });
+        if (settings.smtp) setSmtp({ ...smtp, ...settings.smtp });
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   const handleTestEmail = () => {
     if (!smtp.enabled) {
       toast.error('Please enable SMTP first');
@@ -38,12 +59,20 @@ const IntegrationSettings = () => {
     toast.success('Test email sent successfully!');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put('/api/settings?section=integrations', 
+        { whatsapp, smtp },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success('Integration settings saved!');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

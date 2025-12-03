@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
+import axios from 'axios';
 import SettingsCard from '../../components/settings/SettingsCard';
 import SettingsToggle from '../../components/settings/SettingsToggle';
 import Input from '../../components/ui/Input';
@@ -20,6 +21,24 @@ const InvoiceSettings = () => {
 
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/settings?section=invoice', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.settings) {
+        setFormData({ ...formData, ...response.data.settings });
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -27,11 +46,17 @@ const InvoiceSettings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put('/api/settings?section=invoice', formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success('Invoice settings saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

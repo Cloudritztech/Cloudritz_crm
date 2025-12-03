@@ -1,14 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Monitor, Save } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import SettingsCard from '../../components/settings/SettingsCard';
 import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const AppearanceSettings = () => {
   const { theme, setTheme } = useTheme();
   const [accentColor, setAccentColor] = useState('#3B82F6');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/settings?section=appearance', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.settings) {
+        setAccentColor(response.data.settings.accentColor || '#3B82F6');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
 
   const themeOptions = [
     { value: 'light', icon: Sun, label: 'Light', desc: 'Light theme' },
@@ -25,12 +44,20 @@ const AppearanceSettings = () => {
     { name: 'Pink', value: '#EC4899' },
   ];
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put('/api/settings?section=appearance', 
+        { theme, accentColor },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success('Appearance settings saved!');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

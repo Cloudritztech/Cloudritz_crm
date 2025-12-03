@@ -210,7 +210,7 @@ const Products = () => {
           </div>
         </div>
 
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -218,13 +218,13 @@ const Products = () => {
               placeholder="Search products by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-field pl-10"
+              className="input-field pl-10 w-full"
             />
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="input-field"
+            className="input-field w-full sm:w-48"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -237,7 +237,7 @@ const Products = () => {
           <select
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value)}
-            className="input-field"
+            className="input-field w-full sm:w-40"
           >
             <option value="all">All Stock</option>
             <option value="instock">In Stock</option>

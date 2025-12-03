@@ -7,8 +7,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    role: 'staff'
+    password: ''
   });
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -77,15 +76,6 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
             />
-            <select
-              name="role"
-              className="input-field"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
           </div>
 
           <button

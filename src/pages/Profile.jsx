@@ -96,10 +96,7 @@ const Profile = () => {
               className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white"
             />
           </div>
-          <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-sm text-blue-900 dark:text-blue-300">Role: <span className="font-semibold">{user?.role}</span></span>
-          </div>
+
           <button type="submit" className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
             Save Changes
           </button>

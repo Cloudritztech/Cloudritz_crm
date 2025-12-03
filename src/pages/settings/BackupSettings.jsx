@@ -17,26 +17,55 @@ const BackupSettings = () => {
     { date: '2024-01-13 10:30 AM', size: '2.2 MB', type: 'Manual' },
   ];
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post('/api/settings/backup?action=export', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const dataStr = JSON.stringify(response.data.backup, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `anvi-crm-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
       toast.success('Data exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export data');
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleImport = () => {
     document.getElementById('import-file').click();
   };
 
-  const handleFileImport = (e) => {
+  const handleFileImport = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setLoading(true);
-      setTimeout(() => {
-        toast.success('Data imported successfully!');
-        setLoading(false);
-      }, 2000);
+    if (!file) return;
+    
+    setLoading(true);
+    try {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+      
+      const token = localStorage.getItem('token');
+      await axios.post('/api/settings/backup?action=import', backup, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Data imported successfully!');
+    } catch (error) {
+      toast.error('Failed to import data');
+    } finally {
+      setLoading(false);
+      e.target.value = '';
     }
   };
 

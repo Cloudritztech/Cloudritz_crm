@@ -11,18 +11,12 @@ const SettingsLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sections = [
-    { id: 'general', name: 'General', icon: SettingsIcon, path: '/settings/general' },
     { id: 'appearance', name: 'Appearance', icon: Palette, path: '/settings/appearance' },
-    { id: 'business', name: 'Business', icon: Building2, path: '/settings/business' },
     { id: 'invoice', name: 'Invoice', icon: FileText, path: '/settings/invoice' },
-    { id: 'tax', name: 'Tax', icon: DollarSign, path: '/settings/tax' },
     { id: 'product', name: 'Product', icon: Package, path: '/settings/product' },
-    { id: 'payment', name: 'Payment', icon: CreditCard, path: '/settings/payment' },
     { id: 'notifications', name: 'Notifications', icon: Bell, path: '/settings/notifications' },
     { id: 'backup', name: 'Data Backup', icon: Database, path: '/settings/backup' },
     { id: 'integrations', name: 'Integrations', icon: Plug, path: '/settings/integrations' },
-    { id: 'preferences', name: 'Preferences', icon: Globe, path: '/settings/preferences' },
-    { id: 'security', name: 'Security', icon: Shield, path: '/settings/security' },
   ];
 
   const isActive = (path) => location.pathname === path;

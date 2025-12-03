@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
+import axios from 'axios';
 import SettingsCard from '../../components/settings/SettingsCard';
 import SettingsToggle from '../../components/settings/SettingsToggle';
 import Button from '../../components/ui/Button';
@@ -21,6 +22,24 @@ const NotificationSettings = () => {
 
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/settings?section=notifications', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.settings) {
+        setNotifications({ ...notifications, ...response.data.settings });
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   const handleToggle = (key) => {
     setNotifications({ ...notifications, [key]: !notifications[key] });
   };
@@ -28,11 +47,17 @@ const NotificationSettings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put('/api/settings?section=notifications', notifications, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success('Notification settings saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

@@ -6,6 +6,7 @@ import User from '../../lib/models/User.js';
 import InventoryHistory from '../../lib/models/InventoryHistory.js';
 import { auth } from '../../lib/middleware/auth.js';
 import { numberToWords } from '../../lib/numberToWords.js';
+import { notifyNewSale, checkLowStock, checkPendingPayments } from '../../lib/utils/notificationService.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -333,6 +334,15 @@ export default async function handler(req, res) {
             .populate('createdBy', 'name');
 
           console.log('✅ Invoice created:', populatedInvoice.invoiceNumber);
+          
+          // Send notifications
+          try {
+            await notifyNewSale(req.user._id, populatedInvoice);
+            await checkLowStock(req.user._id);
+            await checkPendingPayments(req.user._id);
+          } catch (notifErr) {
+            console.warn('⚠️ Failed to send notifications:', notifErr.message);
+          }
           
           return res.status(201).json({ 
             success: true, 

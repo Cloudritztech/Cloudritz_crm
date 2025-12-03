@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, FileText, Search, Bell, Menu, X } from 'lucide-react';
+import { Home, Package, Users, FileText, Search, Menu, X } from 'lucide-react';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
+import NotificationPanel from './NotificationPanel';
 
 const ModernLayout = ({ children }) => {
   const location = useLocation();
@@ -75,10 +76,7 @@ const ModernLayout = ({ children }) => {
 
             {/* Right: Notifications + User Menu */}
             <div className="flex items-center space-x-3">
-              <button className="relative p-2 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
-              </button>
+              <NotificationPanel />
               <UserMenu />
             </div>
           </div>

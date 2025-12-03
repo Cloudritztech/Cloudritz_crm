@@ -65,10 +65,10 @@ export const StatCard = ({ icon: Icon, title, value, subtitle, trend, color = 'p
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-secondary-600 truncate">{title}</p>
-              <p className="text-2xl font-bold text-secondary-900 mt-1">{value}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">{title}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
               {subtitle && (
-                <p className="text-sm text-secondary-500 mt-1">{subtitle}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
               )}
             </div>
           </div>
