@@ -85,7 +85,7 @@ function App() {
                         <Route path="/sales-reports" element={<SalesReports />} />
                         <Route path="/business-profile" element={<BusinessProfile />} />
                         <Route path="/profile" element={<Profile />} />
-                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/settings/*" element={<Settings />} />
                       </Routes>
                     </ModernLayout>
                   </ProtectedRoute>

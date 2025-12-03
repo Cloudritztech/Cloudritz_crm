@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
 
-      const user = await User.findOne({ email, isActive: true });
+      const user = await User.findOne({ email });
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
@@ -45,8 +45,7 @@ export default async function handler(req, res) {
         user: {
           id: user._id,
           name: user.name,
-          email: user.email,
-          role: user.role
+          email: user.email
         }
       });
     } catch (error) {
@@ -54,7 +53,7 @@ export default async function handler(req, res) {
     }
   } else if (action === 'register' && req.method === 'POST') {
     try {
-      const { name, email, password, role } = req.body;
+      const { name, email, password } = req.body;
 
       if (!name || !email || !password) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -65,7 +64,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
-      const user = await User.create({ name, email, password, role });
+      const user = await User.create({ name, email, password });
 
       const token = jwt.sign(
         { userId: user._id },
@@ -79,8 +78,7 @@ export default async function handler(req, res) {
         user: {
           id: user._id,
           name: user.name,
-          email: user.email,
-          role: user.role
+          email: user.email
         }
       });
     } catch (error) {
