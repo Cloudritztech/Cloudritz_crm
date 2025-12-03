@@ -358,6 +358,12 @@
     border-color: var(--border-subtle) !important;
   }
   
+  .dark select,
+  .dark select option {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+  }
+  
   .dark .bg-white {
     background: var(--bg-card) !important;
   }
@@ -376,12 +382,27 @@
     color: var(--text-secondary) !important;
   }
   
-  .dark .text-gray-500 {
+  .dark .text-gray-500,
+  .dark .text-gray-400 {
     color: var(--text-muted) !important;
   }
   
   .dark .border-gray-200,
-  .dark .border-gray-300 {
+  .dark .border-gray-300,
+  .dark .border {
     border-color: var(--border-subtle) !important;
+  }
+  
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background: #1E2024 !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
+  }
+  
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: var(--text-muted) !important;
   }
 }
