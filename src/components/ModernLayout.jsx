@@ -66,8 +66,6 @@ const ModernLayout = ({ children }) => {
             );
           })}
         </nav>
-      </aside>
-
         </div>
       </aside>
 
