@@ -153,7 +153,7 @@ const ViewInvoice = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2 sm:p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-0 sm:p-4">
       {/* Action Buttons */}
       <div className="flex justify-between items-center mb-4 no-print">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
@@ -475,52 +475,54 @@ const ViewInvoice = () => {
           color: #000;
           font-family: Arial, sans-serif;
           box-sizing: border-box;
-          font-size: 10px;
-          line-height: 1.2;
+          font-size: 9px;
+          line-height: 1.15;
+          border: 2px solid #000;
         }
         .a4-header {
-          margin-bottom: 6px;
-          font-size: 10px;
-          line-height: 1.2;
+          border-bottom: 1px solid #000;
+          padding-bottom: 3px;
+          margin-bottom: 3px;
+          font-size: 9px;
+          line-height: 1.15;
         }
         .a4-company {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
-          margin-bottom: 2px;
+          margin-bottom: 1px;
         }
         .a4-address {
-          font-size: 9px;
-          line-height: 1.2;
+          font-size: 8px;
+          line-height: 1.15;
         }
         .a4-contact {
-          font-size: 9px;
-          margin-top: 1px;
+          font-size: 8px;
+          margin-top: 0;
         }
         .a4-title {
           text-align: center;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
-          margin: 4px 0;
+          margin: 0;
           padding: 3px;
-          border-top: 1px solid #000;
-          border-bottom: 1px solid #000;
+          border-bottom: 2px solid #000;
         }
         .a4-info-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9px;
-          margin-bottom: 4px;
+          font-size: 8px;
+          margin-bottom: 3px;
         }
         .a4-info-table td {
           border: 1px solid #000;
-          padding: 2px 4px;
+          padding: 1px 3px;
         }
         .a4-party {
           border: 1px solid #000;
-          padding: 4px;
-          font-size: 9px;
-          margin-bottom: 4px;
-          line-height: 1.3;
+          padding: 3px;
+          font-size: 8px;
+          margin-bottom: 3px;
+          line-height: 1.2;
         }
         .a4-party-name {
           font-weight: 700;
@@ -529,72 +531,140 @@ const ViewInvoice = () => {
         .a4-items-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9px;
-          margin-bottom: 4px;
+          font-size: 8px;
+          margin-bottom: 3px;
         }
         .a4-items-table th {
           border: 1px solid #000;
-          padding: 2px;
+          padding: 1px;
           background: #f0f0f0;
           font-weight: 600;
           text-align: center;
         }
         .a4-items-table td {
           border: 1px solid #000;
-          padding: 1px 2px;
+          padding: 1px;
         }
         .a4-continued {
           text-align: right;
-          font-size: 9px;
-          margin-bottom: 4px;
+          font-size: 8px;
+          margin: -3px 0 3px 0;
+          font-style: italic;
         }
         .a4-amount-words {
           border: 1px solid #000;
-          padding: 3px 4px;
-          font-size: 9px;
-          margin-bottom: 4px;
+          padding: 2px 3px;
+          font-size: 8px;
+          margin-bottom: 3px;
         }
         .a4-gst-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9px;
-          margin-bottom: 4px;
+          font-size: 8px;
+          margin-bottom: 3px;
         }
         .a4-gst-table th {
           border: 1px solid #000;
-          padding: 2px;
+          padding: 1px;
           background: #f0f0f0;
           font-weight: 600;
           text-align: center;
         }
         .a4-gst-table td {
           border: 1px solid #000;
-          padding: 1px 2px;
+          padding: 1px;
         }
         .a4-footer-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9px;
+          font-size: 8px;
         }
         .a4-footer-table td {
           border: 1px solid #000;
-          padding: 4px;
+          padding: 3px;
         }
         .a4-footer {
           text-align: center;
-          font-size: 8px;
-          margin-top: 4px;
-          line-height: 1.4;
+          font-size: 7px;
+          margin-top: 3px;
+          line-height: 1.3;
         }
         
         @media screen and (max-width: 768px) {
           .invoice-a4 {
-            width: 100%;
-            padding: 10px;
+            width: 100vw;
+            min-height: 100vh;
+            padding: 4px;
             margin: 0;
-            transform: scale(0.85);
-            transform-origin: top center;
-            border: none;
+            border: 2px solid #000;
+            font-size: 7px;
+          }
+          .a4-header {
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+          }
+          .a4-company {
+            font-size: 10px;
+          }
+          .a4-address,
+          .a4-contact {
+            font-size: 7px;
+          }
+          .a4-title {
+            font-size: 10px;
+            padding: 2px;
+          }
+          .a4-info-table {
+            font-size: 7px;
+            margin-bottom: 3px;
+          }
+          .a4-info-table td {
+            padding: 1px 2px;
+          }
+          .a4-party {
+            padding: 3px;
+            font-size: 7px;
+            margin-bottom: 3px;
+          }
+          .a4-party-name {
+            font-size: 8px;
+          }
+          .a4-items-table {
+            font-size: 7px;
+            margin-bottom: 3px;
+          }
+          .a4-items-table th {
+            padding: 1px;
+            font-size: 7px;
+          }
+          .a4-items-table td {
+            padding: 1px;
+          }
+          .a4-continued {
+            font-size: 6px;
+          }
+          .a4-amount-words {
+            padding: 2px 3px;
+            font-size: 7px;
+            margin-bottom: 3px;
+          }
+          .a4-gst-table {
+            font-size: 7px;
+            margin-bottom: 3px;
+          }
+          .a4-gst-table th,
+          .a4-gst-table td {
+            padding: 1px;
+          }
+          .a4-footer-table {
+            font-size: 7px;
+          }
+          .a4-footer-table td {
+            padding: 3px;
+          }
+          .a4-footer {
+            font-size: 6px;
+            margin-top: 3px;
           }
         }
         
@@ -639,6 +709,12 @@ const ViewInvoice = () => {
           }
           thead {
             display: table-header-group !important;
+          }
+          .a4-header {
+            page-break-after: avoid !important;
+          }
+          .a4-items-table tbody tr {
+            page-break-inside: avoid !important;
           }
           @page {
             size: A4 portrait;
