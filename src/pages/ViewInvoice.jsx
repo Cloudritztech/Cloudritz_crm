@@ -471,31 +471,33 @@ const ViewInvoice = () => {
       {/* Professional Invoice Styles */}
       <style>{`
         .invoice-a4 {
-          width: 210mm;
-          min-height: 297mm;
-          padding: 5mm;
-          margin: 0 auto;
+          width: 200mm;
+          min-height: 277mm;
+          padding: 8mm;
+          margin: 10mm auto;
           background: #ffffff;
           color: #000;
           font-family: Arial, sans-serif;
           box-sizing: border-box;
           font-size: 9px;
-          line-height: 1.15;
-          border: 2px solid #000;
+          line-height: 1.2;
+          border: 1px solid #000;
+          display: flex;
+          flex-direction: column;
         }
 
         .a4-company {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
-          margin-bottom: 1px;
+          margin-bottom: 2px;
         }
         .a4-address {
           font-size: 8px;
-          line-height: 1.15;
+          line-height: 1.3;
         }
         .a4-contact {
           font-size: 8px;
-          margin-top: 0;
+          margin-top: 1px;
         }
 
         .a4-info-table {
@@ -577,7 +579,8 @@ const ViewInvoice = () => {
         .a4-footer {
           text-align: center;
           font-size: 7px;
-          margin-top: 3px;
+          margin-top: auto;
+          padding-top: 5mm;
           line-height: 1.3;
         }
         
@@ -685,13 +688,13 @@ const ViewInvoice = () => {
             display: none !important; 
           }
           .invoice-a4 {
-            width: 210mm !important;
+            width: 190mm !important;
             height: auto !important;
-            min-height: 0 !important;
-            max-width: 210mm !important;
-            padding: 5mm !important;
-            margin: 0 !important;
-            border: 2px solid #000 !important;
+            min-height: 277mm !important;
+            max-width: 190mm !important;
+            padding: 10mm !important;
+            margin: 0 auto !important;
+            border: 1px solid #000 !important;
             box-shadow: none !important;
             background: #ffffff !important;
             color: #000 !important;
