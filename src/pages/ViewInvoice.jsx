@@ -108,6 +108,13 @@ const ViewInvoice = () => {
     window.print();
   };
 
+  // Extract place of supply from customer address
+  const getPlaceOfSupply = () => {
+    if (invoice?.buyerDetails?.state) return invoice.buyerDetails.state;
+    if (invoice?.customer?.address?.city) return invoice.customer.address.city;
+    return 'Fazilnagar';
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -220,7 +227,7 @@ const ViewInvoice = () => {
                 </div>
                 <div>
                   <p className="font-semibold">Place of Supply:</p>
-                  <p>Gorakhpur</p>
+                  <p>{getPlaceOfSupply()}</p>
                 </div>
                 <div>
                   <p className="font-semibold">Due Date:</p>

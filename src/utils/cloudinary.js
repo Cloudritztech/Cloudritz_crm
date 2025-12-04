@@ -1,6 +1,6 @@
 /**
- * Upload image directly to Cloudinary from frontend
- * @param {File} file - Image file to upload
+ * Upload file directly to Cloudinary from frontend
+ * @param {File} file - File to upload (image or PDF)
  * @param {string} folder - Optional folder name (default: 'crm/')
  * @returns {Promise<string>} - Cloudinary secure_url
  */
@@ -13,21 +13,16 @@ export const uploadToCloudinary = async (file, folder = 'crm/') => {
       throw new Error('Cloudinary configuration missing. Check your .env file.');
     }
 
-    // Validate file
     if (!file) {
       throw new Error('No file provided');
     }
 
-    // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error('Invalid file type. Only PNG, JPG, and WebP are allowed.');
-    }
-
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      throw new Error('File size too large. Maximum 5MB allowed.');
+    // Determine resource type based on file type
+    const isPDF = file.type === 'application/pdf';
+    const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    
+    if (!isPDF && !allowedImageTypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only PNG, JPG, WebP, and PDF are allowed.');
     }
 
     // Create FormData
@@ -36,10 +31,11 @@ export const uploadToCloudinary = async (file, folder = 'crm/') => {
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', folder);
 
-    // Upload to Cloudinary
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+    // Use appropriate endpoint based on file type
+    const resourceType = isPDF ? 'raw' : 'image';
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
     
-    console.log('📤 Uploading to Cloudinary...');
+    console.log(`📤 Uploading ${isPDF ? 'PDF' : 'image'} to Cloudinary...`);
     const response = await fetch(cloudinaryUrl, {
       method: 'POST',
       body: formData
