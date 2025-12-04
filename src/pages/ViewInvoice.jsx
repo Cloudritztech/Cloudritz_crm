@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { invoicesAPI, profileAPI } from '../services/api';
 import { Share2, Printer, ArrowLeft, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 const ViewInvoice = () => {
   const { id } = useParams();
@@ -50,25 +48,41 @@ const ViewInvoice = () => {
   };
 
   const generatePDF = async () => {
+    const [html2canvas, jsPDF] = await Promise.all([
+      import('html2canvas').then(m => m.default),
+      import('jspdf').then(m => m.default)
+    ]);
+    
     const element = document.getElementById('invoice-content');
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff'
     });
     
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.8);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 0;
+    const ratio = pdfWidth / imgWidth;
+    const scaledHeight = imgHeight * ratio;
     
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    let heightLeft = scaledHeight;
+    let position = 0;
+    
+    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
+    heightLeft -= pdfHeight;
+    
+    while (heightLeft > 0) {
+      position = heightLeft - scaledHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
+      heightLeft -= pdfHeight;
+    }
+    
     return pdf;
   };
 
@@ -139,7 +153,7 @@ const ViewInvoice = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2 sm:p-4">
       {/* Action Buttons */}
       <div className="flex justify-between items-center mb-4 no-print">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
@@ -159,7 +173,7 @@ const ViewInvoice = () => {
 
       {/* Invoice Content */}
       {template === 'professional' ? (
-        <div id="invoice-content" className="bg-white mx-auto" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
+        <div id="invoice-content" className="bg-white mx-auto print:bg-white" style={{ maxWidth: '100%', width: '210mm', minHeight: 'auto', padding: '5mm' }}>
         {/* Header */}
         <div className="text-center mb-4">
           <h1 className="text-xl font-bold">Proforma Invoice</h1>
@@ -484,26 +498,55 @@ const ViewInvoice = () => {
 
       {/* Print Styles */}
       <style>{`
+        @media screen and (max-width: 768px) {
+          #invoice-content {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 10px !important;
+            font-size: 10px !important;
+          }
+          #invoice-content table {
+            font-size: 9px !important;
+          }
+        }
+        
         @media print {
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
-          body { 
+          body, html { 
             background: white !important;
             margin: 0 !important;
             padding: 0 !important;
+            color: black !important;
           }
           .no-print { 
             display: none !important; 
           }
           #invoice-content {
             width: 210mm !important;
+            max-width: 210mm !important;
             min-height: auto !important;
-            padding: ${template === 'professional' ? '10mm' : '5mm'} !important;
+            padding: 10mm !important;
             margin: 0 !important;
             box-shadow: none !important;
-            page-break-after: auto !important;
+            background: white !important;
+            color: black !important;
+          }
+          #invoice-content * {
+            background: white !important;
+            color: black !important;
+          }
+          #invoice-content .bg-gray-100,
+          #invoice-content .bg-gray-200 {
+            background: #f3f4f6 !important;
+          }
+          #invoice-content .border,
+          #invoice-content .border-black,
+          #invoice-content .border-2 {
+            border-color: black !important;
           }
           table {
             page-break-inside: auto !important;
@@ -515,8 +558,8 @@ const ViewInvoice = () => {
           thead {
             display: table-header-group !important;
           }
-          .border-2 {
-            page-break-inside: avoid !important;
+          tfoot {
+            display: table-footer-group !important;
           }
           @page {
             size: A4 portrait;

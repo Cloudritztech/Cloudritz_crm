@@ -25,24 +25,17 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchAllData();
-    const interval = setInterval(fetchAllData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchAllData = async () => {
     try {
       setError(null);
-      console.log('📊 Fetching dashboard data...');
-      
       const dashboardRes = await reportsAPI.getDashboard();
-      
       if (dashboardRes.data?.success && dashboardRes.data?.stats) {
         setStats(dashboardRes.data.stats);
       }
-      
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('❌ Error fetching dashboard data:', error);
       setError(error.response?.data?.message || error.message);
     } finally {
       setLoading(false);
