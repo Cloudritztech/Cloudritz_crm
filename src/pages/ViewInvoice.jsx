@@ -174,14 +174,18 @@ const ViewInvoice = () => {
       {/* Invoice Content */}
       {template === 'professional' ? (
         <div id="invoice-content" className="invoice-a4">
-        <div className="a4-header">
-          <div className="a4-company">{profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
-          {profile?.businessAddress?.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>) || <div className="a4-address">Shop Address, City, State</div>}
-          <div className="a4-contact">GSTIN/UIN: {profile?.gstin || '09FTIPS4577P1ZD'}</div>
-          <div className="a4-contact">E-Mail: {profile?.email || 'info@anvitiles.com'}</div>
-          <div className="a4-contact">Contact: {profile?.phone || '+91 9876543210'}</div>
+        <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '3px', marginBottom: '3px'}}>
+          <div>
+            <div className="a4-company">{profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
+            {profile?.businessAddress?.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>) || <div className="a4-address">Shop Address, City, State</div>}
+            <div className="a4-contact">GSTIN/UIN: {profile?.gstin || '09FTIPS4577P1ZD'}</div>
+            <div className="a4-contact">E-Mail: {profile?.email || 'info@anvitiles.com'}</div>
+            <div className="a4-contact">Contact: {profile?.phone || '+91 9876543210'}</div>
+          </div>
+          <div style={{textAlign: 'right', alignSelf: 'flex-start'}}>
+            <div style={{fontSize: '12px', fontWeight: '700', marginTop: '20px'}}>Proforma Invoice</div>
+          </div>
         </div>
-        <div className="a4-title">Proforma Invoice</div>
 
         <table className="a4-info-table">
           <tbody>
@@ -479,13 +483,7 @@ const ViewInvoice = () => {
           line-height: 1.15;
           border: 2px solid #000;
         }
-        .a4-header {
-          border-bottom: 1px solid #000;
-          padding-bottom: 3px;
-          margin-bottom: 3px;
-          font-size: 9px;
-          line-height: 1.15;
-        }
+
         .a4-company {
           font-size: 12px;
           font-weight: 700;
@@ -499,14 +497,7 @@ const ViewInvoice = () => {
           font-size: 8px;
           margin-top: 0;
         }
-        .a4-title {
-          text-align: center;
-          font-size: 12px;
-          font-weight: 700;
-          margin: 0;
-          padding: 3px;
-          border-bottom: 2px solid #000;
-        }
+
         .a4-info-table {
           width: 100%;
           border-collapse: collapse;
@@ -669,30 +660,43 @@ const ViewInvoice = () => {
         }
         
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
           }
-          body, html { 
+          html {
+            width: 210mm;
+            height: 297mm;
+          }
+          body { 
             background: #ffffff !important;
             margin: 0 !important;
             padding: 0 !important;
             color: #000 !important;
+            width: 210mm !important;
+            height: 297mm !important;
           }
           .no-print { 
             display: none !important; 
           }
           .invoice-a4 {
             width: 210mm !important;
-            min-height: 297mm !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-width: 210mm !important;
             padding: 5mm !important;
             margin: 0 !important;
-            border: none !important;
+            border: 2px solid #000 !important;
             box-shadow: none !important;
             background: #ffffff !important;
             color: #000 !important;
             transform: none !important;
+            page-break-after: always !important;
           }
           .invoice-a4 * {
             color: #000 !important;
@@ -715,10 +719,6 @@ const ViewInvoice = () => {
           }
           .a4-items-table tbody tr {
             page-break-inside: avoid !important;
-          }
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
           }
         }
       `}</style>
