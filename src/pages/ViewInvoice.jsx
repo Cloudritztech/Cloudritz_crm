@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { invoicesAPI, profileAPI } from '../services/api';
 import { Share2, Printer, ArrowLeft, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { uploadToCloudinary } from '../utils/cloudinary';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -72,33 +71,30 @@ const ViewInvoice = () => {
 
     setSharing(true);
     try {
-      // Generate PDF
       const pdf = await generatePDF();
-      const pdfBlob = pdf.output('blob');
-      
-      // Convert blob to file
-      const pdfFile = new File([pdfBlob], `invoice-${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
-      
-      // Upload to Cloudinary
-      const pdfUrl = await uploadToCloudinary(pdfFile, 'crm/invoices/');
-      
-      // Prepare WhatsApp message
       const customerName = invoice.customer?.name || 'Customer';
-      const message = `Hello ${customerName},\n\nThank you for shopping with ${profile?.businessName || 'Anvi Tiles & Decorhub'}!\n\nHere is your invoice #${invoice.invoiceNumber}\nAmount: ₹${invoice.grandTotal || invoice.total}\n\nInvoice PDF: ${pdfUrl}`;
+      const date = new Date(invoice.createdAt).toLocaleDateString('en-IN').replace(/\//g, '-');
+      const fileName = `${customerName}_${date}.pdf`;
+      pdf.save(fileName);
       
-      // Clean phone number
+      const businessName = profile?.businessName || 'Anvi Tiles & Decorhub';
+      const businessPhone = profile?.phone || '9876543210';
+      
+      const message = `Hello ${customerName},\n\nThank you for shopping with ${businessName}!\n\nInvoice Details:\n━━━━━━━━━━━━━━━\nInvoice #: ${invoice.invoiceNumber}\nDate: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}\nAmount: ₹${(invoice.grandTotal || invoice.total).toFixed(2)}\nPayment: ${invoice.paymentMethod?.toUpperCase() || 'CASH'}\n━━━━━━━━━━━━━━━\n\nFor any queries, contact us at ${businessPhone}\n\nThank you for your business! 🙏`;
+      
       let phone = invoice.customer.phone.replace(/[^0-9]/g, '');
       if (phone.startsWith('91')) phone = phone.substring(2);
-      if (!phone.startsWith('91')) phone = '91' + phone;
+      phone = '91' + phone;
       
-      // Open WhatsApp
-      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      setTimeout(() => {
+        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        toast.success('PDF downloaded! Attach it in WhatsApp');
+      }, 500);
       
-      toast.success('Opening WhatsApp...');
     } catch (error) {
       console.error('Share error:', error);
-      toast.error('Failed to share invoice');
+      toast.error('Failed to generate PDF');
     } finally {
       setSharing(false);
     }
@@ -155,7 +151,7 @@ const ViewInvoice = () => {
             {sharing ? (
               <>
                 <Loader className="h-4 w-4 animate-spin" />
-                Sharing...
+                Generating...
               </>
             ) : (
               <>
