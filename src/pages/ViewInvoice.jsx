@@ -148,14 +148,6 @@ const ViewInvoice = () => {
         </button>
         
         <div className="flex gap-2">
-          <select 
-            value={template} 
-            onChange={(e) => setTemplate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
-          >
-            <option value="compact">Compact Format</option>
-            <option value="professional">Professional A4</option>
-          </select>
           <button onClick={handleShare} disabled={sharing} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
             {sharing ? <><Loader className="h-4 w-4 animate-spin" />Generating...</> : <><Share2 className="h-4 w-4" />Share Invoice</>}
           </button>
@@ -493,21 +485,42 @@ const ViewInvoice = () => {
       {/* Print Styles */}
       <style>{`
         @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body { 
             background: white !important;
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          .no-print { display: none !important; }
+          .no-print { 
+            display: none !important; 
+          }
           #invoice-content {
             width: 210mm !important;
-            min-height: 297mm !important;
-            padding: 10mm !important;
+            min-height: auto !important;
+            padding: ${template === 'professional' ? '10mm' : '5mm'} !important;
             margin: 0 !important;
+            box-shadow: none !important;
+            page-break-after: auto !important;
+          }
+          table {
+            page-break-inside: auto !important;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+          }
+          thead {
+            display: table-header-group !important;
+          }
+          .border-2 {
+            page-break-inside: avoid !important;
           }
           @page {
-            size: A4;
-            margin: 0;
+            size: A4 portrait;
+            margin: 10mm;
           }
         }
       `}</style>
