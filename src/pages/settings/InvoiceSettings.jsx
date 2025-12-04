@@ -12,6 +12,7 @@ const InvoiceSettings = () => {
     prefix: 'INV',
     startingNumber: '1001',
     autoIncrement: true,
+    template: 'compact',
     termsAndConditions: 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
     footerNote: 'Thank you for your business!',
     showLogo: true,
@@ -115,6 +116,75 @@ const InvoiceSettings = () => {
             value={formData.footerNote}
             onChange={handleChange}
           />
+        </div>
+      </SettingsCard>
+
+      <SettingsCard title="Invoice Template" description="Choose invoice layout style">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="relative cursor-pointer">
+              <input
+                type="radio"
+                name="template"
+                value="compact"
+                checked={formData.template === 'compact'}
+                onChange={handleChange}
+                className="sr-only peer"
+              />
+              <div className="border-2 rounded-lg p-4 peer-checked:border-blue-600 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 hover:border-gray-400 dark:border-gray-700 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-900 dark:text-white">Compact Format</span>
+                  {formData.template === 'compact' && <span className="text-blue-600 text-sm">✓ Selected</span>}
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded p-2 text-xs">
+                  <div className="bg-gray-200 dark:bg-gray-700 h-3 mb-1 rounded"></div>
+                  <div className="grid grid-cols-2 gap-1 mb-1">
+                    <div className="bg-gray-100 dark:bg-gray-600 h-2 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-2 rounded"></div>
+                  </div>
+                  <div className="bg-gray-100 dark:bg-gray-600 h-8 mb-1 rounded"></div>
+                  <div className="bg-gray-100 dark:bg-gray-600 h-4 rounded"></div>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Responsive, mobile-friendly design</p>
+              </div>
+            </label>
+
+            <label className="relative cursor-pointer">
+              <input
+                type="radio"
+                name="template"
+                value="professional"
+                checked={formData.template === 'professional'}
+                onChange={handleChange}
+                className="sr-only peer"
+              />
+              <div className="border-2 rounded-lg p-4 peer-checked:border-blue-600 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 hover:border-gray-400 dark:border-gray-700 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-900 dark:text-white">Professional A4</span>
+                  {formData.template === 'professional' && <span className="text-blue-600 text-sm">✓ Selected</span>}
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded p-2 text-xs">
+                  <div className="bg-gray-200 dark:bg-gray-700 h-2 mb-1 rounded"></div>
+                  <div className="border border-gray-300 dark:border-gray-600 p-1 mb-1">
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 mb-0.5 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 rounded"></div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-0.5 mb-1">
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-1 rounded"></div>
+                  </div>
+                  <div className="border border-gray-300 dark:border-gray-600 h-6 mb-1 rounded"></div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <div className="bg-gray-100 dark:bg-gray-600 h-2 rounded"></div>
+                    <div className="bg-gray-100 dark:bg-gray-600 h-2 rounded"></div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">A4 format, ideal for printing</p>
+              </div>
+            </label>
+          </div>
         </div>
       </SettingsCard>
 

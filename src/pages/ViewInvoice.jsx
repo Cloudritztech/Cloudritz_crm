@@ -13,7 +13,7 @@ const ViewInvoice = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
-  const [template, setTemplate] = useState('compact'); // 'compact' or 'professional'
+  const [template, setTemplate] = useState('compact');
 
   useEffect(() => {
     fetchData();
@@ -21,9 +21,13 @@ const ViewInvoice = () => {
 
   const fetchData = async () => {
     try {
-      const [invoiceRes, profileRes] = await Promise.all([
+      const token = localStorage.getItem('token');
+      const [invoiceRes, profileRes, settingsRes] = await Promise.all([
         invoicesAPI.getById(id),
-        profileAPI.getProfile()
+        profileAPI.getProfile(),
+        fetch('/api/settings?section=invoice', {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json()).catch(() => ({ settings: { template: 'compact' } }))
       ]);
       
       if (invoiceRes.data?.success && invoiceRes.data?.invoice) {
@@ -32,6 +36,10 @@ const ViewInvoice = () => {
       
       if (profileRes.data?.success && profileRes.data?.profile) {
         setProfile(profileRes.data.profile);
+      }
+      
+      if (settingsRes?.settings?.template) {
+        setTemplate(settingsRes.settings.template);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
