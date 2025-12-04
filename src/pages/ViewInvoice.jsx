@@ -1,27 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { invoicesAPI, profileAPI } from '../services/api';
-
-// Add print styles
-const printStyles = `
-  @media print {
-    body * {
-      visibility: hidden;
-    }
-    #invoice-content, #invoice-content * {
-      visibility: visible;
-    }
-    #invoice-content {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-    }
-    .no-print {
-      display: none !important;
-    }
-  }
-`;
+import { Share2, Printer, ArrowLeft, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { uploadToCloudinary } from '../utils/cloudinary';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const ViewInvoice = () => {
   const { id } = useParams();
@@ -29,6 +13,7 @@ const ViewInvoice = () => {
   const [invoice, setInvoice] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -37,316 +22,400 @@ const ViewInvoice = () => {
   const fetchData = async () => {
     try {
       const [invoiceRes, profileRes] = await Promise.all([
-        fetchInvoice(),
+        invoicesAPI.getById(id),
         profileAPI.getProfile()
       ]);
+      
+      if (invoiceRes.data?.success && invoiceRes.data?.invoice) {
+        setInvoice(invoiceRes.data.invoice);
+      }
       
       if (profileRes.data?.success && profileRes.data?.profile) {
         setProfile(profileRes.data.profile);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchInvoice = async () => {
-    try {
-      console.log('🔍 Fetching invoice with ID:', id);
-      
-      if (!id) {
-        console.error('❌ No invoice ID provided');
-        setLoading(false);
-        return;
-      }
-      
-      const res = await invoicesAPI.getById(id);
-      console.log('✅ Invoice API response:', res.data);
-      
-      if (res.data?.success && res.data?.invoice) {
-        setInvoice(res.data.invoice);
-      } else {
-        console.error('❌ Invalid response structure:', res.data);
-        setInvoice(null);
-      }
-    } catch (err) {
-      console.error('❌ Error fetching invoice:', err);
-      console.error('❌ Error details:', err.response?.data);
-      setInvoice(null);
+      toast.error('Failed to load invoice');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
-  if (!invoice) return <div className="text-center py-8">Invoice not found</div>;
+  const generatePDF = async () => {
+    const element = document.getElementById('invoice-content');
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 0;
+    
+    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    return pdf;
+  };
+
+  const handleShare = async () => {
+    if (!invoice?.customer?.phone) {
+      toast.error('Customer phone number not found');
+      return;
+    }
+
+    setSharing(true);
+    try {
+      // Generate PDF
+      const pdf = await generatePDF();
+      const pdfBlob = pdf.output('blob');
+      
+      // Convert blob to file
+      const pdfFile = new File([pdfBlob], `invoice-${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
+      
+      // Upload to Cloudinary
+      const pdfUrl = await uploadToCloudinary(pdfFile, 'crm/invoices/');
+      
+      // Prepare WhatsApp message
+      const customerName = invoice.customer?.name || 'Customer';
+      const message = `Hello ${customerName},\n\nThank you for shopping with ${profile?.businessName || 'Anvi Tiles & Decorhub'}!\n\nHere is your invoice #${invoice.invoiceNumber}\nAmount: ₹${invoice.grandTotal || invoice.total}\n\nInvoice PDF: ${pdfUrl}`;
+      
+      // Clean phone number
+      let phone = invoice.customer.phone.replace(/[^0-9]/g, '');
+      if (phone.startsWith('91')) phone = phone.substring(2);
+      if (!phone.startsWith('91')) phone = '91' + phone;
+      
+      // Open WhatsApp
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      
+      toast.success('Opening WhatsApp...');
+    } catch (error) {
+      console.error('Share error:', error);
+      toast.error('Failed to share invoice');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600 dark:text-gray-400">Invoice not found</p>
+        <button onClick={() => navigate('/invoices')} className="mt-4 text-blue-600 hover:underline">
+          Back to Invoices
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <style>{printStyles}</style>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 p-2 sm:p-4 lg:p-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 no-print space-y-4 sm:space-y-0">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words whitespace-normal">Invoice Details</h2>
-        <div className="flex flex-wrap gap-2">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 lg:p-6">
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 no-print">
+        <button
+          onClick={() => navigate('/invoices')}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="hidden sm:inline">Back to Invoices</span>
+        </button>
+        
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
-            onClick={async () => {
-              try {
-                const response = await invoicesAPI.generatePDF(id);
-                
-                const blob = new Blob([response.data], { type: 'application/pdf' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `invoice-${invoice.invoiceNumber}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-              } catch (err) {
-                alert('Failed to download PDF');
-              }
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            onClick={handleShare}
+            disabled={sharing}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
           >
-            Download PDF
+            {sharing ? (
+              <>
+                <Loader className="h-4 w-4 animate-spin" />
+                Sharing...
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                Share Invoice
+              </>
+            )}
           </button>
+          
           <button
-            onClick={() => {
-              const printContent = document.getElementById('invoice-content');
-              const originalContent = document.body.innerHTML;
-              document.body.innerHTML = printContent.innerHTML;
-              window.print();
-              document.body.innerHTML = originalContent;
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            onClick={handlePrint}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
           >
+            <Printer className="h-4 w-4" />
             Print
-          </button>
-          <button
-            onClick={() => navigate(`/invoices/edit/${id}`)}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => navigate("/invoices")}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            Back
           </button>
         </div>
       </div>
 
-      <div id="invoice-content" className="bg-white rounded-lg shadow-lg p-2 sm:p-4 lg:p-8 w-full max-w-4xl mx-auto print:shadow-none print:rounded-none print:p-0 print:max-w-none" style={{overflowWrap: 'break-word'}}>
-        {/* Header */}
-        <div className="border border-black sm:border-2">
-          <div className="bg-gray-100 p-2 sm:p-4 text-center border-b border-black sm:border-b-2">
-            <h1 className="text-xl sm:text-2xl font-bold break-words whitespace-normal">TAX INVOICE</h1>
-            <div className="text-right text-xs sm:text-sm mt-2 break-words whitespace-normal">ORIGINAL FOR RECIPIENT</div>
+      {/* Invoice Content */}
+      <div id="invoice-content" className="bg-white mx-auto max-w-4xl shadow-lg print:shadow-none print:max-w-none">
+        <div className="border-2 border-black">
+          {/* Header */}
+          <div className="bg-gray-100 p-3 sm:p-4 text-center border-b-2 border-black no-break">
+            <h1 className="text-lg sm:text-2xl font-bold">TAX INVOICE</h1>
+            <div className="text-right text-xs mt-1">ORIGINAL FOR RECIPIENT</div>
           </div>
 
           {/* Company and Invoice Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 border-b border-black sm:border-b-2">
-            <div className="p-2 sm:p-4 sm:border-r-2 border-black">
-              <div className="flex items-center mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 border-b-2 border-black no-break">
+            <div className="p-3 sm:p-4 border-b md:border-b-0 md:border-r-2 border-black">
+              <div className="flex items-start gap-2 mb-2">
                 {profile?.logoUrl ? (
-                  <img 
-                    src={profile.logoUrl} 
-                    alt="Business Logo" 
-                    className="w-8 h-8 sm:w-12 sm:h-12 object-contain mr-3"
-                  />
+                  <img src={profile.logoUrl} alt="Logo" className="w-10 h-10 object-contain" />
                 ) : (
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-sm">
                     {profile?.businessName?.charAt(0) || 'A'}
                   </div>
                 )}
-                <div>
-                  <h2 className="font-bold text-sm sm:text-lg break-words whitespace-normal">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
-                  <p className="text-xs sm:text-sm break-words whitespace-normal">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-sm sm:text-base break-words">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
+                  <p className="text-xs break-words">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
                 </div>
               </div>
-              <div className="text-xs sm:text-sm space-y-1">
-                {profile?.businessAddress ? (
-                  profile.businessAddress.split('\n').map((line, index) => (
-                    <p key={index} className="break-words whitespace-normal">{line}</p>
-                  ))
-                ) : (
+              <div className="text-xs space-y-0.5">
+                {profile?.businessAddress?.split('\n').map((line, i) => (
+                  <p key={i} className="break-words">{line}</p>
+                )) || (
                   <>
-                    <p className="break-words whitespace-normal">Shop No. 123, Tiles Market</p>
-                    <p className="break-words whitespace-normal">Main Road, City Center</p>
-                    <p className="break-words whitespace-normal">State: UTTAR PRADESH, 273001</p>
+                    <p>Shop No. 123, Tiles Market</p>
+                    <p>Main Road, City Center</p>
+                    <p>State: UTTAR PRADESH, 273001</p>
                   </>
                 )}
-                <p className="break-words whitespace-normal">Mobile: {profile?.phone || '+91 9876543210'}</p>
-                <p className="break-words whitespace-normal">Email: {profile?.email || 'info@anvitiles.com'}</p>
+                <p>Mobile: {profile?.phone || '+91 9876543210'}</p>
+                <p>Email: {profile?.email || 'info@anvitiles.com'}</p>
               </div>
             </div>
             
-            <div className="p-2 sm:p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+            <div className="p-3 sm:p-4">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <p className="break-words whitespace-normal"><strong>Invoice #:</strong></p>
-                  <p className="break-words whitespace-normal">{invoice.invoiceNumber}</p>
+                  <p className="font-semibold">Invoice #:</p>
+                  <p className="break-words">{invoice.invoiceNumber}</p>
                 </div>
                 <div>
-                  <p className="break-words whitespace-normal"><strong>Invoice Date:</strong></p>
-                  <p className="break-words whitespace-normal">{new Date(invoice.createdAt).toLocaleDateString()}</p>
+                  <p className="font-semibold">Date:</p>
+                  <p>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</p>
                 </div>
                 <div>
-                  <p className="break-words whitespace-normal"><strong>Place of Supply:</strong></p>
-                  <p className="break-words whitespace-normal">Gorakhpur</p>
+                  <p className="font-semibold">Place of Supply:</p>
+                  <p>Gorakhpur</p>
                 </div>
                 <div>
-                  <p className="break-words whitespace-normal"><strong>Due Date:</strong></p>
-                  <p className="break-words whitespace-normal">{new Date(invoice.createdAt).toLocaleDateString()}</p>
+                  <p className="font-semibold">Due Date:</p>
+                  <p>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Customer Details */}
-          <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
-            <p className="font-bold mb-2 break-words whitespace-normal">Customer Details:</p>
-            <p className="text-xs sm:text-sm break-words whitespace-normal">GSTIN: N/A</p>
-            <p className="text-xs sm:text-sm break-words whitespace-normal">Billing Address: {invoice.customer?.name}</p>
-            <p className="text-xs sm:text-sm break-words whitespace-normal">Phone: {invoice.customer?.phone}</p>
+          <div className="p-3 sm:p-4 border-b-2 border-black text-xs no-break">
+            <p className="font-bold mb-1">Customer Details:</p>
+            <p>Name: {invoice.customer?.name}</p>
+            <p>Phone: {invoice.customer?.phone}</p>
+            <p>GSTIN: N/A</p>
           </div>
 
-          {/* Items Table */}
-          <div className="border-b border-black sm:border-b-2 w-full overflow-x-auto">
-            <table className="w-full min-w-full text-xs sm:text-sm" style={{tableLayout: 'fixed', overflowWrap: 'break-word'}}>
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border-r border-black p-1 sm:p-2 text-left w-8 sm:w-12">S</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-left">Item</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-center w-16 sm:w-20">HSN</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-right w-16 sm:w-24">Rate</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-center w-12 sm:w-16">Qty</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-right w-20 sm:w-28">Taxable</th>
-                  <th className="border-r border-black p-1 sm:p-2 text-right w-16 sm:w-24">GST</th>
-                  <th className="p-1 sm:p-2 text-right w-20 sm:w-28">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items?.map((item, index) => {
-                  const taxableValue = item.taxableValue || (item.quantity * item.price);
-                  const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
-                  const totalAmount = taxableValue + gstAmount;
-                  
-                  return (
-                    <tr key={index} className="border-b border-gray-300">
-                      <td className="border-r border-black p-1 sm:p-2 text-center">{index + 1}</td>
-                      <td className="border-r border-black p-1 sm:p-2" style={{overflowWrap: 'break-word', wordBreak: 'break-word'}}>
-                        {item.product?.name || 'Product'}
-                      </td>
-                      <td className="border-r border-black p-1 sm:p-2 text-center">
-                        {item.product?.hsnCode || '6907'}
-                      </td>
-                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{parseFloat(item.price).toFixed(2)}</td>
-                      <td className="border-r border-black p-1 sm:p-2 text-center">{item.quantity}</td>
-                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{taxableValue.toFixed(2)}</td>
-                      <td className="border-r border-black p-1 sm:p-2 text-right">₹{gstAmount.toFixed(2)}</td>
-                      <td className="p-1 sm:p-2 text-right">₹{totalAmount.toFixed(2)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Items Table - Mobile Responsive */}
+          <div className="border-b-2 border-black">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="border-r border-black p-2 text-left w-8">#</th>
+                    <th className="border-r border-black p-2 text-left">Item</th>
+                    <th className="border-r border-black p-2 text-center w-16">HSN</th>
+                    <th className="border-r border-black p-2 text-right w-20">Rate</th>
+                    <th className="border-r border-black p-2 text-center w-12">Qty</th>
+                    <th className="border-r border-black p-2 text-right w-24">Taxable</th>
+                    <th className="border-r border-black p-2 text-right w-20">GST</th>
+                    <th className="p-2 text-right w-24">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.items?.map((item, index) => {
+                    const taxableValue = item.taxableValue || (item.quantity * item.price);
+                    const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
+                    const totalAmount = taxableValue + gstAmount;
+                    
+                    return (
+                      <tr key={index} className="border-t border-gray-300">
+                        <td className="border-r border-black p-2 text-center">{index + 1}</td>
+                        <td className="border-r border-black p-2 break-words">{item.product?.name || 'Product'}</td>
+                        <td className="border-r border-black p-2 text-center">{item.product?.hsnCode || '6907'}</td>
+                        <td className="border-r border-black p-2 text-right">₹{item.price.toFixed(2)}</td>
+                        <td className="border-r border-black p-2 text-center">{item.quantity}</td>
+                        <td className="border-r border-black p-2 text-right">₹{taxableValue.toFixed(2)}</td>
+                        <td className="border-r border-black p-2 text-right">₹{gstAmount.toFixed(2)}</td>
+                        <td className="p-2 text-right">₹{totalAmount.toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-gray-300">
+              {invoice.items?.map((item, index) => {
+                const taxableValue = item.taxableValue || (item.quantity * item.price);
+                const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
+                const totalAmount = taxableValue + gstAmount;
+                
+                return (
+                  <div key={index} className="p-3 text-xs space-y-1">
+                    <div className="flex justify-between font-semibold">
+                      <span>{index + 1}. {item.product?.name || 'Product'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
+                      <div>HSN: {item.product?.hsnCode || '6907'}</div>
+                      <div>Rate: ₹{item.price.toFixed(2)}</div>
+                      <div>Qty: {item.quantity}</div>
+                      <div>Taxable: ₹{taxableValue.toFixed(2)}</div>
+                      <div>GST: ₹{gstAmount.toFixed(2)}</div>
+                      <div className="font-semibold text-gray-900">Amount: ₹{totalAmount.toFixed(2)}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Totals */}
-          <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
-            <div className="flex flex-col sm:flex-row justify-between">
-              <div className="flex-1"></div>
-              <div className="text-right space-y-1 min-w-[280px]">
+          <div className="p-3 sm:p-4 border-b-2 border-black no-break">
+            <div className="flex justify-end">
+              <div className="w-full sm:w-64 space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between border-b pb-1">
                   <span className="font-medium">Item Total:</span>
-                  <span className="font-medium">₹{((invoice.totalTaxableAmount || invoice.subtotal) + (invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
+                  <span>₹{((invoice.totalTaxableAmount || invoice.subtotal) + (invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
                 </div>
                 
                 {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
                   <div className="flex justify-between text-red-600">
                     <span>Discount:</span>
-                    <span>-₹{(parseFloat(invoice.discount || 0) + parseFloat(invoice.autoDiscount || 0)).toFixed(2)}</span>
+                    <span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between font-semibold border-b pb-1 mt-1">
+                <div className="flex justify-between font-semibold border-b pb-1">
                   <span>Taxable Amount:</span>
-                  <span>₹{parseFloat(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span>
+                  <span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span>
                 </div>
                 
                 {(invoice.totalCgst > 0 || invoice.totalSgst > 0) && (
                   <>
-                    <div className="flex justify-between text-blue-700 text-sm">
+                    <div className="flex justify-between text-blue-700">
                       <span>CGST @ 9%:</span>
-                      <span>₹{parseFloat(invoice.totalCgst || 0).toFixed(2)}</span>
+                      <span>₹{(invoice.totalCgst || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-blue-700 text-sm">
+                    <div className="flex justify-between text-blue-700">
                       <span>SGST @ 9%:</span>
-                      <span>₹{parseFloat(invoice.totalSgst || 0).toFixed(2)}</span>
+                      <span>₹{(invoice.totalSgst || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-blue-800">
                       <span>Total GST (18%):</span>
-                      <span>₹{(parseFloat(invoice.totalCgst || 0) + parseFloat(invoice.totalSgst || 0)).toFixed(2)}</span>
+                      <span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span>
                     </div>
                   </>
                 )}
                 
                 {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between">
                     <span>Round Off:</span>
-                    <span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{parseFloat(invoice.roundOff).toFixed(2)}</span>
+                    <span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between text-xl font-bold text-green-700 border-t-2 border-gray-400 pt-2 mt-2">
+                <div className="flex justify-between text-base sm:text-lg font-bold text-green-700 border-t-2 border-gray-400 pt-2">
                   <span>Grand Total:</span>
-                  <span>₹{parseFloat(invoice.grandTotal || invoice.total).toFixed(2)}</span>
+                  <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Amount in Words */}
-          <div className="p-2 sm:p-4 border-b border-black sm:border-b-2">
-            <p className="text-xs sm:text-sm break-words whitespace-normal">
-              <strong>Total amount (in words):</strong> {invoice.amountInWords || `Rupees ${invoice.grandTotal || invoice.total} Only`}
-            </p>
+          <div className="p-3 sm:p-4 border-b-2 border-black text-xs no-break">
+            <p><strong>Amount in words:</strong> {invoice.amountInWords || `Rupees ${invoice.grandTotal || invoice.total} Only`}</p>
           </div>
 
           {/* Footer */}
-          <div className="grid grid-cols-1 sm:grid-cols-2">
-            <div className="p-2 sm:p-4 sm:border-r-2 border-black">
-              <p className="font-bold mb-2 break-words whitespace-normal">Bank Details:</p>
-              <div className="text-xs sm:text-sm space-y-1">
-                <p className="break-words whitespace-normal">Bank: HDFC Bank</p>
-                <p className="break-words whitespace-normal">Account #: 50200068337918</p>
-                <p className="break-words whitespace-normal">IFSC Code: HDFC0004331</p>
-                <p className="break-words whitespace-normal">Branch: Main Branch</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 no-break">
+            <div className="p-3 sm:p-4 border-b md:border-b-0 md:border-r-2 border-black">
+              <p className="font-bold mb-2 text-xs">Bank Details:</p>
+              <div className="text-xs space-y-0.5">
+                <p>Bank: HDFC Bank</p>
+                <p>Account #: 50200068337918</p>
+                <p>IFSC Code: HDFC0004331</p>
+                <p>Branch: Main Branch</p>
               </div>
             </div>
             
-            <div className="p-2 sm:p-4 text-right">
-              <p className="mb-4 break-words whitespace-normal"><strong>Amount Payable:</strong></p>
-              <p className="mb-8 break-words whitespace-normal">For {profile?.businessName || 'ANVI TILES & DECORHUB'}</p>
+            <div className="p-3 sm:p-4 text-right">
+              <p className="mb-2 text-xs"><strong>For {profile?.businessName || 'ANVI TILES & DECORHUB'}</strong></p>
               {profile?.signatureUrl ? (
-                <div className="mt-8 mb-4">
-                  <img 
-                    src={profile.signatureUrl} 
-                    alt="Digital Signature" 
-                    className="max-w-24 max-h-12 object-contain ml-auto"
-                  />
-                </div>
+                <img src={profile.signatureUrl} alt="Signature" className="max-w-20 max-h-10 object-contain ml-auto mt-4" />
               ) : (
-                <p className="mt-16 break-words whitespace-normal">Authorised Signatory</p>
+                <p className="mt-8 text-xs">Authorised Signatory</p>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Print Styles */}
+      <style>{`
+        @media print {
+          body { 
+            background: white !important; 
+            margin: 0;
+            padding: 0;
+          }
+          .no-print { display: none !important; }
+          #invoice-content { 
+            max-width: 100% !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+          }
+          .no-break {
+            page-break-inside: avoid;
+          }
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          #invoice-content {
+            font-size: 11px;
+          }
+        }
+      `}</style>
     </div>
-    </>
   );
 };
 
