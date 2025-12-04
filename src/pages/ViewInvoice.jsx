@@ -268,8 +268,6 @@ const ViewInvoice = () => {
         </table>
         {invoice.items?.length > 10 && <div className="a4-continued">continued to page number 2</div>}
 
-        <div style={{marginTop: '10mm'}}></div>
-
         <div className="a4-amount-words">
           <strong>Amount Chargeable (in words):</strong>
           <div style={{fontWeight: '600', marginTop: '3px'}}>{invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}</div>
@@ -528,20 +526,40 @@ const ViewInvoice = () => {
           width: 100%;
           border-collapse: collapse;
           font-size: 8px;
-          margin-bottom: 4px;
+          flex: 1;
+          border: 1px solid #000;
         }
         .a4-items-table th {
-          border: 1px solid #000;
+          border-left: 1px solid #000;
+          border-right: 1px solid #000;
+          border-bottom: 1px solid #000;
           padding: 2px;
           background: #f0f0f0;
           font-weight: 600;
           text-align: center;
           line-height: 1.3;
         }
+        .a4-items-table th:first-child {
+          border-left: none;
+        }
+        .a4-items-table th:last-child {
+          border-right: none;
+        }
         .a4-items-table td {
-          border: 1px solid #000;
+          border-left: 1px solid #000;
+          border-right: 1px solid #000;
+          border-bottom: none;
           padding: 2px;
           line-height: 1.3;
+        }
+        .a4-items-table td:first-child {
+          border-left: none;
+        }
+        .a4-items-table td:last-child {
+          border-right: none;
+        }
+        .a4-items-table tbody tr:last-child td {
+          border-bottom: 1px solid #000;
         }
         .a4-continued {
           text-align: right;
@@ -579,7 +597,6 @@ const ViewInvoice = () => {
           width: 100%;
           border-collapse: collapse;
           font-size: 8px;
-          margin-top: auto;
         }
         .a4-footer-table td {
           border: 1px solid #000;
@@ -590,7 +607,7 @@ const ViewInvoice = () => {
         .a4-footer {
           text-align: center;
           font-size: 7px;
-          margin-top: 10mm;
+          margin-top: 4mm;
           line-height: 1.3;
         }
         
