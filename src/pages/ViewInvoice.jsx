@@ -174,7 +174,7 @@ const ViewInvoice = () => {
       {/* Invoice Content */}
       {template === 'professional' ? (
         <div id="invoice-content" className="invoice-a4">
-        <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '4px', marginBottom: '4px'}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderBottom: '2px solid #000', padding: '6px'}}>
           <div>
             <div className="a4-company">{profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
             {profile?.businessAddress?.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>) || <div className="a4-address">Shop Address, City, State</div>}
@@ -183,61 +183,35 @@ const ViewInvoice = () => {
             <div className="a4-contact">Contact: {profile?.phone || '+91 9876543210'}</div>
           </div>
           <div style={{textAlign: 'right', alignSelf: 'flex-start'}}>
-            <div style={{fontSize: '12px', fontWeight: '700', marginTop: '20px'}}>Proforma Invoice</div>
+            <div style={{fontSize: '12px', fontWeight: '700', marginTop: '20px'}}>Tax Invoice</div>
           </div>
         </div>
 
-        <table className="a4-info-table">
-          <tbody>
-            <tr>
-              <td>Invoice No.: <strong>{invoice.invoiceNumber}</strong></td>
-              <td>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></td>
-            </tr>
-            <tr>
-              <td>Delivery Note: {invoice.deliveryNote || '-'}</td>
-              <td>Mode/Terms of Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</td>
-            </tr>
-            <tr>
-              <td>Reference No. & Date: {invoice.referenceNo || '-'}</td>
-              <td>Other References: -</td>
-            </tr>
-            <tr>
-              <td>Buyer's Order No.: {invoice.buyerOrderNo || '-'}</td>
-              <td>Dated: {new Date(invoice.createdAt).toLocaleDateString('en-IN')}</td>
-            </tr>
-            <tr>
-              <td>Dispatch Doc No.: -</td>
-              <td>Delivery Note Date: -</td>
-            </tr>
-            <tr>
-              <td>Dispatched through: {invoice.destination || '-'}</td>
-              <td>Destination: {getPlaceOfSupply()}</td>
-            </tr>
-            <tr>
-              <td colSpan="2">Terms of Delivery: -</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="a4-party">
-          <div>Consignee (Ship to):</div>
-          <div className="a4-party-name">{invoice.customer?.name}</div>
-          <div>{invoice.buyerDetails?.address || invoice.customer?.address?.street || '-'}</div>
-          <div>Mobile: {invoice.customer?.phone}</div>
-          <div>State Name: {invoice.buyerDetails?.state || invoice.customer?.address?.state || 'Uttar Pradesh'}</div>
-          <div>Place of Supply: {getPlaceOfSupply()}</div>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', border: '2px solid #000', borderTop: 'none', fontSize: '7px', padding: '4px', gap: '4px'}}>
+          <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
+          <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
+          <div>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</div>
+          <div>Destination: {getPlaceOfSupply()}</div>
         </div>
 
-        <table className="a4-items-table">
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '6px', fontSize: '7px'}}>
+          <div style={{fontWeight: '700', marginBottom: '3px'}}>Customer Details:</div>
+          <div style={{fontWeight: '700'}}>{invoice.customer?.name}</div>
+          <div>Mobile: {invoice.customer?.phone}</div>
+          <div>State: {invoice.buyerDetails?.state || invoice.customer?.address?.state || 'Uttar Pradesh'}</div>
+        </div>
+
+        <table style={{width: '100%', borderCollapse: 'collapse', border: '2px solid #000', borderTop: 'none', fontSize: '7px'}}>
           <thead>
-            <tr>
-              <th style={{width: '30px'}}>Sl No.</th>
-              <th>Description of Goods</th>
-              <th style={{width: '60px'}}>HSN/SAC</th>
-              <th style={{width: '50px'}}>Quantity</th>
-              <th style={{width: '70px'}}>Rate</th>
-              <th style={{width: '40px'}}>per</th>
-              <th style={{width: '80px'}}>Amount</th>
+            <tr style={{backgroundColor: '#f0f0f0'}}>
+              <th style={{border: '1px solid #000', padding: '3px', width: '25px'}}>Sl</th>
+              <th style={{border: '1px solid #000', padding: '3px', textAlign: 'left'}}>Description</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '45px'}}>HSN</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '35px'}}>Qty</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '50px'}}>Rate</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '55px'}}>Taxable</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '45px'}}>GST</th>
+              <th style={{border: '1px solid #000', padding: '3px', width: '60px'}}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -247,96 +221,45 @@ const ViewInvoice = () => {
               const totalAmount = taxableValue + gstAmount;
               return (
                 <tr key={index}>
-                  <td style={{textAlign: 'center'}}>{index + 1}</td>
-                  <td>{item.product?.name || 'Product'}</td>
-                  <td style={{textAlign: 'center'}}>{item.product?.hsnCode || '6907'}</td>
-                  <td style={{textAlign: 'center'}}>{item.quantity}</td>
-                  <td style={{textAlign: 'right'}}>{item.price.toFixed(2)}</td>
-                  <td style={{textAlign: 'center'}}>Nos</td>
-                  <td style={{textAlign: 'right'}}>{totalAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{index + 1}</td>
+                  <td style={{border: '1px solid #000', padding: '2px'}}>{item.product?.name || 'Product'}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{item.product?.hsnCode || '6907'}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{item.quantity}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{item.price.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{taxableValue.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{gstAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
                 </tr>
               );
             })}
-            <tr>
-              <td colSpan="6" rowSpan="2" style={{fontWeight: '600', verticalAlign: 'top'}}>IGST @ 18%</td>
-              <td style={{textAlign: 'right'}}>{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style={{textAlign: 'right', fontWeight: '700'}}>₹ {(invoice.grandTotal || invoice.total).toFixed(2)}</td>
+            <tr style={{fontWeight: '700'}}>
+              <td colSpan="5" style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>Total</td>
+              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
-        {invoice.items?.length > 10 && <div className="a4-continued">continued to page number 2</div>}
 
-        <div className="a4-amount-words">
-          <strong>Amount Chargeable (in words):</strong>
-          <div style={{fontWeight: '600', marginTop: '3px'}}>{invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}</div>
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '6px', fontSize: '7px'}}>
+          <strong>Amount in words:</strong> {invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}
         </div>
 
-        <table className="a4-gst-table">
-          <thead>
-            <tr>
-              <th rowSpan="2">HSN/SAC</th>
-              <th rowSpan="2">Taxable Value</th>
-              <th colSpan="2">CGST</th>
-              <th colSpan="2">SGST/UTGST</th>
-              <th rowSpan="2">Total Tax Amount</th>
-            </tr>
-            <tr>
-              <th>Rate</th>
-              <th>Amount</th>
-              <th>Rate</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{textAlign: 'center'}}>6907</td>
-              <td style={{textAlign: 'right'}}>{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
-              <td style={{textAlign: 'center'}}>9%</td>
-              <td style={{textAlign: 'right'}}>{(invoice.totalCgst || 0).toFixed(2)}</td>
-              <td style={{textAlign: 'center'}}>9%</td>
-              <td style={{textAlign: 'right'}}>{(invoice.totalSgst || 0).toFixed(2)}</td>
-              <td style={{textAlign: 'right'}}>{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-            </tr>
-            <tr style={{fontWeight: '600'}}>
-              <td colSpan="2" style={{textAlign: 'right'}}>Total</td>
-              <td colSpan="2" style={{textAlign: 'right'}}>{(invoice.totalCgst || 0).toFixed(2)}</td>
-              <td colSpan="2" style={{textAlign: 'right'}}>{(invoice.totalSgst || 0).toFixed(2)}</td>
-              <td style={{textAlign: 'right'}}>{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <table className="a4-footer-table">
-          <tbody>
-            <tr>
-              <td style={{width: '50%', verticalAlign: 'top'}}>
-                <div style={{fontWeight: '600', marginBottom: '4px'}}>Tax Amount (in words): INR {invoice.amountInWords || `${invoice.grandTotal || invoice.total} Only`}</div>
-                <div style={{marginTop: '8px', fontWeight: '600'}}>Declaration:</div>
-                <div style={{fontSize: '9px', lineHeight: '1.4'}}>We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</div>
-                <div style={{marginTop: '10px'}}>
-                  <div style={{fontWeight: '600'}}>Bank Name: HDFC Bank</div>
-                  <div>A/c No.: 50200068337918</div>
-                  <div>Branch & IFS Code: HDFC0004331</div>
-                </div>
-              </td>
-              <td style={{textAlign: 'right', verticalAlign: 'top'}}>
-                <div style={{fontWeight: '600', marginBottom: '4px'}}>for {profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
-                <div style={{height: '50px', marginTop: '15px', marginBottom: '10px'}}>
-                  {profile?.signatureUrl && (
-                    <img src={profile.signatureUrl} alt="Signature" style={{maxWidth: '90px', maxHeight: '45px', marginLeft: 'auto', display: 'block'}} />
-                  )}
-                </div>
-                <div style={{fontWeight: '600', borderTop: '1px solid #000', paddingTop: '4px', marginTop: '10px'}}>Authorised Signatory</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="a4-footer">
-          <div style={{fontWeight: '600'}}>SUBJECT TO VARANASI JURISDICTION</div>
-          <div>This is a Computer Generated Invoice</div>
+        <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
+          <div style={{flex: 1, padding: '6px', fontSize: '7px', borderRight: '2px solid #000'}}>
+            <div style={{fontWeight: '700', marginBottom: '3px'}}>Bank Details:</div>
+            <div>Bank: HDFC Bank</div>
+            <div>A/c No.: 50200068337918</div>
+            <div>IFSC: HDFC0004331</div>
+            <div style={{marginTop: '6px', fontSize: '6px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
+          </div>
+          <div style={{width: '140px', padding: '6px', fontSize: '7px', textAlign: 'center'}}>
+            <div style={{fontWeight: '700', marginBottom: '3px'}}>for {profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
+            {profile?.signatureUrl && (
+              <img src={profile.signatureUrl} alt="Signature" style={{maxWidth: '80px', maxHeight: '35px', margin: '10px auto', display: 'block'}} />
+            )}
+            <div style={{marginTop: '20px', fontSize: '6px'}}>Authorised Signatory</div>
+          </div>
         </div>
       </div>
       ) : (
@@ -500,116 +423,7 @@ const ViewInvoice = () => {
           margin-top: 1px;
         }
 
-        .a4-info-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8px;
-          margin-bottom: 4px;
-        }
-        .a4-info-table td {
-          border: 1px solid #000;
-          padding: 2px 4px;
-          line-height: 1.4;
-        }
-        .a4-party {
-          border: 1px solid #000;
-          padding: 4px;
-          font-size: 8px;
-          margin-bottom: 4px;
-          line-height: 1.4;
-        }
-        .a4-party-name {
-          font-weight: 700;
-          margin: 2px 0;
-        }
-        .a4-items-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8px;
-          flex: 1;
-          border: 1px solid #000;
-        }
-        .a4-items-table th {
-          border-left: 1px solid #000;
-          border-right: 1px solid #000;
-          border-bottom: 1px solid #000;
-          padding: 2px;
-          background: #f0f0f0;
-          font-weight: 600;
-          text-align: center;
-          line-height: 1.3;
-        }
-        .a4-items-table th:first-child {
-          border-left: none;
-        }
-        .a4-items-table th:last-child {
-          border-right: none;
-        }
-        .a4-items-table td {
-          border-left: 1px solid #000;
-          border-right: 1px solid #000;
-          border-bottom: none;
-          padding: 2px;
-          line-height: 1.3;
-        }
-        .a4-items-table td:first-child {
-          border-left: none;
-        }
-        .a4-items-table td:last-child {
-          border-right: none;
-        }
-        .a4-items-table tbody tr:last-child td {
-          border-bottom: 1px solid #000;
-        }
-        .a4-continued {
-          text-align: right;
-          font-size: 8px;
-          margin: -3px 0 3px 0;
-          font-style: italic;
-        }
-        .a4-amount-words {
-          border: 1px solid #000;
-          padding: 3px 4px;
-          font-size: 8px;
-          margin-bottom: 4px;
-          line-height: 1.4;
-        }
-        .a4-gst-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8px;
-          margin-bottom: 4px;
-        }
-        .a4-gst-table th {
-          border: 1px solid #000;
-          padding: 2px;
-          background: #f0f0f0;
-          font-weight: 600;
-          text-align: center;
-          line-height: 1.3;
-        }
-        .a4-gst-table td {
-          border: 1px solid #000;
-          padding: 2px;
-          line-height: 1.3;
-        }
-        .a4-footer-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8px;
-        }
-        .a4-footer-table td {
-          border: 1px solid #000;
-          padding: 4px;
-          line-height: 1.4;
-          vertical-align: top;
-        }
-        .a4-footer {
-          text-align: center;
-          font-size: 7px;
-          margin-top: 4mm;
-          line-height: 1.3;
-        }
+
         
         @media screen and (max-width: 768px) {
           .invoice-a4 {
@@ -617,12 +431,7 @@ const ViewInvoice = () => {
             min-height: 100vh;
             padding: 8px;
             margin: 0;
-            border: none;
             font-size: 7px;
-          }
-          .a4-header {
-            padding-bottom: 3px;
-            margin-bottom: 3px;
           }
           .a4-company {
             font-size: 10px;
@@ -630,62 +439,6 @@ const ViewInvoice = () => {
           .a4-address,
           .a4-contact {
             font-size: 7px;
-          }
-          .a4-title {
-            font-size: 10px;
-            padding: 2px;
-          }
-          .a4-info-table {
-            font-size: 7px;
-            margin-bottom: 3px;
-          }
-          .a4-info-table td {
-            padding: 1px 2px;
-          }
-          .a4-party {
-            padding: 3px;
-            font-size: 7px;
-            margin-bottom: 3px;
-          }
-          .a4-party-name {
-            font-size: 8px;
-          }
-          .a4-items-table {
-            font-size: 7px;
-            margin-bottom: 3px;
-          }
-          .a4-items-table th {
-            padding: 1px;
-            font-size: 7px;
-          }
-          .a4-items-table td {
-            padding: 1px;
-          }
-          .a4-continued {
-            font-size: 6px;
-          }
-          .a4-amount-words {
-            padding: 2px 3px;
-            font-size: 7px;
-            margin-bottom: 3px;
-          }
-          .a4-gst-table {
-            font-size: 7px;
-            margin-bottom: 3px;
-          }
-          .a4-gst-table th,
-          .a4-gst-table td {
-            padding: 1px;
-          }
-          .a4-footer-table {
-            font-size: 7px;
-          }
-          .a4-footer-table td {
-            padding: 3px;
-          }
-          .a4-footer {
-            font-size: 6px;
-            margin-top: 3px;
           }
         }
         
@@ -730,9 +483,6 @@ const ViewInvoice = () => {
           }
           .invoice-a4 * {
             color: #000 !important;
-          }
-          .a4-items-table th, .a4-gst-table th {
-            background: #f0f0f0 !important;
           }
           table {
             page-break-inside: auto !important;
