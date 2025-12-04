@@ -174,7 +174,10 @@ const ViewInvoice = () => {
       {/* Invoice Content */}
       {template === 'professional' ? (
         <div id="invoice-content" className="invoice-a4">
-        <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderBottom: '2px solid #000', padding: '6px'}}>
+        <div style={{textAlign: 'center', padding: '8px', border: '2px solid #000', borderBottom: '1px solid #000', fontWeight: 'bold', fontSize: '12px'}}>
+          TAX INVOICE
+        </div>
+        <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderTop: 'none', borderBottom: '1px solid #000', padding: '8px'}}>
           <div>
             <div className="a4-company">{profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
             {profile?.businessAddress?.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>) || <div className="a4-address">Shop Address, City, State</div>}
@@ -182,8 +185,10 @@ const ViewInvoice = () => {
             <div className="a4-contact">E-Mail: {profile?.email || 'info@anvitiles.com'}</div>
             <div className="a4-contact">Contact: {profile?.phone || '+91 9876543210'}</div>
           </div>
-          <div style={{textAlign: 'right', alignSelf: 'flex-start'}}>
-            <div style={{fontSize: '12px', fontWeight: '700', marginTop: '20px'}}>Tax Invoice</div>
+          <div style={{position: 'relative', width: '200px'}}>
+            {profile?.logoUrl && (
+              <img src={profile.logoUrl} alt="Logo" style={{position: 'absolute', top: '0', right: '0', width: '50px', height: '50px', objectFit: 'contain'}} />
+            )}
           </div>
         </div>
 
@@ -263,129 +268,66 @@ const ViewInvoice = () => {
         </div>
       </div>
       ) : (
-        <div id="invoice-content" className="bg-white mx-auto max-w-4xl shadow-lg print:shadow-none print:max-w-none">
-          <div className="border-2 border-black">
-            <div className="bg-gray-100 p-3 sm:p-4 text-center border-b-2 border-black">
-              <h1 className="text-lg sm:text-2xl font-bold">TAX INVOICE</h1>
-              <div className="text-right text-xs mt-1">ORIGINAL FOR RECIPIENT</div>
+        <div id="invoice-content" className="bg-white mx-auto max-w-sm shadow-lg print:shadow-none print:max-w-none" style={{fontSize: '11px'}}>
+          <div className="border border-gray-300 p-3">
+            <div className="text-center mb-3">
+              <h2 className="font-bold text-base">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
+              <p className="text-xs">{profile?.businessAddress?.split('\n')[0] || 'Shop Address'}</p>
+              <p className="text-xs">Ph: {profile?.phone || '+91 9876543210'}</p>
+              <p className="text-xs">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 border-b-2 border-black">
-              <div className="p-3 sm:p-4 border-b md:border-b-0 md:border-r-2 border-black">
-                <div className="flex items-start gap-2 mb-2">
-                  {profile?.logoUrl ? (
-                    <img src={profile.logoUrl} alt="Logo" className="w-10 h-10 object-contain" />
-                  ) : (
-                    <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-sm">
-                      {profile?.businessName?.charAt(0) || 'A'}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h2 className="font-bold text-sm sm:text-base break-words">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
-                    <p className="text-xs break-words">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
-                  </div>
-                </div>
-                <div className="text-xs space-y-0.5">
-                  {profile?.businessAddress?.split('\n').map((line, i) => (
-                    <p key={i} className="break-words">{line}</p>
-                  )) || (
-                    <>
-                      <p>Shop No. 123, Tiles Market</p>
-                      <p>Main Road, City Center</p>
-                      <p>State: UTTAR PRADESH, 273001</p>
-                    </>
-                  )}
-                  <p>Mobile: {profile?.phone || '+91 9876543210'}</p>
-                  <p>Email: {profile?.email || 'info@anvitiles.com'}</p>
-                </div>
-              </div>
-              <div className="p-3 sm:p-4">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div><p className="font-semibold">Invoice #:</p><p className="break-words">{invoice.invoiceNumber}</p></div>
-                  <div><p className="font-semibold">Date:</p><p>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</p></div>
-                  <div><p className="font-semibold">Place of Supply:</p><p>{getPlaceOfSupply()}</p></div>
-                  <div><p className="font-semibold">Due Date:</p><p>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</p></div>
-                </div>
-              </div>
+            
+            <div className="border-t border-b border-dashed border-gray-400 py-2 mb-2 text-xs">
+              <div className="flex justify-between"><span>Bill No:</span><span className="font-semibold">{invoice.invoiceNumber}</span></div>
+              <div className="flex justify-between"><span>Date:</span><span>{new Date(invoice.createdAt).toLocaleDateString('en-IN')} {new Date(invoice.createdAt).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'})}</span></div>
+              <div className="flex justify-between"><span>Customer:</span><span>{invoice.customer?.name}</span></div>
+              <div className="flex justify-between"><span>Phone:</span><span>{invoice.customer?.phone}</span></div>
             </div>
-            <div className="p-3 sm:p-4 border-b-2 border-black text-xs">
-              <p className="font-bold mb-1">Customer Details:</p>
-              <p>Name: {invoice.customer?.name}</p>
-              <p>Phone: {invoice.customer?.phone}</p>
-              <p>GSTIN: N/A</p>
-            </div>
-            <div className="border-b-2 border-black">
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border-r border-black p-2 text-left w-8">#</th>
-                      <th className="border-r border-black p-2 text-left">Item</th>
-                      <th className="border-r border-black p-2 text-center w-16">HSN</th>
-                      <th className="border-r border-black p-2 text-right w-20">Rate</th>
-                      <th className="border-r border-black p-2 text-center w-12">Qty</th>
-                      <th className="border-r border-black p-2 text-right w-24">Taxable</th>
-                      <th className="border-r border-black p-2 text-right w-20">GST</th>
-                      <th className="p-2 text-right w-24">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.items?.map((item, index) => {
-                      const taxableValue = item.taxableValue || (item.quantity * item.price);
-                      const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
-                      const totalAmount = taxableValue + gstAmount;
-                      return (
-                        <tr key={index} className="border-t border-gray-300">
-                          <td className="border-r border-black p-2 text-center">{index + 1}</td>
-                          <td className="border-r border-black p-2 break-words">{item.product?.name || 'Product'}</td>
-                          <td className="border-r border-black p-2 text-center">{item.product?.hsnCode || '6907'}</td>
-                          <td className="border-r border-black p-2 text-right">₹{item.price.toFixed(2)}</td>
-                          <td className="border-r border-black p-2 text-center">{item.quantity}</td>
-                          <td className="border-r border-black p-2 text-right">₹{taxableValue.toFixed(2)}</td>
-                          <td className="border-r border-black p-2 text-right">₹{gstAmount.toFixed(2)}</td>
-                          <td className="p-2 text-right">₹{totalAmount.toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="md:hidden divide-y divide-gray-300">
+
+            <table className="w-full text-xs mb-2">
+              <thead>
+                <tr className="border-b border-gray-400">
+                  <th className="text-left py-1">Item</th>
+                  <th className="text-center py-1 w-12">Qty</th>
+                  <th className="text-right py-1 w-16">Rate</th>
+                  <th className="text-right py-1 w-20">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
                 {invoice.items?.map((item, index) => {
                   const taxableValue = item.taxableValue || (item.quantity * item.price);
                   const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
                   const totalAmount = taxableValue + gstAmount;
                   return (
-                    <div key={index} className="p-3 text-xs space-y-1">
-                      <div className="flex justify-between font-semibold"><span>{index + 1}. {item.product?.name || 'Product'}</span></div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
-                        <div>HSN: {item.product?.hsnCode || '6907'}</div>
-                        <div>Rate: ₹{item.price.toFixed(2)}</div>
-                        <div>Qty: {item.quantity}</div>
-                        <div>Taxable: ₹{taxableValue.toFixed(2)}</div>
-                        <div>GST: ₹{gstAmount.toFixed(2)}</div>
-                        <div className="font-semibold text-gray-900">Amount: ₹{totalAmount.toFixed(2)}</div>
-                      </div>
-                    </div>
+                    <tr key={index} className="border-b border-dotted border-gray-300">
+                      <td className="py-1">{item.product?.name || 'Product'}</td>
+                      <td className="text-center py-1">{item.quantity}</td>
+                      <td className="text-right py-1">₹{item.price.toFixed(2)}</td>
+                      <td className="text-right py-1">₹{totalAmount.toFixed(2)}</td>
+                    </tr>
                   );
                 })}
+              </tbody>
+            </table>
+
+            <div className="border-t border-gray-400 pt-2 text-xs space-y-1">
+              <div className="flex justify-between"><span>Subtotal:</span><span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span></div>
+              {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
+                <div className="flex justify-between text-red-600"><span>Discount:</span><span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span></div>
+              )}
+              <div className="flex justify-between"><span>GST (18%):</span><span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span></div>
+              {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
+                <div className="flex justify-between"><span>Round Off:</span><span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</span></div>
+              )}
+              <div className="flex justify-between font-bold text-base border-t border-gray-400 pt-2 mt-2">
+                <span>TOTAL:</span>
+                <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
               </div>
             </div>
-            <div className="p-3 sm:p-4 border-b-2 border-black">
-              <div className="flex justify-end">
-                <div className="w-full sm:w-64 space-y-1 text-xs sm:text-sm">
-                  <div className="flex justify-between border-b pb-1"><span className="font-medium">Item Total:</span><span>₹{((invoice.totalTaxableAmount || invoice.subtotal) + (invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span></div>
-                  {(invoice.discount > 0 || invoice.autoDiscount > 0) && (<div className="flex justify-between text-red-600"><span>Discount:</span><span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span></div>)}
-                  <div className="flex justify-between font-semibold border-b pb-1"><span>Taxable Amount:</span><span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span></div>
-                  {(invoice.totalCgst > 0 || invoice.totalSgst > 0) && (<><div className="flex justify-between text-blue-700"><span>CGST @ 9%:</span><span>₹{(invoice.totalCgst || 0).toFixed(2)}</span></div><div className="flex justify-between text-blue-700"><span>SGST @ 9%:</span><span>₹{(invoice.totalSgst || 0).toFixed(2)}</span></div><div className="flex justify-between font-semibold text-blue-800"><span>Total GST (18%):</span><span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span></div></>)}
-                  {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (<div className="flex justify-between"><span>Round Off:</span><span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</span></div>)}
-                  <div className="flex justify-between text-base sm:text-lg font-bold text-green-700 border-t-2 border-gray-400 pt-2"><span>Grand Total:</span><span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-3 sm:p-4 border-b-2 border-black text-xs"><p><strong>Amount in words:</strong> {invoice.amountInWords || `Rupees ${invoice.grandTotal || invoice.total} Only`}</p></div>
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-3 sm:p-4 border-b md:border-b-0 md:border-r-2 border-black"><p className="font-bold mb-2 text-xs">Bank Details:</p><div className="text-xs space-y-0.5"><p>Bank: HDFC Bank</p><p>Account #: 50200068337918</p><p>IFSC Code: HDFC0004331</p><p>Branch: Main Branch</p></div></div>
-              <div className="p-3 sm:p-4 text-right"><p className="mb-2 text-xs"><strong>For {profile?.businessName || 'ANVI TILES & DECORHUB'}</strong></p>{profile?.signatureUrl ? (<img src={profile.signatureUrl} alt="Signature" className="max-w-20 max-h-10 object-contain ml-auto mt-4" />) : (<p className="mt-8 text-xs">Authorised Signatory</p>)}</div>
+
+            <div className="text-center mt-3 pt-2 border-t border-dashed border-gray-400 text-xs">
+              <p>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</p>
+              <p className="mt-2">Thank you! Visit again</p>
             </div>
           </div>
         </div>
