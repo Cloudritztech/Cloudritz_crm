@@ -268,6 +268,8 @@ const ViewInvoice = () => {
         </table>
         {invoice.items?.length > 10 && <div className="a4-continued">continued to page number 2</div>}
 
+        <div style={{marginTop: '10mm'}}></div>
+
         <div className="a4-amount-words">
           <strong>Amount Chargeable (in words):</strong>
           <div style={{fontWeight: '600', marginTop: '3px'}}>{invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}</div>
@@ -471,17 +473,17 @@ const ViewInvoice = () => {
       {/* Professional Invoice Styles */}
       <style>{`
         .invoice-a4 {
-          width: 200mm;
-          min-height: 277mm;
-          padding: 8mm;
-          margin: 10mm auto;
+          width: 210mm;
+          min-height: 297mm;
+          padding: 10mm;
+          margin: 0 auto;
           background: #ffffff;
           color: #000;
           font-family: Arial, sans-serif;
           box-sizing: border-box;
           font-size: 9px;
           line-height: 1.2;
-          border: 1px solid #000;
+          border: none;
           display: flex;
           flex-direction: column;
         }
@@ -588,8 +590,7 @@ const ViewInvoice = () => {
         .a4-footer {
           text-align: center;
           font-size: 7px;
-          margin-top: auto;
-          padding-top: 5mm;
+          margin-top: 10mm;
           line-height: 1.3;
         }
         
@@ -597,9 +598,9 @@ const ViewInvoice = () => {
           .invoice-a4 {
             width: 100vw;
             min-height: 100vh;
-            padding: 4px;
+            padding: 8px;
             margin: 0;
-            border: 2px solid #000;
+            border: none;
             font-size: 7px;
           }
           .a4-header {
@@ -697,13 +698,13 @@ const ViewInvoice = () => {
             display: none !important; 
           }
           .invoice-a4 {
-            width: 190mm !important;
+            width: 210mm !important;
             height: auto !important;
-            min-height: 277mm !important;
-            max-width: 190mm !important;
+            min-height: 297mm !important;
+            max-width: 210mm !important;
             padding: 10mm !important;
-            margin: 0 auto !important;
-            border: 1px solid #000 !important;
+            margin: 0 !important;
+            border: none !important;
             box-shadow: none !important;
             background: #ffffff !important;
             color: #000 !important;
