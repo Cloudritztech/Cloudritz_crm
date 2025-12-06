@@ -93,7 +93,6 @@ export default async function handler(req, res) {
             discountType = 'amount', 
             paymentMethod = 'cash',
             applyGST = false,
-            reverseGST = false,
             deliveryNote, 
             referenceNo, 
             buyerOrderNo, 
@@ -104,7 +103,7 @@ export default async function handler(req, res) {
             terms 
           } = req.body;
           
-          console.log('📝 Invoice creation request:', { customer, itemsCount: items?.length, discount, applyGST, reverseGST });
+          console.log('📝 Invoice creation request:', { customer, itemsCount: items?.length, discount, applyGST });
           
           // Validation
           if (!customer) {
@@ -172,11 +171,9 @@ export default async function handler(req, res) {
             const taxableValue = itemGross - discountAmount;
             
             // GST calculation
-            // If reverseGST: don't add GST to item total (will be shown but discounted later)
-            // If normal GST: add GST to item total
             const cgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
             const sgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
-            const itemTotal = reverseGST ? taxableValue : (taxableValue + cgstAmount + sgstAmount);
+            const itemTotal = taxableValue + cgstAmount + sgstAmount;
             
             processedItems.push({
               product: product._id,
@@ -226,27 +223,15 @@ export default async function handler(req, res) {
           let totalCgst = 0;
           let totalSgst = 0;
           let totalGst = 0;
-          let autoDiscount = 0;
           
           if (applyGST) {
             totalCgst = (taxableAmount * 9) / 100;
             totalSgst = (taxableAmount * 9) / 100;
             totalGst = totalCgst + totalSgst;
-            
-            if (reverseGST) {
-              // Reverse GST: GST is calculated but then discounted
-              autoDiscount = totalGst;
-            }
           }
           
           // Calculate final total
-          // When reverseGST: final amount = taxable (GST added then discounted)
-          // When normal GST: final amount = taxable + GST
-          // When no GST: final amount = taxable
-          let subtotal = taxableAmount;
-          if (applyGST && !reverseGST) {
-            subtotal = taxableAmount + totalGst;
-          }
+          let subtotal = applyGST ? (taxableAmount + totalGst) : taxableAmount;
           const roundOff = Math.round(subtotal) - subtotal;
           const grandTotal = Math.round(subtotal);
           const amountInWords = numberToWords(grandTotal);
@@ -258,9 +243,7 @@ export default async function handler(req, res) {
             taxableAmount, 
             totalCgst,
             totalSgst,
-            totalGst, 
-            autoDiscount,
-            reverseGST,
+            totalGst,
             grandTotal 
           });
           
@@ -299,10 +282,8 @@ export default async function handler(req, res) {
             totalSgst: parseFloat(totalSgst.toFixed(2)),
             tax: parseFloat(totalGst.toFixed(2)),
             discount: parseFloat(additionalDiscount.toFixed(2)),
-            autoDiscount: parseFloat(autoDiscount.toFixed(2)),
             discountType: discountType,
             applyGST: applyGST,
-            reverseGST: reverseGST,
             roundOff: parseFloat(roundOff.toFixed(2)),
             grandTotal: grandTotal,
             total: grandTotal,

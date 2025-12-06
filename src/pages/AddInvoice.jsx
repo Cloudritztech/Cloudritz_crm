@@ -18,7 +18,6 @@ const AddInvoice = () => {
     
     // GST Controls
     applyGST: false,
-    reverseGST: false,
     
     // Invoice details
     deliveryNote: "",
@@ -199,7 +198,6 @@ const AddInvoice = () => {
         customer: formData.customer,
         items: validItems,
         applyGST: formData.applyGST || false,
-        reverseGST: formData.reverseGST || false,
         discount: formData.discount || 0,
         discountType: formData.discountType,
         paymentMethod: formData.paymentMethod || 'cash',
@@ -617,27 +615,7 @@ const AddInvoice = () => {
               <span className="font-medium text-gray-900 dark:text-white">Apply 18% GST (9% CGST + 9% SGST)</span>
             </label>
             
-            {/* Reverse GST Button */}
-            {formData.applyGST && (
-              <div className="mt-3 pl-8">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, reverseGST: !formData.reverseGST })}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    formData.reverseGST 
-                      ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {formData.reverseGST ? '✓ Reverse GST Applied' : 'Apply Reverse GST'}
-                </button>
-                {formData.reverseGST && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    GST amount will be auto-discounted to keep final price unchanged
-                  </p>
-                )}
-              </div>
-            )}
+
           </div>
           
           {/* Billing Breakdown */}
@@ -732,17 +710,7 @@ const AddInvoice = () => {
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Calculation Formula:</h4>
                 <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  {formData.applyGST && formData.reverseGST ? (
-                    <>
-                      <p className="font-medium text-blue-700">Reverse GST Mode:</p>
-                      <p>Taxable = Gross - Discounts</p>
-                      <p>CGST = Taxable × 9%</p>
-                      <p>SGST = Taxable × 9%</p>
-                      <p>GST Added = CGST + SGST</p>
-                      <p>Auto Discount = -GST Amount</p>
-                      <p className="font-medium text-gray-800 mt-2">Total = Taxable (GST cancelled)</p>
-                    </>
-                  ) : formData.applyGST ? (
+                  {formData.applyGST ? (
                     <>
                       <p className="font-medium text-blue-700">Normal GST Mode:</p>
                       <p>Taxable = Gross - Discounts</p>
