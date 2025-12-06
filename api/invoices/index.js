@@ -248,7 +248,13 @@ export default async function handler(req, res) {
           }
           
           // Calculate final total
-          let subtotal = applyGST && !reverseGST ? (taxableAmount + totalGst) : amountAfterDiscount;
+          // When reverseGST: final amount = taxable (GST added then discounted)
+          // When normal GST: final amount = taxable + GST
+          // When no GST: final amount = taxable
+          let subtotal = amountAfterDiscount;
+          if (applyGST && !reverseGST) {
+            subtotal = taxableAmount + totalGst;
+          }
           const roundOff = Math.round(subtotal) - subtotal;
           const grandTotal = Math.round(subtotal);
           const amountInWords = numberToWords(grandTotal);
