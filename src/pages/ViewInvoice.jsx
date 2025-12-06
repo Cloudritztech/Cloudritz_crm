@@ -239,6 +239,60 @@ const ViewInvoice = () => {
         <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
           <strong>Amount in words:</strong> {invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}
         </div>
+        
+        {/* Billing Breakdown */}
+        {(invoice.discount > 0 || invoice.autoDiscount > 0 || (invoice.totalCgst > 0 && invoice.totalSgst > 0)) && (
+          <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '10px', backgroundColor: '#f9f9f9'}}>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr auto', gap: '4px'}}>
+              {invoice.subtotal > 0 && (
+                <>
+                  <div>Item Total:</div>
+                  <div style={{textAlign: 'right', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</div>
+                </>
+              )}
+              
+              {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
+                <>
+                  <div style={{color: '#dc2626'}}>Discount{invoice.autoDiscount > 0 ? ' (incl. GST)' : ''}:</div>
+                  <div style={{textAlign: 'right', color: '#dc2626', fontWeight: '600'}}>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</div>
+                  
+                  {invoice.autoDiscount > 0 && (
+                    <>
+                      <div style={{paddingLeft: '12px', fontSize: '9px', color: '#dc2626'}}>└ Auto GST Discount:</div>
+                      <div style={{textAlign: 'right', fontSize: '9px', color: '#dc2626'}}>-₹{invoice.autoDiscount.toFixed(2)}</div>
+                    </>
+                  )}
+                </>
+              )}
+              
+              <div style={{fontWeight: '700'}}>Taxable Amount:</div>
+              <div style={{textAlign: 'right', fontWeight: '700'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</div>
+              
+              {(invoice.totalCgst > 0 || invoice.totalSgst > 0) && (
+                <>
+                  <div style={{fontSize: '9px', color: '#2563eb'}}>CGST @ 9%:</div>
+                  <div style={{textAlign: 'right', fontSize: '9px', color: '#2563eb'}}>₹{(invoice.totalCgst || 0).toFixed(2)}</div>
+                  
+                  <div style={{fontSize: '9px', color: '#2563eb'}}>SGST @ 9%:</div>
+                  <div style={{textAlign: 'right', fontSize: '9px', color: '#2563eb'}}>₹{(invoice.totalSgst || 0).toFixed(2)}</div>
+                  
+                  <div style={{fontWeight: '600', color: '#2563eb'}}>Total GST (18%):</div>
+                  <div style={{textAlign: 'right', fontWeight: '600', color: '#2563eb'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</div>
+                </>
+              )}
+              
+              {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
+                <>
+                  <div>Round Off:</div>
+                  <div style={{textAlign: 'right'}}>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</div>
+                </>
+              )}
+              
+              <div style={{fontWeight: '700', fontSize: '12px', borderTop: '2px solid #000', paddingTop: '6px', marginTop: '4px'}}>GRAND TOTAL:</div>
+              <div style={{textAlign: 'right', fontWeight: '700', fontSize: '12px', borderTop: '2px solid #000', paddingTop: '6px', marginTop: '4px'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</div>
+            </div>
+          </div>
+        )}
 
         <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
           <div style={{flex: 1, padding: '12px', fontSize: '11px', borderRight: '2px solid #000'}}>
