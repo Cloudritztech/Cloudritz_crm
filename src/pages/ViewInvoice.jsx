@@ -241,26 +241,16 @@ const ViewInvoice = () => {
           <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '11px'}}>
             <table style={{width: '100%', borderCollapse: 'collapse'}}>
               <tbody>
-                {invoice.subtotal > 0 && (
-                  <tr>
-                    <td style={{padding: '3px 0'}}>Item Total:</td>
-                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</td>
-                  </tr>
-                )}
+                <tr>
+                  <td style={{padding: '3px 0'}}>Item Total:</td>
+                  <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</td>
+                </tr>
                 
-                {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
-                  <>
-                    <tr>
-                      <td style={{padding: '3px 0'}}>Discount{invoice.autoDiscount > 0 ? ' (incl. GST)' : ''}:</td>
-                      <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</td>
-                    </tr>
-                    {invoice.autoDiscount > 0 && (
-                      <tr>
-                        <td style={{paddingLeft: '15px', padding: '2px 0', fontSize: '10px'}}>└ Auto GST Discount:</td>
-                        <td style={{textAlign: 'right', padding: '2px 0', fontSize: '10px'}}>-₹{invoice.autoDiscount.toFixed(2)}</td>
-                      </tr>
-                    )}
-                  </>
+                {invoice.discount > 0 && (
+                  <tr>
+                    <td style={{padding: '3px 0'}}>Additional Discount:</td>
+                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.discount.toFixed(2)}</td>
+                  </tr>
                 )}
                 
                 <tr>
@@ -283,6 +273,13 @@ const ViewInvoice = () => {
                       <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
                     </tr>
                   </>
+                )}
+                
+                {invoice.autoDiscount > 0 && (
+                  <tr>
+                    <td style={{padding: '3px 0'}}>Auto GST Discount:</td>
+                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.autoDiscount.toFixed(2)}</td>
+                  </tr>
                 )}
                 
                 {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
@@ -381,19 +378,11 @@ const ViewInvoice = () => {
             <div className="border-t border-gray-400 pt-2 text-xs space-y-1">
               <div className="flex justify-between"><span>Item Total:</span><span>₹{(invoice.subtotal || 0).toFixed(2)}</span></div>
               
-              {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
-                <>
-                  <div className="flex justify-between text-red-600">
-                    <span>Discount{invoice.autoDiscount > 0 ? ' (incl. GST)' : ''}:</span>
-                    <span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
-                  </div>
-                  {invoice.autoDiscount > 0 && (
-                    <div className="flex justify-between text-red-600" style={{fontSize: '10px', paddingLeft: '8px'}}>
-                      <span>└ Auto GST Discount:</span>
-                      <span>-₹{invoice.autoDiscount.toFixed(2)}</span>
-                    </div>
-                  )}
-                </>
+              {invoice.discount > 0 && (
+                <div className="flex justify-between">
+                  <span>Additional Discount:</span>
+                  <span>-₹{invoice.discount.toFixed(2)}</span>
+                </div>
               )}
               
               <div className="flex justify-between font-semibold"><span>Taxable Amount:</span><span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span></div>
@@ -413,6 +402,13 @@ const ViewInvoice = () => {
                     <span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span>
                   </div>
                 </>
+              )}
+              
+              {invoice.autoDiscount > 0 && (
+                <div className="flex justify-between">
+                  <span>Auto GST Discount:</span>
+                  <span>-₹{invoice.autoDiscount.toFixed(2)}</span>
+                </div>
               )}
               
               {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
