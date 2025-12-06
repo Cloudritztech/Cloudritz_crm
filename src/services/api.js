@@ -194,7 +194,7 @@ export const invoicesAPI = {
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
-    const response = await api.get(`/invoice?id=${id}`);
+    const response = await api.get(`/invoices?id=${id}`);
     apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
@@ -204,10 +204,10 @@ export const invoicesAPI = {
     apiCache.clear('dashboard');
     return response;
   },
-  generatePDF: (id) => api.get(`/invoice?id=${id}&action=pdf`, { responseType: 'blob' }),
-  getWhatsAppLink: (id) => api.get(`/invoice?id=${id}&action=whatsapp`),
+  generatePDF: (id) => api.get(`/invoices?id=${id}&action=pdf`, { responseType: 'blob' }),
+  getWhatsAppLink: (id) => api.get(`/invoices?id=${id}&action=whatsapp`),
   updatePayment: async (id, paymentData) => {
-    const response = await api.put(`/invoices/payment?id=${id}`, paymentData);
+    const response = await api.put(`/invoices?id=${id}&action=payment`, paymentData);
     apiCache.clear(`invoice_${id}`);
     apiCache.clear('invoices_');
     apiCache.clear('dashboard');
@@ -273,19 +273,19 @@ export const reportsAPI = {
   },
 };
 
-// Profile API with caching
+// Profile API with caching (now part of user)
 export const profileAPI = {
   getProfile: async () => {
     const cacheKey = 'businessProfile';
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
-    const response = await api.get('/profile');
+    const response = await api.get('/user?action=profile');
     apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   updateProfile: async (profileData) => {
-    const response = await api.post('/profile', profileData);
+    const response = await api.post('/user?action=profile', profileData);
     apiCache.clear('businessProfile');
     return response;
   },
@@ -310,13 +310,13 @@ export const expensesAPI = {
   delete: (id) => api.delete(`/expenses?id=${id}`)
 };
 
-// Payments API
+// Payments API (now part of invoices)
 export const paymentsAPI = {
-  getAll: (params) => api.get('/payments', { params }),
-  getByInvoice: (invoiceId) => api.get(`/payments?invoiceId=${invoiceId}`),
-  getByCustomer: (customerId) => api.get(`/payments?customerId=${customerId}`),
-  create: (data) => api.post('/payments', data),
-  delete: (id) => api.delete(`/payments?id=${id}`)
+  getAll: (params) => api.get('/invoices?action=payment', { params }),
+  getByInvoice: (invoiceId) => api.get(`/invoices?action=payment&invoiceId=${invoiceId}`),
+  getByCustomer: (customerId) => api.get(`/invoices?action=payment&customerId=${customerId}`),
+  create: (data) => api.post('/invoices?action=payment', data),
+  delete: (id) => api.delete(`/invoices?id=${id}&action=payment`)
 };
 
 // Notifications API

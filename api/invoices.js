@@ -1,0 +1,506 @@
+import connectDB from '../lib/mongodb.js';
+import Invoice from '../lib/models/Invoice.js';
+import Customer from '../lib/models/Customer.js';
+import Product from '../lib/models/Product.js';
+import Payment from '../lib/models/Payment.js';
+import InventoryHistory from '../lib/models/InventoryHistory.js';
+import { auth } from '../lib/middleware/auth.js';
+import { generateInvoicePDF } from '../lib/pdfGenerator.js';
+import { numberToWords } from '../lib/numberToWords.js';
+
+async function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) return reject(result);
+      return resolve(result);
+    });
+  });
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    await connectDB();
+    await runMiddleware(req, res, auth);
+
+    const { method, query } = req;
+    const { id, action } = query;
+
+    // Payment operations
+    if (action === 'payment') {
+      if (method === 'PUT' && id) return await updateInvoicePayment(req, res, id);
+      if (method === 'GET') return await getPayments(req, res, query);
+      if (method === 'POST') return await createPayment(req, res);
+      if (method === 'DELETE' && id) return await deletePayment(req, res, id);
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+
+    // PDF generation
+    if (action === 'pdf' && id) {
+      if (method === 'GET') return await generatePDF(req, res, id);
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+
+    // Single invoice operations
+    if (id) {
+      if (method === 'GET') return await getInvoice(req, res, id);
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+
+    // List/Create invoices
+    if (method === 'GET') return await listInvoices(req, res, query);
+    if (method === 'POST') return await createInvoice(req, res);
+
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  } catch (error) {
+    console.error('❌ Invoice API error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// List invoices
+async function listInvoices(req, res, query) {
+  try {
+    const { search, status, startDate, endDate, limit = 50 } = query;
+    const filter = {};
+    
+    if (status) filter.status = status;
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+    
+    if (search) {
+      const customers = await Customer.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+      
+      filter.$or = [
+        { invoiceNumber: { $regex: search, $options: 'i' } },
+        { customer: { $in: customers.map(c => c._id) } }
+      ];
+    }
+
+    const invoices = await Invoice.find(filter)
+      .populate('customer', 'name phone')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    return res.status(200).json({ success: true, invoices });
+  } catch (error) {
+    console.error('❌ List invoices error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Get single invoice
+async function getInvoice(req, res, id) {
+  try {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid invoice ID' });
+    }
+
+    const invoice = await Invoice.findById(id)
+      .populate('customer', 'name phone address')
+      .populate('items.product', 'name category hsnCode brand')
+      .populate('createdBy', 'name')
+      .lean();
+
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    return res.status(200).json({ success: true, invoice });
+  } catch (error) {
+    console.error('❌ Get invoice error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Generate PDF
+async function generatePDF(req, res, id) {
+  try {
+    const invoice = await Invoice.findById(id)
+      .populate('customer', 'name phone address')
+      .populate('items.product', 'name category brand hsnCode')
+      .populate('createdBy', 'name')
+      .lean();
+
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    const pdfBuffer = await generateInvoicePDF(invoice);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error('❌ PDF generation error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Create invoice
+async function createInvoice(req, res) {
+  try {
+    const {
+      customer, items, discount = 0, discountType = 'amount', applyGST = true,
+      paymentMethod = 'cash', notes = '', dueDate, terms, buyerDetails,
+      destination, deliveryNote, referenceNo, buyerOrderNo
+    } = req.body;
+
+    if (!customer || !items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Customer and items required' });
+    }
+
+    const customerExists = await Customer.findById(customer);
+    if (!customerExists) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+
+    let grossAmount = 0;
+    let itemDiscountTotal = 0;
+    const processedItems = [];
+
+    for (const item of items) {
+      if (!item.product || !item.quantity || item.quantity <= 0 || !item.price || item.price < 0) {
+        return res.status(400).json({ success: false, message: 'Invalid item data' });
+      }
+
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Product not found: ${item.product}` });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.name}. Available: ${product.stock}`
+        });
+      }
+
+      const qty = parseFloat(item.quantity);
+      const price = parseFloat(item.price);
+      const itemGross = qty * price;
+      grossAmount += itemGross;
+
+      const itemDiscount = parseFloat(item.discount) || 0;
+      const itemDiscountType = item.discountType || 'amount';
+      let discountAmount = 0;
+
+      if (itemDiscountType === 'percentage') {
+        discountAmount = (itemGross * itemDiscount) / 100;
+      } else {
+        discountAmount = itemDiscount;
+      }
+
+      itemDiscountTotal += discountAmount;
+      const taxableValue = itemGross - discountAmount;
+
+      const cgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
+      const sgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
+      const itemTotal = taxableValue + cgstAmount + sgstAmount;
+
+      processedItems.push({
+        product: product._id,
+        quantity: qty,
+        price: price,
+        discount: itemDiscount,
+        discountType: itemDiscountType,
+        taxableValue: parseFloat(taxableValue.toFixed(2)),
+        cgstRate: 9,
+        sgstRate: 9,
+        cgstAmount: parseFloat(cgstAmount.toFixed(2)),
+        sgstAmount: parseFloat(sgstAmount.toFixed(2)),
+        total: parseFloat(itemTotal.toFixed(2))
+      });
+
+      product.stock -= qty;
+      await product.save();
+
+      try {
+        await InventoryHistory.create({
+          product: product._id,
+          type: 'sale',
+          quantity: -qty,
+          previousStock: product.stock + qty,
+          newStock: product.stock,
+          updatedBy: req.user?._id || null
+        });
+      } catch (invErr) {
+        console.warn('⚠️ Failed to log inventory:', invErr.message);
+      }
+    }
+
+    let additionalDiscount = parseFloat(discount) || 0;
+    let amountAfterItemDiscount = grossAmount - itemDiscountTotal;
+
+    if (discountType === 'percentage') {
+      additionalDiscount = (amountAfterItemDiscount * additionalDiscount) / 100;
+    }
+
+    let taxableAmount = grossAmount - itemDiscountTotal - additionalDiscount;
+
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalGst = 0;
+
+    if (applyGST) {
+      totalCgst = (taxableAmount * 9) / 100;
+      totalSgst = (taxableAmount * 9) / 100;
+      totalGst = totalCgst + totalSgst;
+    }
+
+    let subtotal = applyGST ? (taxableAmount + totalGst) : taxableAmount;
+    const roundOff = Math.round(subtotal) - subtotal;
+    const grandTotal = Math.round(subtotal);
+    const amountInWords = numberToWords(grandTotal);
+
+    const invoice = await Invoice.create({
+      customer,
+      buyerDetails: {
+        name: customerExists.name,
+        address: buyerDetails?.street ?
+          `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
+          customerExists.address?.street || 'Address not provided',
+        mobile: customerExists.phone,
+        gstin: buyerDetails?.gstin || 'N/A',
+        state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
+        stateCode: '09'
+      },
+      consigneeDetails: {
+        name: customerExists.name,
+        address: buyerDetails?.street ?
+          `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
+          customerExists.address?.street || 'Address not provided',
+        mobile: customerExists.phone,
+        gstin: buyerDetails?.gstin || 'N/A',
+        state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
+        stateCode: '09'
+      },
+      modeOfPayment: paymentMethod,
+      destination: destination || customerExists.address?.city || 'Gorakhpur',
+      deliveryNote: deliveryNote || '',
+      referenceNo: referenceNo || '',
+      buyerOrderNo: buyerOrderNo || '',
+      items: processedItems,
+      subtotal: parseFloat(grossAmount.toFixed(2)),
+      totalTaxableAmount: parseFloat(taxableAmount.toFixed(2)),
+      totalCgst: parseFloat(totalCgst.toFixed(2)),
+      totalSgst: parseFloat(totalSgst.toFixed(2)),
+      tax: parseFloat(totalGst.toFixed(2)),
+      discount: parseFloat(additionalDiscount.toFixed(2)),
+      discountType: discountType,
+      applyGST: applyGST,
+      roundOff: parseFloat(roundOff.toFixed(2)),
+      grandTotal: grandTotal,
+      total: grandTotal,
+      amountInWords: amountInWords,
+      paymentMethod: paymentMethod,
+      notes: notes || '',
+      dueDate: dueDate ? new Date(dueDate) : null,
+      terms: terms || 'Payment due within 30 days',
+      createdBy: req.user?._id || null
+    });
+
+    try {
+      await Customer.findByIdAndUpdate(customer, {
+        $inc: { totalPurchases: grandTotal },
+        lastPurchaseDate: new Date()
+      });
+    } catch (custErr) {
+      console.warn('⚠️ Failed to update customer:', custErr.message);
+    }
+
+    const populatedInvoice = await Invoice.findById(invoice._id)
+      .populate('customer', 'name phone address')
+      .populate('items.product', 'name category')
+      .populate('createdBy', 'name');
+
+    return res.status(201).json({
+      success: true,
+      message: 'Invoice created successfully',
+      invoice: populatedInvoice
+    });
+  } catch (error) {
+    console.error('❌ Create invoice error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Update invoice payment
+async function updateInvoicePayment(req, res, id) {
+  try {
+    const { paymentStatus, paidAmount, paymentNotes } = req.body;
+
+    const invoice = await Invoice.findById(id);
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+
+    const totalAmount = invoice.grandTotal || invoice.total;
+
+    invoice.paymentStatus = paymentStatus;
+    invoice.paidAmount = paidAmount || 0;
+    invoice.pendingAmount = totalAmount - (paidAmount || 0);
+    invoice.paymentNotes = paymentNotes;
+
+    if (paymentStatus === 'paid') {
+      invoice.paidAmount = totalAmount;
+      invoice.pendingAmount = 0;
+      invoice.paymentDate = new Date();
+    }
+
+    await invoice.save();
+    return res.json({ success: true, invoice });
+  } catch (error) {
+    console.error('❌ Payment update error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Get payments
+async function getPayments(req, res, query) {
+  try {
+    if (query.invoiceId) {
+      const payments = await Payment.find({ invoice: query.invoiceId })
+        .populate('receivedBy', 'name')
+        .sort({ paymentDate: -1 });
+      return res.status(200).json({ success: true, payments });
+    }
+
+    if (query.customerId) {
+      const payments = await Payment.find({ customer: query.customerId })
+        .populate('invoice', 'invoiceNumber grandTotal')
+        .populate('receivedBy', 'name')
+        .sort({ paymentDate: -1 });
+      return res.status(200).json({ success: true, payments });
+    }
+
+    const payments = await Payment.find()
+      .populate('invoice', 'invoiceNumber grandTotal')
+      .populate('customer', 'name phone')
+      .populate('receivedBy', 'name')
+      .sort({ paymentDate: -1 })
+      .limit(100);
+
+    return res.status(200).json({ success: true, payments });
+  } catch (error) {
+    console.error('❌ Get payments error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Create payment
+async function createPayment(req, res) {
+  try {
+    const { invoice: invoiceId, amount, paymentMethod, paymentDate, transactionId, notes } = req.body;
+
+    if (!invoiceId || !amount || !paymentMethod || !paymentDate) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const invoice = await Invoice.findById(invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    const paymentAmount = parseFloat(amount);
+    const newPaidAmount = invoice.paidAmount + paymentAmount;
+    const newPendingAmount = invoice.grandTotal - newPaidAmount;
+
+    if (newPaidAmount > invoice.grandTotal) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment exceeds pending amount. Pending: ₹${invoice.pendingAmount.toFixed(2)}`
+      });
+    }
+
+    const payment = await Payment.create({
+      invoice: invoiceId,
+      customer: invoice.customer,
+      amount: paymentAmount,
+      paymentMethod,
+      paymentDate: new Date(paymentDate),
+      transactionId,
+      notes,
+      receivedBy: req.user._id
+    });
+
+    let paymentStatus = 'pending';
+    if (newPendingAmount <= 0) {
+      paymentStatus = 'paid';
+    } else if (newPaidAmount > 0) {
+      paymentStatus = 'partial';
+    }
+
+    await Invoice.findByIdAndUpdate(invoiceId, {
+      paidAmount: newPaidAmount,
+      pendingAmount: newPendingAmount,
+      paymentStatus,
+      status: paymentStatus === 'paid' ? 'paid' : 'pending'
+    });
+
+    const populatedPayment = await Payment.findById(payment._id)
+      .populate('invoice', 'invoiceNumber grandTotal')
+      .populate('customer', 'name phone')
+      .populate('receivedBy', 'name');
+
+    return res.status(201).json({
+      success: true,
+      payment: populatedPayment,
+      message: `Payment of ₹${paymentAmount.toFixed(2)} recorded`
+    });
+  } catch (error) {
+    console.error('❌ Create payment error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// Delete payment
+async function deletePayment(req, res, id) {
+  try {
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    const invoice = await Invoice.findById(payment.invoice);
+    if (invoice) {
+      const updatedPaidAmount = invoice.paidAmount - payment.amount;
+      const updatedPendingAmount = invoice.grandTotal - updatedPaidAmount;
+
+      let updatedStatus = 'pending';
+      if (updatedPendingAmount <= 0) {
+        updatedStatus = 'paid';
+      } else if (updatedPaidAmount > 0) {
+        updatedStatus = 'partial';
+      }
+
+      await Invoice.findByIdAndUpdate(payment.invoice, {
+        paidAmount: updatedPaidAmount,
+        pendingAmount: updatedPendingAmount,
+        paymentStatus: updatedStatus,
+        status: updatedStatus === 'paid' ? 'paid' : 'pending'
+      });
+    }
+
+    await Payment.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, message: 'Payment deleted' });
+  } catch (error) {
+    console.error('❌ Delete payment error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
