@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { reportsAPI } from '../services/api';
+import { reportsAPI, productsAPI, customersAPI, invoicesAPI } from '../services/api';
 import { 
   Users, 
   Package, 
@@ -25,6 +25,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchAllData();
+    
+    // Prefetch common pages
+    const prefetchTimer = setTimeout(() => {
+      productsAPI.getAll().catch(() => {});
+      customersAPI.getAll().catch(() => {});
+      invoicesAPI.getAll().catch(() => {});
+    }, 2000);
+    
+    return () => clearTimeout(prefetchTimer);
   }, []);
 
   const fetchAllData = async () => {
@@ -85,8 +94,8 @@ const Dashboard = () => {
     );
   }
 
-  // Row 1: Main metrics
-  const mainMetrics = [
+  // Row 1: Main metrics (memoized)
+  const mainMetrics = useMemo(() => [
     {
       title: 'Total Customers',
       value: stats?.totalCustomers || 0,
@@ -115,7 +124,7 @@ const Dashboard = () => {
       icon: AlertTriangle,
       color: 'danger'
     }
-  ];
+  ], [stats]);
 
   return (
     <div className="space-y-6 animate-fade-in">

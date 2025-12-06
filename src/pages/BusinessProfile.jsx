@@ -15,7 +15,14 @@ const BusinessProfile = () => {
     phone: '',
     email: '',
     logoUrl: null,
-    signatureUrl: null
+    signatureUrl: null,
+    bankDetails: {
+      bankName: '',
+      accountNo: '',
+      ifscCode: '',
+      branch: ''
+    },
+    upiId: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -258,6 +265,51 @@ const BusinessProfile = () => {
                 placeholder="Enter email address"
               />
             </div>
+          </div>
+
+          {/* Bank Details */}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bank Details (for A4 Invoice)</h3>
+            <div className="space-y-4">
+              <Input
+                label="Bank Name"
+                value={profile.bankDetails?.bankName || ''}
+                onChange={(e) => handleInputChange('bankDetails', { ...profile.bankDetails, bankName: e.target.value })}
+                placeholder="Enter bank name"
+              />
+              <Input
+                label="Account Number"
+                value={profile.bankDetails?.accountNo || ''}
+                onChange={(e) => handleInputChange('bankDetails', { ...profile.bankDetails, accountNo: e.target.value })}
+                placeholder="Enter account number"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="IFSC Code"
+                  value={profile.bankDetails?.ifscCode || ''}
+                  onChange={(e) => handleInputChange('bankDetails', { ...profile.bankDetails, ifscCode: e.target.value })}
+                  placeholder="Enter IFSC code"
+                />
+                <Input
+                  label="Branch"
+                  value={profile.bankDetails?.branch || ''}
+                  onChange={(e) => handleInputChange('bankDetails', { ...profile.bankDetails, branch: e.target.value })}
+                  placeholder="Enter branch name"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* UPI Details */}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">UPI Payment</h3>
+            <Input
+              label="UPI ID"
+              value={profile.upiId || ''}
+              onChange={(e) => handleInputChange('upiId', e.target.value)}
+              placeholder="yourname@paytm"
+              helperText="QR code will be shown on UPI payment invoices"
+            />
           </div>
         </div>
 

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { reportsAPI } from '../services/api';
-import { TrendingUp, Calendar, ArrowLeft, Download, Filter, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Calendar, ArrowLeft, Download, Filter, AlertTriangle, Sparkles } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { StatCard } from '../components/ui/Card';
 import Loading from '../components/ui/Loading';
+import SalesChart from '../components/SalesChart';
+import { analyzeBusinessData } from '../../lib/gemini';
 
 const SalesReports = () => {
   const navigate = useNavigate();
@@ -21,6 +23,8 @@ const SalesReports = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const quickFilters = [
     { key: 'today', label: 'Today' },
@@ -59,6 +63,7 @@ const SalesReports = () => {
       if (response.data?.success && response.data?.data) {
         setSalesData(response.data.data);
         console.log('✅ Sales data fetched:', response.data.data);
+        generateAIInsights(response.data.data);
       } else {
         throw new Error('Invalid response format');
       }
@@ -90,6 +95,24 @@ const SalesReports = () => {
   };
 
   const formatCurrency = (amount) => `₹${(amount || 0).toLocaleString('en-IN')}`;
+
+  const generateAIInsights = async (data) => {
+    setLoadingAI(true);
+    try {
+      const insights = await analyzeBusinessData({
+        totalSales: data.totalAmount,
+        totalCustomers: data.totalOrders,
+        totalProducts: 0,
+        topProduct: 'N/A',
+        growth: data.growthRate
+      });
+      setAiInsights(insights);
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -218,15 +241,45 @@ const SalesReports = () => {
         </div>
       )}
 
-      {/* Additional Reports Section */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Analytics</h3>
-        <div className="text-center py-12">
-          <TrendingUp className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Advanced analytics and charts coming soon</p>
-          <Button variant="primary">Request Feature</Button>
+      {/* AI Insights */}
+      {aiInsights && (
+        <div className="card bg-gradient-to-br from-purple-50 to-blue-50">
+          <div className="flex items-center space-x-3 mb-4">
+            <Sparkles className="h-6 w-6 text-purple-600" />
+            <h3 className="text-lg font-semibold text-gray-900">AI-Powered Insights</h3>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">Key Insights</h4>
+              <ul className="space-y-2">
+                {aiInsights.insights.map((insight, i) => (
+                  <li key={i} className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span className="text-gray-700">{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">Recommendations</h4>
+              <ul className="space-y-2">
+                {aiInsights.recommendations.map((rec, i) => (
+                  <li key={i} className="flex items-start space-x-2">
+                    <span className="text-green-600 mt-1">✓</span>
+                    <span className="text-gray-700">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {loadingAI && (
+        <div className="card">
+          <Loading text="Generating AI insights..." />
+        </div>
+      )}
     </div>
   );
 };

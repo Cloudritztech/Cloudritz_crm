@@ -55,31 +55,32 @@ const ViewInvoice = () => {
     
     const element = document.getElementById('invoice-content');
     const canvas = await html2canvas(element, {
-      scale: 1.5,
+      scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      windowHeight: element.scrollHeight + 100
     });
     
-    const imgData = canvas.toDataURL('image/jpeg', 0.8);
+    const imgData = canvas.toDataURL('image/png', 1.0);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = pdfWidth / imgWidth;
+    const ratio = (pdfWidth - 10) / imgWidth;
     const scaledHeight = imgHeight * ratio;
     
     let heightLeft = scaledHeight;
-    let position = 0;
+    let position = 5;
     
-    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
+    pdf.addImage(imgData, 'PNG', 5, position, pdfWidth - 10, scaledHeight);
     heightLeft -= pdfHeight;
     
     while (heightLeft > 0) {
-      position = heightLeft - scaledHeight;
+      position = heightLeft - scaledHeight + 5;
       pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, scaledHeight, undefined, 'FAST');
+      pdf.addImage(imgData, 'PNG', 5, position, pdfWidth - 10, scaledHeight);
       heightLeft -= pdfHeight;
     }
     
@@ -153,7 +154,7 @@ const ViewInvoice = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-0 sm:p-4">
+    <div className="w-full min-h-screen h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto p-0 sm:p-4">
       {/* Action Buttons */}
       <div className="flex justify-between items-center mb-4 no-print">
         <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
@@ -172,8 +173,9 @@ const ViewInvoice = () => {
       </div>
 
       {/* Invoice Content */}
+      <div className="w-full h-auto pb-4">
       {template === 'professional' ? (
-        <div id="invoice-content" className="invoice-a4">
+        <div id="invoice-content" className="invoice-a4" style={{paddingBottom: '40px'}}>
         <div style={{textAlign: 'center', padding: '8px', border: '2px solid #000', borderBottom: '1px solid #000', fontWeight: 'bold', fontSize: '12px'}}>
           TAX INVOICE
         </div>
@@ -272,7 +274,7 @@ const ViewInvoice = () => {
         </div>
       </div>
       ) : (
-        <div id="invoice-content" className="bg-white mx-auto max-w-sm shadow-lg print:shadow-none print:max-w-none" style={{fontSize: '11px'}}>
+        <div id="invoice-content" className="bg-white mx-auto max-w-sm shadow-lg print:shadow-none print:max-w-none" style={{fontSize: '11px', paddingBottom: '30px'}}>
           <div className="border border-gray-300 p-3">
             <div className="text-center mb-3">
               {profile?.businessName && <h2 className="font-bold text-base">{profile.businessName}</h2>}
@@ -336,6 +338,7 @@ const ViewInvoice = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* Professional Invoice Styles */}
       <style>{`

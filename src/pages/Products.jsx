@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { productsAPI } from '../services/api';
+import { useDebounce } from '../hooks/useDebounce';
 import { Plus, Upload, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
@@ -17,6 +18,7 @@ const Products = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [sortBy, setSortBy] = useState('newest');
   const [stockFilter, setStockFilter] = useState('all');
 
@@ -36,13 +38,13 @@ const Products = () => {
     }
   };
 
-  useEffect(() => {
+  const filteredAndSortedProducts = useMemo(() => {
     let result = [...products];
 
     // Search filter
-    if (searchQuery) {
+    if (debouncedSearch) {
       result = result.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+        p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
     }
 
@@ -70,10 +72,14 @@ const Products = () => {
       result.sort((a, b) => a.stock - b.stock);
     }
 
-    setFilteredProducts(result);
-  }, [products, searchQuery, sortBy, stockFilter]);
+    return result;
+  }, [products, debouncedSearch, sortBy, stockFilter]);
 
-  const handleSubmit = async (formData) => {
+  useEffect(() => {
+    setFilteredProducts(filteredAndSortedProducts);
+  }, [filteredAndSortedProducts]);
+
+  const handleSubmit = useCallback(async (formData) => {
     try {
       if (editingProduct) {
         await productsAPI.update(editingProduct._id, formData);
@@ -88,14 +94,14 @@ const Products = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed');
     }
-  };
+  }, [editingProduct]);
 
-  const handleEdit = (product) => {
+  const handleEdit = useCallback((product) => {
     setEditingProduct(product);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await productsAPI.delete(id);
@@ -105,11 +111,11 @@ const Products = () => {
         toast.error('Failed to delete product');
       }
     }
-  };
+  }, []);
 
-  const handleStockUpdate = () => {
+  const handleStockUpdate = useCallback(() => {
     fetchProducts();
-  };
+  }, []);
 
   const handleExcelUpload = (e) => {
     const file = e.target.files[0];

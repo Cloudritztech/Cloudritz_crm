@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDebounce } from '../hooks/useDebounce';
 import { invoicesAPI } from '../services/api';
 import { ResponsiveTable, StatusBadge, TableActions } from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -11,6 +12,7 @@ const InvoiceManagement = () => {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -61,10 +63,12 @@ const InvoiceManagement = () => {
     }
   };
 
-  const filtered = invoices.filter(
-    (inv) =>
-      inv.customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(() => 
+    invoices.filter(
+      (inv) =>
+        inv.customer?.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        inv.invoiceNumber?.toLowerCase().includes(debouncedSearch.toLowerCase())
+    ), [invoices, debouncedSearch]
   );
 
   if (loading) {

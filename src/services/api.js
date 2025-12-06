@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiCache } from '../utils/cache';
 
 // Dynamic API base URL for different environments
 const getApiBaseUrl = () => {
@@ -76,58 +77,218 @@ export const authAPI = {
   getProfile: () => api.get('/auth/profile'),
 };
 
-// Products API
+// Products API with caching
 export const productsAPI = {
-  getAll: (params) => api.get('/products', { params }),
-  getById: (id) => api.get(`/products?id=${id}`),
-  create: (product) => api.post('/products', product),
-  update: (id, product) => api.put(`/products?id=${id}`, product),
-  delete: (id) => api.delete(`/products?id=${id}`),
-  updateStock: (id, data) => api.post(`/products?id=${id}&action=stock`, data),
-  getLowStock: () => api.get('/products?lowStock=true'),
-  syncExcel: (products) => api.post('/products?action=sync-excel', { products }),
+  getAll: async (params) => {
+    const cacheKey = `products_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/products', { params });
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
+  getById: async (id) => {
+    const cacheKey = `product_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get(`/products?id=${id}`);
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    return response;
+  },
+  create: async (product) => {
+    const response = await api.post('/products', product);
+    apiCache.clear('products_');
+    return response;
+  },
+  update: async (id, product) => {
+    const response = await api.put(`/products?id=${id}`, product);
+    apiCache.clear(`product_${id}`);
+    apiCache.clear('products_');
+    return response;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/products?id=${id}`);
+    apiCache.clear(`product_${id}`);
+    apiCache.clear('products_');
+    return response;
+  },
+  updateStock: async (id, data) => {
+    const response = await api.post(`/products?id=${id}&action=stock`, data);
+    apiCache.clear(`product_${id}`);
+    apiCache.clear('products_');
+    return response;
+  },
+  getLowStock: async () => {
+    const cacheKey = 'products_lowStock';
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/products?lowStock=true');
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
+  syncExcel: async (products) => {
+    const response = await api.post('/products?action=sync-excel', { products });
+    apiCache.clear('products_');
+    return response;
+  },
 };
 
-// Customers API
+// Customers API with caching
 export const customersAPI = {
-  getAll: (params) => api.get('/customers', { params }),
-  getById: (id) => api.get(`/customers?id=${id}`),
-  create: (customer) => api.post('/customers', customer),
-  update: (id, customer) => api.put(`/customers?id=${id}`, customer),
-  getPurchaseHistory: (id) => api.get(`/customers?id=${id}&action=purchases`),
+  getAll: async (params) => {
+    const cacheKey = `customers_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/customers', { params });
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
+  getById: async (id) => {
+    const cacheKey = `customer_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get(`/customers?id=${id}`);
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    return response;
+  },
+  create: async (customer) => {
+    const response = await api.post('/customers', customer);
+    apiCache.clear('customers_');
+    return response;
+  },
+  update: async (id, customer) => {
+    const response = await api.put(`/customers?id=${id}`, customer);
+    apiCache.clear(`customer_${id}`);
+    apiCache.clear('customers_');
+    return response;
+  },
+  getPurchaseHistory: async (id) => {
+    const cacheKey = `customer_purchases_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get(`/customers?id=${id}&action=purchases`);
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
 };
 
-// Invoices API
+// Invoices API with caching
 export const invoicesAPI = {
-  getAll: (params) => api.get('/invoices', { params }),
-  getById: (id) => {
-    console.log('🔍 Making API call to get invoice by ID:', id);
-    console.log('🔍 Full URL will be:', `${API_BASE_URL}/invoice?id=${id}`);
-    return api.get(`/invoice?id=${id}`);
+  getAll: async (params) => {
+    const cacheKey = `invoices_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/invoices', { params });
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
   },
-  create: (invoice) => api.post('/invoices', invoice),
-  generatePDF: (id) => {
-    console.log('🔍 Making API call to generate PDF for ID:', id);
-    console.log('🔍 Full URL will be:', `${API_BASE_URL}/invoice?id=${id}&action=pdf`);
-    return api.get(`/invoice?id=${id}&action=pdf`, { responseType: 'blob' });
+  getById: async (id) => {
+    const cacheKey = `invoice_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get(`/invoice?id=${id}`);
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    return response;
   },
+  create: async (invoice) => {
+    const response = await api.post('/invoices', invoice);
+    apiCache.clear('invoices_');
+    apiCache.clear('dashboard');
+    return response;
+  },
+  generatePDF: (id) => api.get(`/invoice?id=${id}&action=pdf`, { responseType: 'blob' }),
   getWhatsAppLink: (id) => api.get(`/invoice?id=${id}&action=whatsapp`),
+  updatePayment: async (id, paymentData) => {
+    const response = await api.put(`/invoices/payment?id=${id}`, paymentData);
+    apiCache.clear(`invoice_${id}`);
+    apiCache.clear('invoices_');
+    apiCache.clear('dashboard');
+    return response;
+  },
 };
 
-// Reports API
+// Reports API with caching
 export const reportsAPI = {
-  getSales: (params) => api.get('/reports?action=sales', { params }),
-  getProfit: (params) => api.get('/reports?action=profit', { params }),
-  getTopProducts: (params) => api.get('/reports?action=top-products', { params }),
-  getDashboard: () => api.get('/reports'),
-  getSalesAnalytics: () => api.get('/reports?action=sales-analytics'),
-  getSalesReports: (params) => api.get('/reports?action=sales-reports', { params }),
+  getSales: async (params) => {
+    const cacheKey = `sales_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=sales', { params });
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
+  getProfit: async (params) => {
+    const cacheKey = `profit_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=profit', { params });
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
+  getTopProducts: async (params) => {
+    const cacheKey = `topProducts_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=top-products', { params });
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
+  getDashboard: async () => {
+    const cacheKey = 'dashboard';
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports');
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
+  getSalesAnalytics: async () => {
+    const cacheKey = 'salesAnalytics';
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=sales-analytics');
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
+  getSalesReports: async (params) => {
+    const cacheKey = `salesReports_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=sales-reports', { params });
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
 };
 
-// Profile API (JSON only - no file uploads)
+// Profile API with caching
 export const profileAPI = {
-  getProfile: () => api.get('/profile'),
-  updateProfile: (profileData) => api.post('/profile', profileData), // JSON only
+  getProfile: async () => {
+    const cacheKey = 'businessProfile';
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/profile');
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    return response;
+  },
+  updateProfile: async (profileData) => {
+    const response = await api.post('/profile', profileData);
+    apiCache.clear('businessProfile');
+    return response;
+  },
 };
 
 export default api;

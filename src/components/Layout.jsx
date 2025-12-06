@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NotificationPanel from './NotificationPanel';
 import { 
   Home, 
   Package, 
@@ -9,7 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   Search,
   Settings,
   ChevronDown,
@@ -222,11 +222,8 @@ const Layout = ({ children }) => {
           
           {/* Right section */}
           <div className="flex items-center space-x-4 px-4 lg:px-6">
-            {/* Notifications */}
-            <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            {/* AI Notifications */}
+            <NotificationPanel />
             
             {/* Mobile user info */}
             <div className="hidden sm:flex items-center space-x-3">

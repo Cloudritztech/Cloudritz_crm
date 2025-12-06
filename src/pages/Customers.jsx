@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { customersAPI } from '../services/api';
+import { useDebounce } from '../hooks/useDebounce';
 import { Plus, User, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/ui/Modal';
@@ -12,30 +13,28 @@ const Customers = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
-      const response = await customersAPI.getAll({ search: searchTerm });
+      const response = await customersAPI.getAll({ search: debouncedSearch });
       setCustomers(response.data.customers);
     } catch (error) {
       toast.error('Failed to fetch customers');
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch]);
 
   useEffect(() => {
-    const delayedSearch = setTimeout(() => {
-      fetchCustomers();
-    }, 500);
-    return () => clearTimeout(delayedSearch);
-  }, [searchTerm]);
+    fetchCustomers();
+  }, [debouncedSearch]);
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = useCallback(async (formData) => {
     try {
       if (editingCustomer) {
         await customersAPI.update(editingCustomer._id, formData);
@@ -50,12 +49,12 @@ const Customers = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed');
     }
-  };
+  }, [editingCustomer]);
 
-  const handleEdit = (customer) => {
+  const handleEdit = useCallback((customer) => {
     setEditingCustomer(customer);
     setShowModal(true);
-  };
+  }, []);
 
   if (loading) {
     return (

@@ -13,6 +13,7 @@ const AddInvoice = () => {
     discount: 0,
     discountType: "amount",
     paymentMethod: "cash",
+    paymentStatus: "paid",
     notes: "",
     
     // GST Controls
@@ -202,6 +203,7 @@ const AddInvoice = () => {
         discount: formData.discount || 0,
         discountType: formData.discountType,
         paymentMethod: formData.paymentMethod || 'cash',
+        paymentStatus: formData.paymentStatus || 'paid',
         deliveryNote: formData.deliveryNote,
         referenceNo: formData.referenceNo,
         buyerOrderNo: formData.buyerOrderNo,
@@ -402,6 +404,18 @@ const AddInvoice = () => {
                 <option value="card">Card</option>
                 <option value="upi">UPI</option>
                 <option value="cheque">Cheque</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Status</label>
+              <select
+                value={formData.paymentStatus}
+                onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="paid">Paid</option>
+                <option value="pending">Pending</option>
               </select>
             </div>
           </div>
