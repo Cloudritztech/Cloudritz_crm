@@ -10,7 +10,9 @@ import {
   RefreshCw,
   Plus,
   ArrowUpRight,
-  ShoppingCart
+  ShoppingCart,
+  DollarSign,
+  UserCheck
 } from 'lucide-react';
 import { StatCard } from '../components/ui/Card';
 import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
@@ -326,6 +328,32 @@ const Dashboard = () => {
               <div>
                 <p className="font-medium text-gray-900">Sales Reports</p>
                 <p className="text-sm text-gray-500">Detailed analytics</p>
+              </div>
+            </Link>
+
+            <Link 
+              to="/expenses" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-red-100 rounded-xl mr-4 group-hover:bg-red-200 transition-colors">
+                <DollarSign className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Expenses</p>
+                <p className="text-sm text-gray-500">Track spending</p>
+              </div>
+            </Link>
+
+            <Link 
+              to="/employees" 
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
+                <UserCheck className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Employees</p>
+                <p className="text-sm text-gray-500">Manage team</p>
               </div>
             </Link>
           </div>

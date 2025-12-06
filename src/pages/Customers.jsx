@@ -22,8 +22,10 @@ const Customers = () => {
   const fetchCustomers = useCallback(async () => {
     try {
       const response = await customersAPI.getAll({ search: debouncedSearch });
-      setCustomers(response.data.customers);
+      setCustomers(response.data.customers || []);
     } catch (error) {
+      console.error('Fetch customers error:', error);
+      setCustomers([]);
       toast.error('Failed to fetch customers');
     } finally {
       setLoading(false);
@@ -146,4 +148,3 @@ const Customers = () => {
 };
 
 export default Customers;
-d

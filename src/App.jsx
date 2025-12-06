@@ -17,6 +17,8 @@ const SalesReports = lazy(() => import('./pages/SalesReports'));
 const BusinessProfile = lazy(() => import('./pages/BusinessProfile'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
+const Expenses = lazy(() => import('./pages/Expenses'));
+const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 
@@ -84,6 +86,8 @@ function App() {
                             <Route path="/invoices/add" element={<AddInvoice />} />
                             <Route path="/invoices/view/:id" element={<ViewInvoice />} />
                             <Route path="/sales-reports" element={<SalesReports />} />
+                            <Route path="/expenses" element={<Expenses />} />
+                            <Route path="/employees" element={<Employees />} />
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/settings/*" element={<Settings />} />
