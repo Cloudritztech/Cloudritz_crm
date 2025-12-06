@@ -57,6 +57,8 @@ export default async function handler(req, res) {
     
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
+    const Expense = (await import('../lib/models/Expense.js')).default;
+
     const [
       todaySales,
       weeklySales,
@@ -71,7 +73,9 @@ export default async function handler(req, res) {
       recentInvoices,
       pendingPayments,
       totalTilesSold,
-      topProducts
+      topProducts,
+      totalExpenses,
+      monthlyExpenses
     ] = await Promise.all([
       // Today's sales
       Invoice.aggregate([
@@ -143,6 +147,15 @@ export default async function handler(req, res) {
         }},
         { $sort: { totalQuantity: -1 } },
         { $limit: 10 }
+      ]),
+      // Total expenses
+      Expense.aggregate([
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ]),
+      // Monthly expenses
+      Expense.aggregate([
+        { $match: { expenseDate: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } }
       ])
     ]);
 
@@ -161,7 +174,10 @@ export default async function handler(req, res) {
       pendingPayments: pendingPayments[0]?.total || 0,
       pendingCount: pendingPayments[0]?.count || 0,
       totalTilesSold: totalTilesSold[0]?.totalQuantity || 0,
-      topProducts: topProducts || []
+      topProducts: topProducts || [],
+      totalExpenses: totalExpenses[0]?.total || 0,
+      monthlyExpenses: monthlyExpenses[0]?.total || 0,
+      profit: (totalRevenue[0]?.total || 0) - (totalExpenses[0]?.total || 0)
     };
 
     console.log('✅ Comprehensive dashboard stats:', stats);

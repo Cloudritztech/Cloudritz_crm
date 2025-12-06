@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { invoicesAPI, profileAPI } from '../services/api';
 import { Share2, Printer, ArrowLeft, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import QRCode from 'qrcode';
 
 const ViewInvoice = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const ViewInvoice = () => {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [template, setTemplate] = useState('compact');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -38,6 +40,13 @@ const ViewInvoice = () => {
       
       if (settingsRes?.settings?.template) {
         setTemplate(settingsRes.settings.template);
+      }
+
+      // Generate QR code for UPI payment
+      if (invoiceRes.data?.invoice?.paymentMethod === 'upi' && profileRes.data?.profile?.upiId) {
+        const upiString = `upi://pay?pa=${profileRes.data.profile.upiId}&pn=${encodeURIComponent(profileRes.data.profile.businessName || 'Business')}&am=${invoiceRes.data.invoice.grandTotal || invoiceRes.data.invoice.total}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceRes.data.invoice.invoiceNumber)}`;
+        const qrUrl = await QRCode.toDataURL(upiString, { width: 200, margin: 1 });
+        setQrCodeUrl(qrUrl);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -321,6 +330,16 @@ const ViewInvoice = () => {
                 {profile.bankDetails?.branch && <div>Branch: {profile.bankDetails.branch}</div>}
               </>
             )}
+            
+            {/* UPI QR Code for Professional Template */}
+            {invoice.paymentMethod === 'upi' && qrCodeUrl && (
+              <div style={{marginTop: '10px', textAlign: 'center'}}>
+                <div style={{fontWeight: '700', marginBottom: '4px', fontSize: '10px'}}>Scan to Pay via UPI:</div>
+                <img src={qrCodeUrl} alt="UPI QR" style={{width: '80px', height: '80px', border: '2px solid #000', margin: '0 auto'}} />
+                {profile?.upiId && <div style={{fontSize: '9px', marginTop: '2px'}}>{profile.upiId}</div>}
+              </div>
+            )}
+            
             <div style={{marginTop: '10px', fontSize: '10px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
           </div>
           <div style={{width: '140px', padding: '12px', fontSize: '11px', textAlign: 'center'}}>
@@ -435,6 +454,16 @@ const ViewInvoice = () => {
 
             <div className="text-center mt-3 pt-2 border-t border-dashed border-gray-400 text-xs">
               <p>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</p>
+              
+              {/* UPI QR Code */}
+              {invoice.paymentMethod === 'upi' && qrCodeUrl && (
+                <div className="mt-3 flex flex-col items-center">
+                  <p className="font-semibold mb-2">Scan to Pay via UPI</p>
+                  <img src={qrCodeUrl} alt="UPI QR Code" className="w-32 h-32 border-2 border-gray-300 rounded" />
+                  {profile?.upiId && <p className="text-xs mt-1 text-gray-600">{profile.upiId}</p>}
+                </div>
+              )}
+              
               <p className="mt-2">Thank you! Visit again</p>
             </div>
           </div>

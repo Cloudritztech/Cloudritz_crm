@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Package, Users, FileText, Search, Bell, Menu, X } from 'lucide-react';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
+import NotificationCenter from './NotificationCenter';
 
 const ModernLayout = ({ children }) => {
   const location = useLocation();
@@ -91,8 +92,9 @@ const ModernLayout = ({ children }) => {
             {/* Desktop: Empty space to push right items */}
             <div className="hidden lg:block"></div>
 
-            {/* Right: User Menu */}
+            {/* Right: Notifications & User Menu */}
             <div className="flex items-center space-x-3">
+              <NotificationCenter />
               <UserMenu />
             </div>
           </div>

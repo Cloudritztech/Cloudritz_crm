@@ -291,4 +291,43 @@ export const profileAPI = {
   },
 };
 
+// Employees API
+export const employeesAPI = {
+  getAll: () => api.get('/employees'),
+  getById: (id) => api.get(`/employees?id=${id}`),
+  create: (data) => api.post('/employees', data),
+  update: (id, data) => api.put(`/employees?id=${id}`, data),
+  delete: (id) => api.delete(`/employees?id=${id}`)
+};
+
+// Expenses API
+export const expensesAPI = {
+  getAll: (params) => api.get('/expenses', { params }),
+  getById: (id) => api.get(`/expenses?id=${id}`),
+  getSummary: (params) => api.get('/expenses', { params: { action: 'summary', ...params } }),
+  create: (data) => api.post('/expenses', data),
+  update: (id, data) => api.put(`/expenses?id=${id}`, data),
+  delete: (id) => api.delete(`/expenses?id=${id}`)
+};
+
+// Payments API
+export const paymentsAPI = {
+  getAll: (params) => api.get('/payments', { params }),
+  getByInvoice: (invoiceId) => api.get(`/payments?invoiceId=${invoiceId}`),
+  getByCustomer: (customerId) => api.get(`/payments?customerId=${customerId}`),
+  create: (data) => api.post('/payments', data),
+  delete: (id) => api.delete(`/payments?id=${id}`)
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications?action=unread-count'),
+  generateDaily: () => api.get('/notifications?action=generate-daily'),
+  markAsRead: (id) => api.put(`/notifications?action=mark-read&id=${id}`),
+  markAllAsRead: () => api.put('/notifications?action=mark-read&id=all'),
+  delete: (id) => api.delete(`/notifications?id=${id}`),
+  deleteAll: () => api.delete('/notifications?id=all')
+};
+
 export default api;

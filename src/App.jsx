@@ -16,6 +16,7 @@ const ViewInvoice = lazy(() => import('./pages/ViewInvoice'));
 const SalesReports = lazy(() => import('./pages/SalesReports'));
 const BusinessProfile = lazy(() => import('./pages/BusinessProfile'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 
@@ -78,6 +79,7 @@ function App() {
                             <Route path="/products" element={<Products />} />
                             <Route path="/products/:id" element={<ProductDetail />} />
                             <Route path="/customers" element={<Customers />} />
+                            <Route path="/customers/:id" element={<CustomerDetail />} />
                             <Route path="/invoices" element={<Invoices />} />
                             <Route path="/invoices/add" element={<AddInvoice />} />
                             <Route path="/invoices/view/:id" element={<ViewInvoice />} />
