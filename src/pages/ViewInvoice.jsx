@@ -179,11 +179,11 @@ const ViewInvoice = () => {
         </div>
         <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderTop: 'none', borderBottom: '1px solid #000', padding: '8px'}}>
           <div>
-            <div className="a4-company">{profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
-            {profile?.businessAddress?.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>) || <div className="a4-address">Shop Address, City, State</div>}
-            <div className="a4-contact">GSTIN/UIN: {profile?.gstin || '09FTIPS4577P1ZD'}</div>
-            <div className="a4-contact">E-Mail: {profile?.email || 'info@anvitiles.com'}</div>
-            <div className="a4-contact">Contact: {profile?.phone || '+91 9876543210'}</div>
+            {profile?.businessName && <div className="a4-company">{profile.businessName.toUpperCase()}</div>}
+            {profile?.businessAddress && profile.businessAddress.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>)}
+            {profile?.gstin && <div className="a4-contact">GSTIN/UIN: {profile.gstin}</div>}
+            {profile?.email && <div className="a4-contact">E-Mail: {profile.email}</div>}
+            {profile?.phone && <div className="a4-contact">Contact: {profile.phone}</div>}
           </div>
           <div style={{position: 'relative', width: '200px'}}>
             {profile?.logoUrl && (
@@ -252,14 +252,18 @@ const ViewInvoice = () => {
 
         <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
           <div style={{flex: 1, padding: '6px', fontSize: '7px', borderRight: '2px solid #000'}}>
-            <div style={{fontWeight: '700', marginBottom: '3px'}}>Bank Details:</div>
-            <div>Bank: HDFC Bank</div>
-            <div>A/c No.: 50200068337918</div>
-            <div>IFSC: HDFC0004331</div>
+            {(invoice.bankDetails?.bankName || invoice.bankDetails?.accountNo || invoice.bankDetails?.ifscCode) && (
+              <>
+                <div style={{fontWeight: '700', marginBottom: '3px'}}>Bank Details:</div>
+                {invoice.bankDetails?.bankName && <div>Bank: {invoice.bankDetails.bankName}</div>}
+                {invoice.bankDetails?.accountNo && <div>A/c No.: {invoice.bankDetails.accountNo}</div>}
+                {invoice.bankDetails?.ifscCode && <div>IFSC: {invoice.bankDetails.ifscCode}</div>}
+              </>
+            )}
             <div style={{marginTop: '6px', fontSize: '6px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
           </div>
           <div style={{width: '140px', padding: '6px', fontSize: '7px', textAlign: 'center'}}>
-            <div style={{fontWeight: '700', marginBottom: '3px'}}>for {profile?.businessName?.toUpperCase() || 'ANVI TILES & DECORHUB'}</div>
+            {profile?.businessName && <div style={{fontWeight: '700', marginBottom: '3px'}}>for {profile.businessName.toUpperCase()}</div>}
             {profile?.signatureUrl && (
               <img src={profile.signatureUrl} alt="Signature" style={{maxWidth: '80px', maxHeight: '35px', margin: '10px auto', display: 'block'}} />
             )}
@@ -271,10 +275,10 @@ const ViewInvoice = () => {
         <div id="invoice-content" className="bg-white mx-auto max-w-sm shadow-lg print:shadow-none print:max-w-none" style={{fontSize: '11px'}}>
           <div className="border border-gray-300 p-3">
             <div className="text-center mb-3">
-              <h2 className="font-bold text-base">{profile?.businessName || 'ANVI TILES & DECORHUB'}</h2>
-              <p className="text-xs">{profile?.businessAddress?.split('\n')[0] || 'Shop Address'}</p>
-              <p className="text-xs">Ph: {profile?.phone || '+91 9876543210'}</p>
-              <p className="text-xs">GSTIN: {profile?.gstin || '09FTIPS4577P1ZD'}</p>
+              {profile?.businessName && <h2 className="font-bold text-base">{profile.businessName}</h2>}
+              {profile?.businessAddress && <p className="text-xs">{profile.businessAddress.split('\n')[0]}</p>}
+              {profile?.phone && <p className="text-xs">Ph: {profile.phone}</p>}
+              {profile?.gstin && <p className="text-xs">GSTIN: {profile.gstin}</p>}
             </div>
             
             <div className="border-t border-b border-dashed border-gray-400 py-2 mb-2 text-xs">
