@@ -57,10 +57,20 @@ const BusinessProfile = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setProfile(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'bankDetails') {
+      setProfile(prev => ({
+        ...prev,
+        bankDetails: {
+          ...prev.bankDetails,
+          ...value
+        }
+      }));
+    } else {
+      setProfile(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   // Upload image to Cloudinary and update preview
