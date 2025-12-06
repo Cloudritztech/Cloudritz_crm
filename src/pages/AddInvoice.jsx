@@ -312,13 +312,14 @@ const AddInvoice = () => {
     
     if (formData.applyGST) {
       if (formData.reverseGST) {
-        // Reverse GST: Extract GST from inclusive price
+        // Reverse GST: Extract GST from inclusive price and apply as discount
         const gstRate = 18;
         totalGst = (amountAfterDiscount * gstRate) / (100 + gstRate);
         cgst = totalGst / 2;
         sgst = totalGst / 2;
         taxableAmount = amountAfterDiscount - totalGst;
-        autoDiscount = totalGst;
+        autoDiscount = totalGst; // This will be shown as discount
+        totalDiscountAmount = totalDiscountAmount + totalGst;
       } else {
         // Normal GST: Add on top
         cgst = (amountAfterDiscount * 9) / 100;
@@ -651,8 +652,15 @@ const AddInvoice = () => {
               
               {parseFloat(totals.totalDiscountAmount) > 0 && (
                 <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
-                  <span>Discount:</span>
+                  <span>Discount{formData.reverseGST && parseFloat(totals.autoDiscount) > 0 ? ' (incl. GST)' : ''}:</span>
                   <span>-₹{totals.totalDiscountAmount}</span>
+                </div>
+              )}
+              
+              {formData.reverseGST && parseFloat(totals.autoDiscount) > 0 && (
+                <div className="flex justify-between text-xs text-orange-600 dark:text-orange-400 pl-4">
+                  <span>└ Auto GST Discount:</span>
+                  <span>-₹{totals.autoDiscount}</span>
                 </div>
               )}
               
