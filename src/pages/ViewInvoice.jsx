@@ -235,10 +235,6 @@ const ViewInvoice = () => {
             </tr>
           </tbody>
         </table>
-
-        <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
-          <strong>Amount in words:</strong> {invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}
-        </div>
         
         {/* Billing Breakdown */}
         {(invoice.discount > 0 || invoice.autoDiscount > 0 || (invoice.totalCgst > 0 && invoice.totalSgst > 0)) && (
@@ -304,6 +300,18 @@ const ViewInvoice = () => {
             </table>
           </div>
         )}
+
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '11px', backgroundColor: '#f9f9f9'}}>
+          <div style={{fontWeight: '700', marginBottom: '4px'}}>Amount in Words:</div>
+          <div style={{fontStyle: 'italic'}}>{invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}</div>
+        </div>
+        
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '13px', fontWeight: '700', backgroundColor: '#e8f5e9'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <span>PAYABLE AMOUNT:</span>
+            <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
+          </div>
+        </div>
 
         <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
           <div style={{flex: 1, padding: '12px', fontSize: '11px', borderRight: '2px solid #000'}}>
@@ -413,6 +421,18 @@ const ViewInvoice = () => {
               
               <div className="flex justify-between font-bold text-base border-t border-gray-400 pt-2 mt-2">
                 <span>GRAND TOTAL:</span>
+                <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-400 pt-2 mt-2 text-xs">
+              <div className="font-semibold mb-1">Amount in Words:</div>
+              <div className="italic text-xs">{invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}</div>
+            </div>
+            
+            <div className="bg-green-50 border border-green-300 rounded p-2 mt-2">
+              <div className="flex justify-between font-bold text-sm">
+                <span>PAYABLE AMOUNT:</span>
                 <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
               </div>
             </div>
