@@ -312,13 +312,12 @@ const AddInvoice = () => {
     
     if (formData.applyGST) {
       if (formData.reverseGST) {
-        // Reverse GST: Extract GST from inclusive price and apply as discount
-        const gstRate = 18;
-        totalGst = (amountAfterDiscount * gstRate) / (100 + gstRate);
-        cgst = totalGst / 2;
-        sgst = totalGst / 2;
-        taxableAmount = amountAfterDiscount - totalGst;
-        autoDiscount = totalGst; // This will be shown as discount
+        // Reverse GST: Start with base amount, add GST, then discount it
+        taxableAmount = amountAfterDiscount;
+        cgst = (taxableAmount * 9) / 100;
+        sgst = (taxableAmount * 9) / 100;
+        totalGst = cgst + sgst;
+        autoDiscount = totalGst; // Discount the GST amount
         totalDiscountAmount = totalDiscountAmount + totalGst;
       } else {
         // Normal GST: Add on top
@@ -330,7 +329,7 @@ const AddInvoice = () => {
     }
     
     // Calculate grand total
-    let subtotal = formData.reverseGST ? amountAfterDiscount : (taxableAmount + totalGst);
+    let subtotal = formData.applyGST && !formData.reverseGST ? (taxableAmount + totalGst) : amountAfterDiscount;
     const roundOff = Math.round(subtotal) - subtotal;
     const grandTotal = Math.round(subtotal);
     
@@ -736,11 +735,12 @@ const AddInvoice = () => {
                   {formData.applyGST && formData.reverseGST ? (
                     <>
                       <p className="font-medium text-blue-700">Reverse GST Mode:</p>
-                      <p>GST = (Amount × 18%) / (100 + 18%)</p>
-                      <p>Taxable = Amount - GST</p>
-                      <p>CGST = GST / 2 (9%)</p>
-                      <p>SGST = GST / 2 (9%)</p>
-                      <p className="font-medium text-gray-800 mt-2">Total = Amount (GST extracted)</p>
+                      <p>Taxable = Gross - Discounts</p>
+                      <p>CGST = Taxable × 9%</p>
+                      <p>SGST = Taxable × 9%</p>
+                      <p>GST Added = CGST + SGST</p>
+                      <p>Auto Discount = -GST Amount</p>
+                      <p className="font-medium text-gray-800 mt-2">Total = Taxable (GST cancelled)</p>
                     </>
                   ) : formData.applyGST ? (
                     <>

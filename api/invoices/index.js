@@ -230,14 +230,14 @@ export default async function handler(req, res) {
           
           if (applyGST) {
             if (reverseGST) {
-              // Reverse GST: Extract GST from the amount (price is inclusive of GST)
-              // Formula: GST = (Amount × GST%) / (100 + GST%)
-              const gstRate = 18; // 9% CGST + 9% SGST
-              totalGst = (amountAfterDiscount * gstRate) / (100 + gstRate);
-              totalCgst = totalGst / 2;
-              totalSgst = totalGst / 2;
-              taxableAmount = amountAfterDiscount - totalGst;
-              autoDiscount = totalGst; // Show as discount to keep total same
+              // Reverse GST: Start with base amount, add GST, then discount it
+              // Base amount is what user entered (already without GST)
+              taxableAmount = amountAfterDiscount;
+              totalCgst = (taxableAmount * 9) / 100;
+              totalSgst = (taxableAmount * 9) / 100;
+              totalGst = totalCgst + totalSgst;
+              autoDiscount = totalGst; // Discount the GST amount
+              totalDiscountAmount = totalDiscountAmount + totalGst;
             } else {
               // Normal GST: Add GST on top of taxable amount
               totalCgst = (amountAfterDiscount * 9) / 100;
@@ -248,7 +248,7 @@ export default async function handler(req, res) {
           }
           
           // Calculate final total
-          let subtotal = reverseGST ? amountAfterDiscount : (taxableAmount + totalGst);
+          let subtotal = applyGST && !reverseGST ? (taxableAmount + totalGst) : amountAfterDiscount;
           const roundOff = Math.round(subtotal) - subtotal;
           const grandTotal = Math.round(subtotal);
           const amountInWords = numberToWords(grandTotal);
