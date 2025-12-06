@@ -90,7 +90,9 @@ async function handleUpdateProfile(req, res) {
       phone,
       email,
       logoUrl,
-      signatureUrl
+      signatureUrl,
+      bankDetails,
+      upiId
     } = req.body;
 
     // Validate required fields
@@ -132,6 +134,12 @@ async function handleUpdateProfile(req, res) {
     }
     if (signatureUrl !== undefined) {
       updateData.signatureUrl = signatureUrl;
+    }
+    if (bankDetails !== undefined) {
+      updateData.bankDetails = bankDetails;
+    }
+    if (upiId !== undefined) {
+      updateData.upiId = upiId;
     }
 
     // Upsert: Update if exists, create if not
