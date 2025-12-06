@@ -302,7 +302,7 @@ export default async function handler(req, res) {
               lastPurchaseDate: new Date()
             });
           } catch (custErr) {
-            console.warn('⚠️ Failed to update customer purchases:', custErr.message);
+            console.warn('⚠️ Failed to update customer purchase:', custErr.message);
           }
 
           // Populate invoice
