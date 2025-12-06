@@ -243,7 +243,7 @@ export default async function handler(req, res) {
           // When reverseGST: final amount = taxable (GST added then discounted)
           // When normal GST: final amount = taxable + GST
           // When no GST: final amount = taxable
-          let subtotal = amountAfterDiscount;
+          let subtotal = taxableAmount;
           if (applyGST && !reverseGST) {
             subtotal = taxableAmount + totalGst;
           }
