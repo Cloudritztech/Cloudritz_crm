@@ -10,9 +10,10 @@ const Expenses = () => {
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
-    category: 'operational',
-    date: new Date().toISOString().split('T')[0],
-    description: ''
+    type: 'miscellaneous',
+    expenseDate: new Date().toISOString().split('T')[0],
+    description: '',
+    paymentMethod: 'cash'
   });
 
   useEffect(() => {
@@ -38,7 +39,7 @@ const Expenses = () => {
       await expensesAPI.create(formData);
       toast.success('Expense added');
       setShowModal(false);
-      setFormData({ title: '', amount: '', category: 'operational', date: new Date().toISOString().split('T')[0], description: '' });
+      setFormData({ title: '', amount: '', type: 'miscellaneous', expenseDate: new Date().toISOString().split('T')[0], description: '', paymentMethod: 'cash' });
       fetchExpenses();
     } catch (error) {
       toast.error('Failed to add expense');
@@ -81,8 +82,8 @@ const Expenses = () => {
                 <h3 className="font-semibold text-lg">{expense.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{expense.description}</p>
                 <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                  <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(expense.date).toLocaleDateString()}</span>
-                  <span className="flex items-center"><Tag className="h-4 w-4 mr-1" />{expense.category}</span>
+                  <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(expense.expenseDate).toLocaleDateString()}</span>
+                  <span className="flex items-center"><Tag className="h-4 w-4 mr-1" />{expense.type}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -100,14 +101,16 @@ const Expenses = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="input-field" required />
               <input type="number" placeholder="Amount" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="input-field" required />
-              <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="input-field">
-                <option value="operational">Operational</option>
+              <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})} className="input-field">
                 <option value="salary">Salary</option>
                 <option value="rent">Rent</option>
                 <option value="utilities">Utilities</option>
-                <option value="other">Other</option>
+                <option value="travel">Travel</option>
+                <option value="marketing">Marketing</option>
+                <option value="purchase">Purchase</option>
+                <option value="miscellaneous">Miscellaneous</option>
               </select>
-              <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="input-field" required />
+              <input type="date" value={formData.expenseDate} onChange={(e) => setFormData({...formData, expenseDate: e.target.value})} className="input-field" required />
               <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="input-field" rows="3"></textarea>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>

@@ -11,9 +11,9 @@ const Employees = () => {
     name: '',
     phone: '',
     email: '',
-    position: '',
+    department: '',
     salary: '',
-    joinDate: new Date().toISOString().split('T')[0]
+    joiningDate: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const Employees = () => {
       await employeesAPI.create(formData);
       toast.success('Employee added');
       setShowModal(false);
-      setFormData({ name: '', phone: '', email: '', position: '', salary: '', joinDate: new Date().toISOString().split('T')[0] });
+      setFormData({ name: '', phone: '', email: '', department: '', salary: '', joiningDate: new Date().toISOString().split('T')[0] });
       fetchEmployees();
     } catch (error) {
       toast.error('Failed to add employee');
@@ -82,7 +82,7 @@ const Employees = () => {
               <span className="badge-success text-xs">Active</span>
             </div>
             <h3 className="font-semibold text-lg mb-1">{employee.name}</h3>
-            <p className="text-sm text-gray-600 mb-3 flex items-center"><Briefcase className="h-4 w-4 mr-1" />{employee.position}</p>
+            <p className="text-sm text-gray-600 mb-3 flex items-center"><Briefcase className="h-4 w-4 mr-1" />{employee.department}</p>
             <div className="space-y-2 text-sm text-gray-600">
               <p className="flex items-center"><Phone className="h-4 w-4 mr-2" />{employee.phone}</p>
               {employee.email && <p className="flex items-center"><Mail className="h-4 w-4 mr-2" />{employee.email}</p>}
@@ -102,9 +102,9 @@ const Employees = () => {
               <input type="text" placeholder="Name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="input-field" required />
               <input type="tel" placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="input-field" required />
               <input type="email" placeholder="Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="input-field" />
-              <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="input-field" required />
+              <input type="text" placeholder="Department" value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="input-field" required />
               <input type="number" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="input-field" required />
-              <input type="date" value={formData.joinDate} onChange={(e) => setFormData({...formData, joinDate: e.target.value})} className="input-field" required />
+              <input type="date" value={formData.joiningDate} onChange={(e) => setFormData({...formData, joiningDate: e.target.value})} className="input-field" required />
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" className="btn-primary flex-1">Add</button>
