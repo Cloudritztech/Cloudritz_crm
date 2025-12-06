@@ -254,12 +254,13 @@ const ViewInvoice = () => {
 
         <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
           <div style={{flex: 1, padding: '6px', fontSize: '7px', borderRight: '2px solid #000'}}>
-            {(invoice.bankDetails?.bankName || invoice.bankDetails?.accountNo || invoice.bankDetails?.ifscCode) && (
+            {(profile?.bankDetails?.bankName || profile?.bankDetails?.accountNo || profile?.bankDetails?.ifscCode) && (
               <>
                 <div style={{fontWeight: '700', marginBottom: '3px'}}>Bank Details:</div>
-                {invoice.bankDetails?.bankName && <div>Bank: {invoice.bankDetails.bankName}</div>}
-                {invoice.bankDetails?.accountNo && <div>A/c No.: {invoice.bankDetails.accountNo}</div>}
-                {invoice.bankDetails?.ifscCode && <div>IFSC: {invoice.bankDetails.ifscCode}</div>}
+                {profile.bankDetails?.bankName && <div>Bank: {profile.bankDetails.bankName}</div>}
+                {profile.bankDetails?.accountNo && <div>A/c No.: {profile.bankDetails.accountNo}</div>}
+                {profile.bankDetails?.ifscCode && <div>IFSC: {profile.bankDetails.ifscCode}</div>}
+                {profile.bankDetails?.branch && <div>Branch: {profile.bankDetails.branch}</div>}
               </>
             )}
             <div style={{marginTop: '6px', fontSize: '6px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
