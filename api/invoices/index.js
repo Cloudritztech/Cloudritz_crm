@@ -171,10 +171,12 @@ export default async function handler(req, res) {
             itemDiscountTotal += discountAmount;
             const taxableValue = itemGross - discountAmount;
             
-            // GST calculation (always calculate for record, but may not apply)
+            // GST calculation
+            // If reverseGST: don't add GST to item total (will be shown but discounted later)
+            // If normal GST: add GST to item total
             const cgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
             const sgstAmount = applyGST ? (taxableValue * 9) / 100 : 0;
-            const itemTotal = taxableValue + cgstAmount + sgstAmount;
+            const itemTotal = reverseGST ? taxableValue : (taxableValue + cgstAmount + sgstAmount);
             
             processedItems.push({
               product: product._id,
@@ -209,41 +211,31 @@ export default async function handler(req, res) {
             }
           }
 
-          // Calculate after item discounts
+          // Apply additional discount
+          let additionalDiscount = parseFloat(discount) || 0;
           let amountAfterItemDiscount = grossAmount - itemDiscountTotal;
           
-          // Apply additional discount BEFORE GST
-          let additionalDiscount = parseFloat(discount) || 0;
           if (discountType === 'percentage') {
             additionalDiscount = (amountAfterItemDiscount * additionalDiscount) / 100;
           }
           
-          let totalDiscountAmount = itemDiscountTotal + additionalDiscount;
-          let amountAfterDiscount = grossAmount - totalDiscountAmount;
+          // Taxable amount = Gross - All Discounts
+          let taxableAmount = grossAmount - itemDiscountTotal - additionalDiscount;
           
           // Calculate GST
           let totalCgst = 0;
           let totalSgst = 0;
           let totalGst = 0;
-          let taxableAmount = amountAfterDiscount;
           let autoDiscount = 0;
           
           if (applyGST) {
+            totalCgst = (taxableAmount * 9) / 100;
+            totalSgst = (taxableAmount * 9) / 100;
+            totalGst = totalCgst + totalSgst;
+            
             if (reverseGST) {
-              // Reverse GST: Start with base amount, add GST, then discount it
-              // Base amount is what user entered (already without GST)
-              taxableAmount = amountAfterDiscount;
-              totalCgst = (taxableAmount * 9) / 100;
-              totalSgst = (taxableAmount * 9) / 100;
-              totalGst = totalCgst + totalSgst;
-              autoDiscount = totalGst; // Discount the GST amount
-              totalDiscountAmount = totalDiscountAmount + totalGst;
-            } else {
-              // Normal GST: Add GST on top of taxable amount
-              totalCgst = (amountAfterDiscount * 9) / 100;
-              totalSgst = (amountAfterDiscount * 9) / 100;
-              totalGst = totalCgst + totalSgst;
-              taxableAmount = amountAfterDiscount;
+              // Reverse GST: GST is calculated but then discounted
+              autoDiscount = totalGst;
             }
           }
           
@@ -263,14 +255,12 @@ export default async function handler(req, res) {
             grossAmount, 
             itemDiscountTotal, 
             additionalDiscount,
-            totalDiscountAmount,
-            amountAfterDiscount,
-            reverseGST,
             taxableAmount, 
             totalCgst,
             totalSgst,
             totalGst, 
-            autoDiscount, 
+            autoDiscount,
+            reverseGST,
             grandTotal 
           });
           

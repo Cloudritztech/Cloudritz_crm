@@ -280,6 +280,14 @@ const SalesReports = () => {
           <Loading text="Generating AI insights..." />
         </div>
       )}
+
+      {/* Sales Chart */}
+      {!loading && salesData.totalOrders > 0 && (
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
+          <SalesChart period={selectedPeriod} startDate={customStartDate} endDate={customEndDate} />
+        </div>
+      )}
     </div>
   );
 };

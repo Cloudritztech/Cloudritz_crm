@@ -213,7 +213,7 @@ const ViewInvoice = () => {
             {invoice.items?.map((item, index) => {
               const taxableValue = item.taxableValue || (item.quantity * item.price);
               const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
-              const totalAmount = taxableValue + gstAmount;
+              const totalAmount = invoice.reverseGST ? taxableValue : (taxableValue + gstAmount);
               return (
                 <tr key={index}>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{index + 1}</td>
@@ -362,7 +362,7 @@ const ViewInvoice = () => {
                 {invoice.items?.map((item, index) => {
                   const taxableValue = item.taxableValue || (item.quantity * item.price);
                   const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
-                  const totalAmount = taxableValue + gstAmount;
+                  const totalAmount = invoice.reverseGST ? taxableValue : (taxableValue + gstAmount);
                   return (
                     <tr key={index} className="border-b border-dotted border-gray-300">
                       <td className="py-1">{item.product?.name || 'Product'}</td>
