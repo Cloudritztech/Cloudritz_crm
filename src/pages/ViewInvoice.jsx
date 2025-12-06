@@ -306,16 +306,48 @@ const ViewInvoice = () => {
             </table>
 
             <div className="border-t border-gray-400 pt-2 text-xs space-y-1">
-              <div className="flex justify-between"><span>Subtotal:</span><span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Item Total:</span><span>₹{(invoice.subtotal || 0).toFixed(2)}</span></div>
+              
               {(invoice.discount > 0 || invoice.autoDiscount > 0) && (
-                <div className="flex justify-between text-red-600"><span>Discount:</span><span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span></div>
+                <>
+                  <div className="flex justify-between text-red-600">
+                    <span>Discount{invoice.autoDiscount > 0 ? ' (incl. GST)' : ''}:</span>
+                    <span>-₹{((invoice.discount || 0) + (invoice.autoDiscount || 0)).toFixed(2)}</span>
+                  </div>
+                  {invoice.autoDiscount > 0 && (
+                    <div className="flex justify-between text-red-600" style={{fontSize: '10px', paddingLeft: '8px'}}>
+                      <span>└ Auto GST Discount:</span>
+                      <span>-₹{invoice.autoDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                </>
               )}
-              <div className="flex justify-between"><span>GST (18%):</span><span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span></div>
+              
+              <div className="flex justify-between font-semibold"><span>Taxable Amount:</span><span>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</span></div>
+              
+              {((invoice.totalCgst || 0) + (invoice.totalSgst || 0)) > 0 && (
+                <>
+                  <div className="flex justify-between" style={{fontSize: '10px'}}>
+                    <span>CGST @ 9%:</span>
+                    <span>₹{(invoice.totalCgst || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between" style={{fontSize: '10px'}}>
+                    <span>SGST @ 9%:</span>
+                    <span>₹{(invoice.totalSgst || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span>Total GST (18%):</span>
+                    <span>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              
               {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
                 <div className="flex justify-between"><span>Round Off:</span><span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</span></div>
               )}
+              
               <div className="flex justify-between font-bold text-base border-t border-gray-400 pt-2 mt-2">
-                <span>TOTAL:</span>
+                <span>GRAND TOTAL:</span>
                 <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
               </div>
             </div>
