@@ -311,6 +311,8 @@ export default async function handler(req, res) {
             discount: parseFloat(additionalDiscount.toFixed(2)),
             autoDiscount: parseFloat(autoDiscount.toFixed(2)),
             discountType: discountType,
+            applyGST: applyGST,
+            reverseGST: reverseGST,
             roundOff: parseFloat(roundOff.toFixed(2)),
             grandTotal: grandTotal,
             total: grandTotal,
