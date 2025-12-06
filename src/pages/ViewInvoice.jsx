@@ -55,34 +55,22 @@ const ViewInvoice = () => {
     
     const element = document.getElementById('invoice-content');
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff',
-      windowHeight: element.scrollHeight + 100
+      backgroundColor: '#ffffff'
     });
     
-    const imgData = canvas.toDataURL('image/png', 1.0);
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = (pdfWidth - 10) / imgWidth;
+    const ratio = pdfWidth / imgWidth;
     const scaledHeight = imgHeight * ratio;
     
-    let heightLeft = scaledHeight;
-    let position = 5;
-    
-    pdf.addImage(imgData, 'PNG', 5, position, pdfWidth - 10, scaledHeight);
-    heightLeft -= pdfHeight;
-    
-    while (heightLeft > 0) {
-      position = heightLeft - scaledHeight + 5;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 5, position, pdfWidth - 10, scaledHeight);
-      heightLeft -= pdfHeight;
-    }
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
     
     return pdf;
   };
@@ -176,10 +164,10 @@ const ViewInvoice = () => {
       <div className="w-full h-auto pb-4">
       {template === 'professional' ? (
         <div id="invoice-content" className="invoice-a4" style={{paddingBottom: '40px'}}>
-        <div style={{textAlign: 'center', padding: '8px', border: '2px solid #000', borderBottom: '1px solid #000', fontWeight: 'bold', fontSize: '12px'}}>
+        <div style={{textAlign: 'center', padding: '12px', border: '2px solid #000', borderBottom: '1px solid #000', fontWeight: 'bold', fontSize: '18px'}}>
           TAX INVOICE
         </div>
-        <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderTop: 'none', borderBottom: '1px solid #000', padding: '8px'}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', border: '2px solid #000', borderTop: 'none', borderBottom: '1px solid #000', padding: '12px'}}>
           <div>
             {profile?.businessName && <div className="a4-company">{profile.businessName.toUpperCase()}</div>}
             {profile?.businessAddress && profile.businessAddress.split('\n').map((line, i) => <div key={i} className="a4-address">{line}</div>)}
@@ -194,31 +182,31 @@ const ViewInvoice = () => {
           </div>
         </div>
 
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', border: '2px solid #000', borderTop: 'none', fontSize: '7px', padding: '4px', gap: '4px'}}>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', border: '2px solid #000', borderTop: 'none', fontSize: '11px', padding: '10px', gap: '8px'}}>
           <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
           <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
           <div>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</div>
           <div>Destination: {getPlaceOfSupply()}</div>
         </div>
 
-        <div style={{border: '2px solid #000', borderTop: 'none', padding: '6px', fontSize: '7px'}}>
-          <div style={{fontWeight: '700', marginBottom: '3px'}}>Customer Details:</div>
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
+          <div style={{fontWeight: '700', marginBottom: '5px'}}>Customer Details:</div>
           <div style={{fontWeight: '700'}}>{invoice.customer?.name}</div>
           <div>Mobile: {invoice.customer?.phone}</div>
           <div>State: {invoice.buyerDetails?.state || invoice.customer?.address?.state || 'Uttar Pradesh'}</div>
         </div>
 
-        <table style={{width: '100%', borderCollapse: 'collapse', border: '2px solid #000', borderTop: 'none', fontSize: '7px'}}>
+        <table style={{width: '100%', borderCollapse: 'collapse', border: '2px solid #000', borderTop: 'none', fontSize: '11px'}}>
           <thead>
             <tr style={{backgroundColor: '#f0f0f0'}}>
-              <th style={{border: '1px solid #000', padding: '3px', width: '25px'}}>Sl</th>
-              <th style={{border: '1px solid #000', padding: '3px', textAlign: 'left'}}>Description</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '45px'}}>HSN</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '35px'}}>Qty</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '50px'}}>Rate</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '55px'}}>Taxable</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '45px'}}>GST</th>
-              <th style={{border: '1px solid #000', padding: '3px', width: '60px'}}>Amount</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '35px'}}>Sl</th>
+              <th style={{border: '1px solid #000', padding: '8px', textAlign: 'left'}}>Description</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '55px'}}>HSN</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '45px'}}>Qty</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '65px'}}>Rate</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '70px'}}>Taxable</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '60px'}}>GST</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '75px'}}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -228,49 +216,49 @@ const ViewInvoice = () => {
               const totalAmount = taxableValue + gstAmount;
               return (
                 <tr key={index}>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{index + 1}</td>
-                  <td style={{border: '1px solid #000', padding: '2px'}}>{item.product?.name || 'Product'}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{item.product?.hsnCode || '6907'}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'center'}}>{item.quantity}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{item.price.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{taxableValue.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{gstAmount.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{index + 1}</td>
+                  <td style={{border: '1px solid #000', padding: '8px'}}>{item.product?.name || 'Product'}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{item.product?.hsnCode || '6907'}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{item.quantity}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{item.price.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{taxableValue.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{gstAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
                 </tr>
               );
             })}
             <tr style={{fontWeight: '700'}}>
-              <td colSpan="5" style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>Total</td>
-              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '2px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
+              <td colSpan="5" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
 
-        <div style={{border: '2px solid #000', borderTop: 'none', padding: '6px', fontSize: '7px'}}>
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
           <strong>Amount in words:</strong> {invoice.amountInWords || `INR ${invoice.grandTotal || invoice.total} Only`}
         </div>
 
         <div style={{display: 'flex', border: '2px solid #000', borderTop: 'none'}}>
-          <div style={{flex: 1, padding: '6px', fontSize: '7px', borderRight: '2px solid #000'}}>
+          <div style={{flex: 1, padding: '12px', fontSize: '11px', borderRight: '2px solid #000'}}>
             {(profile?.bankDetails?.bankName || profile?.bankDetails?.accountNo || profile?.bankDetails?.ifscCode) && (
               <>
-                <div style={{fontWeight: '700', marginBottom: '3px'}}>Bank Details:</div>
+                <div style={{fontWeight: '700', marginBottom: '6px'}}>Bank Details:</div>
                 {profile.bankDetails?.bankName && <div>Bank: {profile.bankDetails.bankName}</div>}
                 {profile.bankDetails?.accountNo && <div>A/c No.: {profile.bankDetails.accountNo}</div>}
                 {profile.bankDetails?.ifscCode && <div>IFSC: {profile.bankDetails.ifscCode}</div>}
                 {profile.bankDetails?.branch && <div>Branch: {profile.bankDetails.branch}</div>}
               </>
             )}
-            <div style={{marginTop: '6px', fontSize: '6px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
+            <div style={{marginTop: '10px', fontSize: '10px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
           </div>
-          <div style={{width: '140px', padding: '6px', fontSize: '7px', textAlign: 'center'}}>
-            {profile?.businessName && <div style={{fontWeight: '700', marginBottom: '3px'}}>for {profile.businessName.toUpperCase()}</div>}
+          <div style={{width: '140px', padding: '12px', fontSize: '11px', textAlign: 'center'}}>
+            {profile?.businessName && <div style={{fontWeight: '700', marginBottom: '6px'}}>for {profile.businessName.toUpperCase()}</div>}
             {profile?.signatureUrl && (
               <img src={profile.signatureUrl} alt="Signature" style={{maxWidth: '80px', maxHeight: '35px', margin: '10px auto', display: 'block'}} />
             )}
-            <div style={{marginTop: '20px', fontSize: '6px'}}>Authorised Signatory</div>
+            <div style={{marginTop: '20px', fontSize: '10px'}}>Authorised Signatory</div>
           </div>
         </div>
       </div>
@@ -346,31 +334,29 @@ const ViewInvoice = () => {
         .invoice-a4 {
           width: 210mm;
           min-height: 297mm;
-          padding: 10mm;
+          padding: 8mm;
           margin: 0 auto;
           background: #ffffff;
           color: #000;
           font-family: Arial, sans-serif;
           box-sizing: border-box;
-          font-size: 9px;
-          line-height: 1.2;
+          font-size: 11px;
+          line-height: 1.5;
           border: none;
-          display: flex;
-          flex-direction: column;
         }
 
         .a4-company {
-          font-size: 11px;
+          font-size: 16px;
           font-weight: 700;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
         .a4-address {
-          font-size: 8px;
-          line-height: 1.3;
+          font-size: 11px;
+          line-height: 1.5;
         }
         .a4-contact {
-          font-size: 8px;
-          margin-top: 1px;
+          font-size: 11px;
+          margin-top: 2px;
         }
 
 
