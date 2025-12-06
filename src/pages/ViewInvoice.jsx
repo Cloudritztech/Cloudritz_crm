@@ -237,7 +237,7 @@ const ViewInvoice = () => {
         </table>
         
         {/* Billing Breakdown */}
-        {(invoice.discount > 0 || invoice.autoDiscount > 0 || (invoice.totalCgst > 0 && invoice.totalSgst > 0)) && (
+        {(invoice.subtotal > 0) && (
           <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '11px'}}>
             <table style={{width: '100%', borderCollapse: 'collapse'}}>
               <tbody>
@@ -476,18 +476,26 @@ const ViewInvoice = () => {
         
         @media screen and (max-width: 768px) {
           .invoice-a4 {
-            width: 100vw;
-            min-height: 100vh;
-            padding: 8px;
-            margin: 0;
-            font-size: 7px;
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            font-size: 8px !important;
+            box-sizing: border-box !important;
           }
           .a4-company {
-            font-size: 10px;
+            font-size: 11px !important;
           }
           .a4-address,
           .a4-contact {
-            font-size: 7px;
+            font-size: 8px !important;
+          }
+          .invoice-a4 table {
+            font-size: 7px !important;
+          }
+          .invoice-a4 table th,
+          .invoice-a4 table td {
+            padding: 4px 2px !important;
           }
         }
         
