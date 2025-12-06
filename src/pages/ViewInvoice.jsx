@@ -388,53 +388,34 @@ const ViewInvoice = () => {
             print-color-adjust: exact !important;
             color-adjust: exact !important;
           }
-          html {
-            width: 210mm;
-            height: 297mm;
-          }
-          body { 
-            background: #ffffff !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            color: #000 !important;
+          html, body {
             width: 210mm !important;
             height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
           }
-          .no-print { 
-            display: none !important; 
+          body * {
+            visibility: hidden !important;
           }
-          .invoice-a4 {
+          #invoice-content, #invoice-content * {
+            visibility: visible !important;
+          }
+          #invoice-content {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 210mm !important;
             height: auto !important;
             min-height: 297mm !important;
-            max-width: 210mm !important;
-            padding: 10mm !important;
+            padding: 8mm !important;
             margin: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
             background: #ffffff !important;
             color: #000 !important;
-            transform: none !important;
-            page-break-after: always !important;
           }
-          .invoice-a4 * {
-            color: #000 !important;
-          }
-          table {
-            page-break-inside: auto !important;
-          }
-          tr {
-            page-break-inside: avoid !important;
-            page-break-after: auto !important;
-          }
-          thead {
-            display: table-header-group !important;
-          }
-          .a4-header {
-            page-break-after: avoid !important;
-          }
-          .a4-items-table tbody tr {
-            page-break-inside: avoid !important;
+          .no-print { 
+            display: none !important;
+            visibility: hidden !important;
           }
         }
       `}</style>
