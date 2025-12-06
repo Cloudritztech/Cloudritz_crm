@@ -231,7 +231,7 @@ const ViewInvoice = () => {
               <td colSpan="5" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
               <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
               <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{invoice.reverseGST ? (invoice.totalTaxableAmount || invoice.subtotal).toFixed(2) : (invoice.grandTotal || invoice.total).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
