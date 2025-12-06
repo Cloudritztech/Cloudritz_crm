@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsAPI, productsAPI, customersAPI, invoicesAPI } from '../services/api';
 import { 
@@ -94,8 +94,8 @@ const Dashboard = () => {
     );
   }
 
-  // Row 1: Main metrics (memoized)
-  const mainMetrics = useMemo(() => [
+  // Row 1: Main metrics
+  const mainMetrics = [
     {
       title: 'Total Customers',
       value: stats?.totalCustomers || 0,
@@ -124,7 +124,7 @@ const Dashboard = () => {
       icon: AlertTriangle,
       color: 'danger'
     }
-  ], [stats]);
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
