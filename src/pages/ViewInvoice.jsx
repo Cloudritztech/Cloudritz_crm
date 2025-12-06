@@ -213,7 +213,7 @@ const ViewInvoice = () => {
             {invoice.items?.map((item, index) => {
               const taxableValue = item.taxableValue || (item.quantity * item.price);
               const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
-              const totalAmount = invoice.reverseGST ? taxableValue : (taxableValue + gstAmount);
+              const totalAmount = item.total || taxableValue;
               return (
                 <tr key={index}>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{index + 1}</td>
@@ -222,7 +222,7 @@ const ViewInvoice = () => {
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{item.quantity}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{item.price.toFixed(2)}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{taxableValue.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{gstAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{invoice.reverseGST ? '0.00' : gstAmount.toFixed(2)}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
                 </tr>
               );
@@ -230,8 +230,8 @@ const ViewInvoice = () => {
             <tr style={{fontWeight: '700'}}>
               <td colSpan="5" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
               <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{invoice.reverseGST ? (invoice.totalTaxableAmount || invoice.subtotal).toFixed(2) : (invoice.grandTotal || invoice.total).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{invoice.reverseGST ? '0.00' : ((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
+              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
