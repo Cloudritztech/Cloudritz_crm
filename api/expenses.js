@@ -104,9 +104,15 @@ export default async function handler(req, res) {
 
       case 'POST':
         const { type, employee: employeeId, amount, expenseDate, paymentMethod } = req.body;
+        
+        // Clean up empty string values
+        const cleanData = { ...req.body };
+        if (!cleanData.employee || cleanData.employee === '') delete cleanData.employee;
+        if (!cleanData.product || cleanData.product === '') delete cleanData.product;
+        if (!cleanData.description || cleanData.description === '') delete cleanData.description;
 
         // Handle salary payment
-        if (type === 'salary' && employeeId) {
+        if (type === 'salary' && employeeId && employeeId !== '') {
           const employee = await Employee.findById(employeeId);
           if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
 
@@ -121,7 +127,7 @@ export default async function handler(req, res) {
           }
 
           const expense = await Expense.create({
-            ...req.body,
+            ...cleanData,
             createdBy: req.user._id
           });
 
@@ -139,7 +145,7 @@ export default async function handler(req, res) {
           return res.status(201).json({ success: true, expense });
         }
 
-        const expense = await Expense.create({ ...req.body, createdBy: req.user._id });
+        const expense = await Expense.create({ ...cleanData, createdBy: req.user._id });
         return res.status(201).json({ success: true, expense });
 
       case 'PUT':
