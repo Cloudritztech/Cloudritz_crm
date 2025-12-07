@@ -384,11 +384,69 @@ const SalesReports = () => {
         </div>
       )}
 
-      {/* Sales Chart */}
-      {!loading && salesData.totalOrders > 0 && (
+      {/* Sales Visualization */}
+      {!loading && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
-          <SalesChart period={selectedPeriod} startDate={customStartDate} endDate={customEndDate} />
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Overview</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Sales Bar */}
+            <div className="text-center">
+              <div className="mb-2 text-sm font-medium text-gray-600">Total Sales</div>
+              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
+                <div 
+                  className="absolute bottom-0 w-full bg-gradient-to-t from-green-500 to-green-400 transition-all duration-500"
+                  style={{ height: salesData.totalAmount > 0 ? '100%' : '0%' }}
+                >
+                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
+                    {formatCurrency(salesData.totalAmount)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">{salesData.totalOrders} orders</div>
+            </div>
+            
+            {/* Expenses Bar */}
+            <div className="text-center">
+              <div className="mb-2 text-sm font-medium text-gray-600">Total Expenses</div>
+              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
+                <div 
+                  className="absolute bottom-0 w-full bg-gradient-to-t from-red-500 to-red-400 transition-all duration-500"
+                  style={{ height: expenseData.total > 0 ? `${Math.min((expenseData.total / Math.max(salesData.totalAmount, expenseData.total, 1)) * 100, 100)}%` : '0%' }}
+                >
+                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
+                    {formatCurrency(expenseData.total)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">{expenseData.count} transactions</div>
+            </div>
+            
+            {/* Profit Bar */}
+            <div className="text-center">
+              <div className="mb-2 text-sm font-medium text-gray-600">Net Profit</div>
+              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
+                <div 
+                  className={`absolute bottom-0 w-full transition-all duration-500 ${
+                    salesData.totalAmount - expenseData.total >= 0 
+                      ? 'bg-gradient-to-t from-blue-500 to-blue-400' 
+                      : 'bg-gradient-to-t from-orange-500 to-orange-400'
+                  }`}
+                  style={{ 
+                    height: Math.abs(salesData.totalAmount - expenseData.total) > 0 
+                      ? `${Math.min((Math.abs(salesData.totalAmount - expenseData.total) / Math.max(salesData.totalAmount, expenseData.total, 1)) * 100, 100)}%` 
+                      : '0%' 
+                  }}
+                >
+                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
+                    {formatCurrency(salesData.totalAmount - expenseData.total)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                {salesData.totalAmount - expenseData.total >= 0 ? 'Profit' : 'Loss'}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
