@@ -384,71 +384,132 @@ const SalesReports = () => {
         </div>
       )}
 
-      {/* Sales Visualization */}
-      {!loading && (
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Overview</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Sales Bar */}
-            <div className="text-center">
-              <div className="mb-2 text-sm font-medium text-gray-600">Total Sales</div>
-              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
-                <div 
-                  className="absolute bottom-0 w-full bg-gradient-to-t from-green-500 to-green-400 transition-all duration-500"
-                  style={{ height: salesData.totalAmount > 0 ? '100%' : '0%' }}
-                >
-                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
-                    {formatCurrency(salesData.totalAmount)}
+      {/* Sales Visualization - Pie Chart */}
+      {!loading && (() => {
+        const total = salesData.totalAmount + expenseData.total;
+        const salesPercent = total > 0 ? (salesData.totalAmount / total) * 100 : 50;
+        const expensePercent = total > 0 ? (expenseData.total / total) * 100 : 50;
+        
+        // Calculate pie chart segments
+        const radius = 80;
+        const circumference = 2 * Math.PI * radius;
+        const salesDash = (salesPercent / 100) * circumference;
+        const expenseDash = (expensePercent / 100) * circumference;
+        
+        return (
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Financial Overview</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Pie Chart */}
+              <div className="flex items-center justify-center">
+                <div className="relative">
+                  <svg width="240" height="240" viewBox="0 0 240 240" className="transform -rotate-90">
+                    {/* Background circle */}
+                    <circle cx="120" cy="120" r="80" fill="#f3f4f6" />
+                    
+                    {/* Sales segment */}
+                    <circle
+                      cx="120"
+                      cy="120"
+                      r="80"
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="60"
+                      strokeDasharray={`${salesDash} ${circumference}`}
+                      strokeDashoffset="0"
+                      className="transition-all duration-700"
+                    />
+                    
+                    {/* Expenses segment */}
+                    <circle
+                      cx="120"
+                      cy="120"
+                      r="80"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="60"
+                      strokeDasharray={`${expenseDash} ${circumference}`}
+                      strokeDashoffset={`-${salesDash}`}
+                      className="transition-all duration-700"
+                    />
+                    
+                    {/* Center white circle */}
+                    <circle cx="120" cy="120" r="50" fill="white" />
+                  </svg>
+                  
+                  {/* Center text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</div>
+                    <div className="text-sm text-gray-500">Total</div>
                   </div>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">{salesData.totalOrders} orders</div>
-            </div>
-            
-            {/* Expenses Bar */}
-            <div className="text-center">
-              <div className="mb-2 text-sm font-medium text-gray-600">Total Expenses</div>
-              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
-                <div 
-                  className="absolute bottom-0 w-full bg-gradient-to-t from-red-500 to-red-400 transition-all duration-500"
-                  style={{ height: expenseData.total > 0 ? `${Math.min((expenseData.total / Math.max(salesData.totalAmount, expenseData.total, 1)) * 100, 100)}%` : '0%' }}
-                >
-                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
-                    {formatCurrency(expenseData.total)}
+              
+              {/* Legend and Stats */}
+              <div className="flex flex-col justify-center space-y-6">
+                {/* Sales */}
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Total Sales</div>
+                      <div className="text-xs text-gray-500">{salesData.totalOrders} orders</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-600">{formatCurrency(salesData.totalAmount)}</div>
+                    <div className="text-xs text-gray-500">{salesPercent.toFixed(1)}%</div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-2 text-xs text-gray-500">{expenseData.count} transactions</div>
-            </div>
-            
-            {/* Profit Bar */}
-            <div className="text-center">
-              <div className="mb-2 text-sm font-medium text-gray-600">Net Profit</div>
-              <div className="relative h-48 bg-gray-100 rounded-lg overflow-hidden">
-                <div 
-                  className={`absolute bottom-0 w-full transition-all duration-500 ${
-                    salesData.totalAmount - expenseData.total >= 0 
-                      ? 'bg-gradient-to-t from-blue-500 to-blue-400' 
-                      : 'bg-gradient-to-t from-orange-500 to-orange-400'
-                  }`}
-                  style={{ 
-                    height: Math.abs(salesData.totalAmount - expenseData.total) > 0 
-                      ? `${Math.min((Math.abs(salesData.totalAmount - expenseData.total) / Math.max(salesData.totalAmount, expenseData.total, 1)) * 100, 100)}%` 
-                      : '0%' 
-                  }}
-                >
-                  <div className="absolute top-2 left-0 right-0 text-white font-bold text-lg">
-                    {formatCurrency(salesData.totalAmount - expenseData.total)}
+                
+                {/* Expenses */}
+                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Total Expenses</div>
+                      <div className="text-xs text-gray-500">{expenseData.count} transactions</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-red-600">{formatCurrency(expenseData.total)}</div>
+                    <div className="text-xs text-gray-500">{expensePercent.toFixed(1)}%</div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-2 text-xs text-gray-500">
-                {salesData.totalAmount - expenseData.total >= 0 ? 'Profit' : 'Loss'}
+                
+                {/* Net Profit */}
+                <div className={`flex items-center justify-between p-4 rounded-lg border ${
+                  salesData.totalAmount - expenseData.total >= 0
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'bg-orange-50 border-orange-200'
+                }`}>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full ${
+                      salesData.totalAmount - expenseData.total >= 0 ? 'bg-blue-500' : 'bg-orange-500'
+                    }`}></div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Net Profit</div>
+                      <div className="text-xs text-gray-500">
+                        {salesData.totalAmount - expenseData.total >= 0 ? 'Profit' : 'Loss'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${
+                      salesData.totalAmount - expenseData.total >= 0 ? 'text-blue-600' : 'text-orange-600'
+                    }`}>
+                      {formatCurrency(salesData.totalAmount - expenseData.total)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {total > 0 ? ((Math.abs(salesData.totalAmount - expenseData.total) / total) * 100).toFixed(1) : 0}% margin
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
