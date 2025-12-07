@@ -99,10 +99,10 @@ export default async function handler(req, res) {
       // Total customers
       Customer.countDocuments(),
       // Low stock count
-      Product.countDocuments({ $expr: { $lte: ["$stock", "$minStock"] } }),
+      Product.countDocuments({ $expr: { $lte: ["$stock", "$lowStockLimit"] } }),
       // Low stock items details
-      Product.find({ $expr: { $lte: ["$stock", "$minStock"] } })
-        .select('name category stock minStock')
+      Product.find({ $expr: { $lte: ["$stock", "$lowStockLimit"] } })
+        .select('name category stock lowStockLimit')
         .sort({ stock: 1 })
         .limit(20)
         .lean(),

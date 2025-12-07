@@ -425,7 +425,7 @@ const Dashboard = () => {
                     Stock: {item.stock}
                   </span>
                   <span className="text-gray-500">
-                    Min: {item.minStock}
+                    Min: {item.lowStockLimit || item.minStock || 10}
                   </span>
                 </div>
               </div>
