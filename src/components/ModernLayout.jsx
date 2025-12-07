@@ -13,7 +13,13 @@ const ModernLayout = ({ children }) => {
   useEffect(() => {
     const fetchBusinessName = async () => {
       try {
-        const response = await fetch('/api/profile');
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
         if (response.ok) {
           const data = await response.json();
           if (data.profile?.businessName) {
