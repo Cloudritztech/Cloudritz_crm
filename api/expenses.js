@@ -71,10 +71,11 @@ export default async function handler(req, res) {
         if (type) filter.type = type;
 
         const expenses = await Expense.find(filter)
-          .populate('employee', 'name')
-          .populate('product', 'name')
-          .populate('createdBy', 'name')
-          .sort({ expenseDate: -1 });
+          .populate({ path: 'employee', select: 'name', strictPopulate: false })
+          .populate({ path: 'product', select: 'name', strictPopulate: false })
+          .populate({ path: 'createdBy', select: 'name', strictPopulate: false })
+          .sort({ expenseDate: -1 })
+          .lean();
         
         return res.status(200).json({ success: true, expenses });
 
