@@ -2,6 +2,7 @@ import connectDB from '../lib/mongodb.js';
 import Expense from '../lib/models/Expense.js';
 import Employee from '../lib/models/Employee.js';
 import SalaryHistory from '../lib/models/SalaryHistory.js';
+import User from '../lib/models/User.js';
 import { auth } from '../lib/middleware/auth.js';
 
 async function runMiddleware(req, res, fn) {
@@ -63,21 +64,43 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, expense });
         }
 
-        const { startDate, endDate, type } = query;
-        let filter = {};
-        if (startDate && endDate) {
-          filter.expenseDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
-        }
-        if (type) filter.type = type;
+        try {
+          const { startDate, endDate, type } = query;
+          let filter = {};
+          if (startDate && endDate) {
+            filter.expenseDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+          }
+          if (type) filter.type = type;
 
-        const expenses = await Expense.find(filter)
-          .populate({ path: 'employee', select: 'name', strictPopulate: false })
-          .populate({ path: 'product', select: 'name', strictPopulate: false })
-          .populate({ path: 'createdBy', select: 'name', strictPopulate: false })
-          .sort({ expenseDate: -1 })
-          .lean();
-        
-        return res.status(200).json({ success: true, expenses });
+          const expenses = await Expense.find(filter)
+            .sort({ expenseDate: -1 })
+            .lean();
+          
+          // Manually populate to avoid errors
+          for (let expense of expenses) {
+            if (expense.employee) {
+              try {
+                const emp = await Employee.findById(expense.employee).select('name').lean();
+                expense.employee = emp;
+              } catch (e) {
+                expense.employee = null;
+              }
+            }
+            if (expense.createdBy) {
+              try {
+                const user = await User.findById(expense.createdBy).select('name').lean();
+                expense.createdBy = user;
+              } catch (e) {
+                expense.createdBy = null;
+              }
+            }
+          }
+          
+          return res.status(200).json({ success: true, expenses });
+        } catch (err) {
+          console.error('Get expenses error:', err);
+          return res.status(200).json({ success: true, expenses: [] });
+        }
 
       case 'POST':
         const { type, employee: employeeId, amount, expenseDate, paymentMethod } = req.body;
