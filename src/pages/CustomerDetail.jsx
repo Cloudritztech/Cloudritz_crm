@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, DollarSign, FileText, CreditCard, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import { customersAPI, invoicesAPI, paymentsAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -27,13 +28,10 @@ const CustomerDetail = () => {
   const fetchCustomerData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [customerRes, invoicesRes, paymentsRes] = await Promise.all([
-        axios.get(`/api/customers?id=${id}`, { headers }),
-        axios.get(`/api/invoices?customer=${id}`, { headers }),
-        axios.get(`/api/payments?customerId=${id}`, { headers })
+        customersAPI.getById(id),
+        invoicesAPI.getAll({ customer: id }),
+        paymentsAPI.getByCustomer(id)
       ]);
 
       setCustomer(customerRes.data.customer);
@@ -41,7 +39,7 @@ const CustomerDetail = () => {
       setPayments(paymentsRes.data.payments || []);
     } catch (error) {
       console.error('Failed to fetch customer data:', error);
-      alert('Failed to load customer details');
+      toast.error('Failed to load customer details');
     } finally {
       setLoading(false);
     }
@@ -59,16 +57,13 @@ const CustomerDetail = () => {
   const submitPayment = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.post('/api/payments', {
+      await paymentsAPI.create({
         invoice: selectedInvoice._id,
         ...paymentForm,
         amount: parseFloat(paymentForm.amount)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Payment recorded successfully');
+      toast.success('Payment recorded successfully');
       setShowPaymentModal(false);
       setPaymentForm({
         amount: '',
@@ -79,29 +74,26 @@ const CustomerDetail = () => {
       });
       fetchCustomerData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to record payment');
+      toast.error(error.response?.data?.message || 'Failed to record payment');
     }
   };
 
   const markAsPaid = async (invoice) => {
-    if (!confirm(`Mark invoice ${invoice.invoiceNumber} as fully paid?`)) return;
+    if (!window.confirm(`Mark invoice ${invoice.invoiceNumber} as fully paid?`)) return;
     
     try {
-      const token = localStorage.getItem('token');
-      await axios.post('/api/payments', {
+      await paymentsAPI.create({
         invoice: invoice._id,
         amount: invoice.pendingAmount,
         paymentMethod: 'cash',
         paymentDate: new Date().toISOString(),
         notes: 'Marked as paid'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Invoice marked as paid');
+      toast.success('Invoice marked as paid');
       fetchCustomerData();
     } catch (error) {
-      alert('Failed to mark as paid');
+      toast.error('Failed to mark as paid');
     }
   };
 

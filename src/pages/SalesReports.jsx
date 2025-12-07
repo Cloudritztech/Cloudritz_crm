@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { reportsAPI } from '../services/api';
-import { TrendingUp, Calendar, ArrowLeft, Download, Filter, AlertTriangle, Sparkles } from 'lucide-react';
+import { reportsAPI, expensesAPI, invoicesAPI } from '../services/api';
+import { TrendingUp, Calendar, ArrowLeft, Download, Filter, AlertTriangle, Sparkles, DollarSign } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { StatCard } from '../components/ui/Card';
@@ -21,6 +23,7 @@ const SalesReports = () => {
     averageOrder: 0,
     growthRate: '0.0'
   });
+  const [expenseData, setExpenseData] = useState({ total: 0, count: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [aiInsights, setAiInsights] = useState(null);
@@ -50,32 +53,37 @@ const SalesReports = () => {
     setError(null);
     
     try {
-      console.log('📊 Fetching sales data for period:', period);
-      
       const params = { period };
       if (period === 'custom' && startDate && endDate) {
         params.startDate = startDate;
         params.endDate = endDate;
       }
       
-      const response = await reportsAPI.getSalesReports(params);
+      const [salesResponse, expensesResponse] = await Promise.all([
+        reportsAPI.getSalesReports(params),
+        expensesAPI.getAll(period === 'custom' ? { startDate, endDate } : {})
+      ]);
       
-      if (response.data?.success && response.data?.data) {
-        setSalesData(response.data.data);
-        console.log('✅ Sales data fetched:', response.data.data);
-        generateAIInsights(response.data.data);
-      } else {
-        throw new Error('Invalid response format');
+      if (salesResponse.data?.success && salesResponse.data?.data) {
+        setSalesData(salesResponse.data.data);
+        generateAIInsights(salesResponse.data.data);
+      }
+      
+      if (expensesResponse.data?.success) {
+        const expenses = expensesResponse.data.expenses || [];
+        const filtered = period === 'custom' && startDate && endDate
+          ? expenses.filter(e => {
+              const date = new Date(e.expenseDate);
+              return date >= new Date(startDate) && date <= new Date(endDate);
+            })
+          : expenses;
+        const total = filtered.reduce((sum, e) => sum + e.amount, 0);
+        setExpenseData({ total, count: filtered.length });
       }
     } catch (error) {
-      console.error('❌ Error fetching sales data:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to fetch sales data');
-      setSalesData({
-        totalAmount: 0,
-        totalOrders: 0,
-        averageOrder: 0,
-        growthRate: '0.0'
-      });
+      setError(error.response?.data?.message || error.message || 'Failed to fetch data');
+      setSalesData({ totalAmount: 0, totalOrders: 0, averageOrder: 0, growthRate: '0.0' });
+      setExpenseData({ total: 0, count: 0 });
     } finally {
       setLoading(false);
     }
@@ -95,6 +103,87 @@ const SalesReports = () => {
   };
 
   const formatCurrency = (amount) => `₹${(amount || 0).toLocaleString('en-IN')}`;
+
+  const exportToExcel = async () => {
+    try {
+      toast.loading('Generating Excel report...');
+      
+      const params = {};
+      if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
+        params.startDate = customStartDate;
+        params.endDate = customEndDate;
+      }
+      
+      const [invoicesRes, expensesRes] = await Promise.all([
+        invoicesAPI.getAll(params),
+        expensesAPI.getAll(params)
+      ]);
+      
+      const invoices = invoicesRes.data?.invoices || [];
+      const expenses = expensesRes.data?.expenses || [];
+      
+      // Invoice data
+      const invoiceData = invoices.map(inv => ({
+        'Invoice No': inv.invoiceNumber,
+        'Date': new Date(inv.createdAt).toLocaleDateString('en-IN'),
+        'Customer Name': inv.customer?.name || 'N/A',
+        'Amount': inv.total || inv.grandTotal,
+        'Status': inv.status,
+        'Payment Method': inv.paymentMethod
+      }));
+      
+      // Expense data
+      const expenseData = expenses.map(exp => ({
+        'Date': new Date(exp.expenseDate).toLocaleDateString('en-IN'),
+        'Title': exp.title,
+        'Type': exp.type,
+        'Amount': exp.amount,
+        'Payment Method': exp.paymentMethod,
+        'Employee': exp.employee?.name || 'N/A'
+      }));
+      
+      // Summary
+      const totalSales = invoices.reduce((sum, inv) => sum + (inv.total || inv.grandTotal), 0);
+      const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const netProfit = totalSales - totalExpenses;
+      
+      const summary = [{
+        'Metric': 'Total Sales',
+        'Value': totalSales
+      }, {
+        'Metric': 'Total Expenses',
+        'Value': totalExpenses
+      }, {
+        'Metric': 'Net Profit',
+        'Value': netProfit
+      }, {
+        'Metric': 'Total Invoices',
+        'Value': invoices.length
+      }, {
+        'Metric': 'Total Expense Entries',
+        'Value': expenses.length
+      }];
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      const wsSummary = XLSX.utils.json_to_sheet(summary);
+      const wsInvoices = XLSX.utils.json_to_sheet(invoiceData);
+      const wsExpenses = XLSX.utils.json_to_sheet(expenseData);
+      
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      XLSX.utils.book_append_sheet(wb, wsInvoices, 'Invoices');
+      XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
+      
+      const fileName = `Sales_Report_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      toast.dismiss();
+      toast.success('Excel report downloaded!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Failed to generate report');
+    }
+  };
 
   const generateAIInsights = async (data) => {
     setLoadingAI(true);
@@ -132,14 +221,9 @@ const SalesReports = () => {
             <p className="text-gray-600">Detailed sales analytics and performance metrics</p>
           </div>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" icon={Download}>
-            Export
-          </Button>
-          <Button variant="outline" size="sm" icon={Filter}>
-            Filter
-          </Button>
-        </div>
+        <Button variant="primary" size="sm" icon={Download} onClick={exportToExcel}>
+          Export Excel
+        </Button>
       </div>
 
       {/* Error Message */}
@@ -209,36 +293,55 @@ const SalesReports = () => {
       {loading ? (
         <Loading text="Loading sales data..." />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            icon={TrendingUp}
-            title="Total Sales"
-            value={formatCurrency(salesData.totalAmount)}
-            subtitle={quickFilters.find(f => f.key === selectedPeriod)?.label || 'Selected Period'}
-            color="success"
-          />
-          <StatCard
-            icon={Calendar}
-            title="Total Orders"
-            value={salesData.totalOrders}
-            subtitle={quickFilters.find(f => f.key === selectedPeriod)?.label || 'Selected Period'}
-            color="primary"
-          />
-          <StatCard
-            icon={TrendingUp}
-            title="Average Order"
-            value={formatCurrency(salesData.averageOrder)}
-            subtitle="Per order value"
-            color="info"
-          />
-          <StatCard
-            icon={Calendar}
-            title="Growth Rate"
-            value={`${salesData.growthRate > 0 ? '+' : ''}${salesData.growthRate}%`}
-            subtitle="vs previous period"
-            color={salesData.growthRate >= 0 ? 'success' : 'danger'}
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              icon={TrendingUp}
+              title="Total Sales"
+              value={formatCurrency(salesData.totalAmount)}
+              subtitle={quickFilters.find(f => f.key === selectedPeriod)?.label || 'Selected Period'}
+              color="success"
+            />
+            <StatCard
+              icon={Calendar}
+              title="Total Orders"
+              value={salesData.totalOrders}
+              subtitle={quickFilters.find(f => f.key === selectedPeriod)?.label || 'Selected Period'}
+              color="primary"
+            />
+            <StatCard
+              icon={DollarSign}
+              title="Total Expenses"
+              value={formatCurrency(expenseData.total)}
+              subtitle={`${expenseData.count} transactions`}
+              color="danger"
+            />
+            <StatCard
+              icon={TrendingUp}
+              title="Net Profit"
+              value={formatCurrency(salesData.totalAmount - expenseData.total)}
+              subtitle="Sales - Expenses"
+              color={salesData.totalAmount - expenseData.total >= 0 ? 'success' : 'danger'}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <StatCard
+              icon={TrendingUp}
+              title="Average Order"
+              value={formatCurrency(salesData.averageOrder)}
+              subtitle="Per order value"
+              color="info"
+            />
+            <StatCard
+              icon={Calendar}
+              title="Growth Rate"
+              value={`${salesData.growthRate > 0 ? '+' : ''}${salesData.growthRate}%`}
+              subtitle="vs previous period"
+              color={salesData.growthRate >= 0 ? 'success' : 'danger'}
+            />
+          </div>
+        </>
       )}
 
       {/* AI Insights */}

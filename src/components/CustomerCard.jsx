@@ -1,9 +1,12 @@
 import React from 'react';
-import { User, Phone, MapPin, Edit, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, Phone, MapPin, Edit, Mail, Eye } from 'lucide-react';
 
 const CustomerCard = ({ customer, onEdit }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="card-premium">
+    <div className="card-premium cursor-pointer hover:shadow-xl transition-shadow" onClick={() => navigate(`/customers/${customer._id}`)}>
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -52,17 +55,31 @@ const CustomerCard = ({ customer, onEdit }) => {
         )}
       </div>
 
-      {/* Edit Button */}
-      <button
-        onClick={() => onEdit(customer)}
-        className="w-full flex items-center justify-center px-4 py-2 rounded-lg transition-all text-sm"
-        style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 500 }}
-        onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
-      >
-        <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-        Edit
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/customers/${customer._id}`);
+          }}
+          className="flex-1 flex items-center justify-center px-4 py-2 rounded-lg transition-all text-sm"
+          style={{ background: 'var(--accent-primary)', color: 'white', fontWeight: 500 }}
+        >
+          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+          View
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(customer);
+          }}
+          className="flex-1 flex items-center justify-center px-4 py-2 rounded-lg transition-all text-sm"
+          style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 500 }}
+        >
+          <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+          Edit
+        </button>
+      </div>
     </div>
   );
 };

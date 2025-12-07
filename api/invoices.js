@@ -66,9 +66,10 @@ export default async function handler(req, res) {
 // List invoices
 async function listInvoices(req, res, query) {
   try {
-    const { search, status, startDate, endDate, limit = 50 } = query;
+    const { search, status, startDate, endDate, customer, limit = 50 } = query;
     const filter = {};
     
+    if (customer) filter.customer = customer;
     if (status) filter.status = status;
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -140,6 +141,30 @@ async function generatePDF(req, res, id) {
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
+
+    // Fetch business profile for company and bank details
+    const User = (await import('../lib/models/User.js')).default;
+    const user = await User.findById(req.user._id).select('businessProfile').lean();
+    const profile = user?.businessProfile || {};
+
+    // Add company and bank details to invoice
+    invoice.companyDetails = {
+      name: profile.businessName || 'Anvi Tiles & Decorhub',
+      address: profile.address || 'Gorakhpur, Uttar Pradesh',
+      gstin: profile.gstin || '',
+      state: profile.state || 'UTTAR PRADESH',
+      stateCode: profile.stateCode || '09',
+      mobile: profile.phone || '',
+      email: profile.email || '',
+      logo: profile.logo || ''
+    };
+
+    invoice.bankDetails = {
+      bankName: profile.bankName || '',
+      accountNo: profile.accountNumber || '',
+      ifscCode: profile.ifscCode || '',
+      branch: profile.branch || ''
+    };
 
     const pdfBuffer = await generateInvoicePDF(invoice);
     

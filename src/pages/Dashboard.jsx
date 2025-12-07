@@ -12,7 +12,9 @@ import {
   ArrowUpRight,
   ShoppingCart,
   DollarSign,
-  UserCheck
+  UserCheck,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import { StatCard } from '../components/ui/Card';
 import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
@@ -128,6 +130,24 @@ const Dashboard = () => {
     }
   ];
 
+  // Row 1.5: Financial metrics
+  const financialMetrics = [
+    {
+      title: 'Total Expenses',
+      value: `₹${(stats?.totalExpenses || 0).toLocaleString('en-IN')}`,
+      subtitle: `₹${(stats?.monthlyExpenses || 0).toLocaleString('en-IN')} this month`,
+      icon: DollarSign,
+      color: 'danger'
+    },
+    {
+      title: 'Net Profit',
+      value: `₹${(stats?.profit || 0).toLocaleString('en-IN')}`,
+      subtitle: 'Revenue - Expenses',
+      icon: stats?.profit >= 0 ? TrendingUp : TrendingDown,
+      color: stats?.profit >= 0 ? 'success' : 'danger'
+    }
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -166,6 +186,22 @@ const Dashboard = () => {
             color={stat.color}
             className="animate-slide-up"
             style={{ animationDelay: `${index * 0.1}s` }}
+          />
+        ))}
+      </div>
+
+      {/* Row 1.5: Financial Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {financialMetrics.map((stat, index) => (
+          <StatCard
+            key={index}
+            icon={stat.icon}
+            title={stat.title}
+            value={stat.value}
+            subtitle={stat.subtitle}
+            color={stat.color}
+            className="animate-slide-up"
+            style={{ animationDelay: `${(index + 4) * 0.1}s` }}
           />
         ))}
       </div>
