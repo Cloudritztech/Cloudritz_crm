@@ -103,7 +103,8 @@ export default async function handler(req, res) {
       // Low stock items details
       Product.find({ $expr: { $lte: ["$stock", "$minStock"] } })
         .select('name category stock minStock')
-        .limit(10)
+        .sort({ stock: 1 })
+        .limit(20)
         .lean(),
       // Total products
       Product.countDocuments(),
