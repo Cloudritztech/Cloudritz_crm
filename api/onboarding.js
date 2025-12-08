@@ -2,6 +2,7 @@ import connectDB from '../lib/mongodb.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
   await connectDB();
@@ -54,7 +55,11 @@ export default async function handler(req, res) {
         isActive: true
       });
 
-      const token = newAdmin.generateAuthToken();
+      const token = jwt.sign(
+        { userId: newAdmin._id, organizationId: newAdmin.organizationId, role: newAdmin.role, email: newAdmin.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      );
 
       return res.status(201).json({
         success: true,

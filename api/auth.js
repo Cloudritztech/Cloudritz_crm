@@ -85,7 +85,11 @@ export default async function handler(req, res) {
         }
       }
 
-      const token = user.generateAuthToken();
+      const token = jwt.sign(
+        { userId: user._id, organizationId: user.organizationId, role: user.role, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      );
 
       res.json({
         success: true,
