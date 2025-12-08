@@ -30,19 +30,26 @@ export default async function handler(req, res) {
       const businessProfile = user?.businessProfile || {};
 
       if (section === 'invoice') {
+        console.log('📊 Fetching invoice settings for user:', req.user._id);
+        console.log('📊 Current settings:', settings);
+        
+        const responseSettings = {
+          prefix: settings.invoicePrefix || 'INV',
+          startingNumber: settings.invoiceStartNumber || 1001,
+          template: settings.template || 'compact',
+          termsAndConditions: settings.termsAndConditions || 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
+          footerNote: settings.footerNote || 'Thank you for your business!',
+          showLogo: settings.showLogo !== false,
+          showBankDetails: settings.showBankDetails !== false,
+          showSignature: settings.showSignature !== false,
+          autoIncrement: true
+        };
+        
+        console.log('📤 Sending settings:', responseSettings);
+        
         return res.json({
           success: true,
-          settings: {
-            prefix: settings.invoicePrefix || 'INV',
-            startingNumber: settings.invoiceStartNumber || 1001,
-            template: settings.template || 'compact',
-            termsAndConditions: settings.termsAndConditions || 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
-            footerNote: settings.footerNote || 'Thank you for your business!',
-            showLogo: settings.showLogo !== false,
-            showBankDetails: settings.showBankDetails !== false,
-            showSignature: settings.showSignature !== false,
-            autoIncrement: true
-          }
+          settings: responseSettings
         });
       }
 
@@ -53,18 +60,23 @@ export default async function handler(req, res) {
       const updates = req.body;
       
       if (section === 'invoice') {
-        await User.findByIdAndUpdate(req.user._id, {
-          $set: {
-            'settings.invoicePrefix': updates.prefix,
-            'settings.invoiceStartNumber': updates.startingNumber,
-            'settings.template': updates.template,
-            'settings.termsAndConditions': updates.termsAndConditions,
-            'settings.footerNote': updates.footerNote,
-            'settings.showLogo': updates.showLogo,
-            'settings.showBankDetails': updates.showBankDetails,
-            'settings.showSignature': updates.showSignature
-          }
-        });
+        const updateData = {
+          'settings.invoicePrefix': updates.prefix,
+          'settings.invoiceStartNumber': updates.startingNumber,
+          'settings.template': updates.template,
+          'settings.termsAndConditions': updates.termsAndConditions,
+          'settings.footerNote': updates.footerNote,
+          'settings.showLogo': updates.showLogo,
+          'settings.showBankDetails': updates.showBankDetails,
+          'settings.showSignature': updates.showSignature
+        };
+        
+        console.log('💾 Saving invoice settings:', updateData);
+        
+        await User.findByIdAndUpdate(req.user._id, { $set: updateData });
+        
+        const updated = await User.findById(req.user._id).select('settings');
+        console.log('✅ Settings after save:', updated.settings);
       } else {
         await User.findByIdAndUpdate(req.user._id, {
           $set: { settings: updates }

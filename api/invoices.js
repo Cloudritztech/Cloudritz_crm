@@ -142,10 +142,11 @@ async function generatePDF(req, res, id) {
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
 
-    // Fetch business profile for company and bank details
+    // Fetch business profile and settings
     const User = (await import('../lib/models/User.js')).default;
-    const user = await User.findById(req.user._id).select('businessProfile').lean();
+    const user = await User.findById(req.user._id).select('businessProfile settings').lean();
     const profile = user?.businessProfile || {};
+    const settings = user?.settings || {};
 
     // Add company and bank details to invoice
     invoice.companyDetails = {
@@ -166,7 +167,8 @@ async function generatePDF(req, res, id) {
       branch: profile.branch || ''
     };
 
-    const pdfBuffer = await generateInvoicePDF(invoice);
+    const template = settings.template || 'compact';
+    const pdfBuffer = await generateInvoicePDF(invoice, template);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
