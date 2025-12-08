@@ -327,7 +327,7 @@ const SalesReports = () => {
             />
             <StatCard
               icon={TrendingUp}
-              title="Net Profit"
+              title="Revenue"
               value={formatCurrency(salesData.totalAmount - expenseData.total)}
               subtitle="Sales - Expenses"
               color={salesData.totalAmount - expenseData.total >= 0 ? 'success' : 'danger'}
@@ -447,9 +447,9 @@ const SalesReports = () => {
                   </svg>
                   
                   {/* Center text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</div>
-                    <div className="text-sm text-gray-500">Total</div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div className="text-2xl font-bold text-gray-900 bg-white px-2 rounded">{formatCurrency(total)}</div>
+                    <div className="text-sm text-gray-500 bg-white px-2 rounded mt-1">Total</div>
                   </div>
                 </div>
               </div>
@@ -486,7 +486,7 @@ const SalesReports = () => {
                   </div>
                 </div>
                 
-                {/* Net Profit */}
+                {/* Revenue */}
                 <div className={`flex items-center justify-between p-4 rounded-lg border ${
                   salesData.totalAmount - expenseData.total >= 0
                     ? 'bg-blue-50 border-blue-200'
@@ -497,10 +497,8 @@ const SalesReports = () => {
                       salesData.totalAmount - expenseData.total >= 0 ? 'bg-blue-500' : 'bg-orange-500'
                     }`}></div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">Net Profit</div>
-                      <div className="text-xs text-gray-500">
-                        {salesData.totalAmount - expenseData.total >= 0 ? 'Profit' : 'Loss'}
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">Revenue</div>
+                      <div className="text-xs text-gray-500">Sales - Expenses</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -510,7 +508,7 @@ const SalesReports = () => {
                       {formatCurrency(salesData.totalAmount - expenseData.total)}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {total > 0 ? ((Math.abs(salesData.totalAmount - expenseData.total) / total) * 100).toFixed(1) : 0}% margin
+                      {salesData.totalAmount > 0 ? ((Math.abs(salesData.totalAmount - expenseData.total) / salesData.totalAmount) * 100).toFixed(1) : 0}% margin
                     </div>
                   </div>
                 </div>
