@@ -47,13 +47,13 @@ const Login = () => {
         <div className="relative z-10 flex flex-col justify-center px-12 text-white">
           <div className="mb-8">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-              <span className="text-2xl font-bold">A</span>
+              <span className="text-2xl font-bold">C</span>
             </div>
             <h1 className="text-4xl font-bold mb-4">
-              Anvi Tiles & Decorhub
+              Cloudritz CRM
             </h1>
             <p className="text-xl text-white/90 mb-8">
-              Complete CRM solution for tiles, sanitary products, and home decor business
+              Complete business management solution for modern enterprises
             </p>
           </div>
           
@@ -90,10 +90,10 @@ const Login = () => {
             {/* Mobile Logo */}
             <div className="lg:hidden text-center mb-8">
               <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-lg">A</span>
+                <span className="text-white font-bold text-lg">C</span>
               </div>
               <h2 className="text-2xl font-bold text-secondary-900">
-                Anvi Tiles & Decorhub
+                Cloudritz CRM
               </h2>
             </div>
 
@@ -156,7 +156,7 @@ const Login = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-secondary-500">
-            <p>© 2024 Anvi Tiles & Decorhub. All rights reserved.</p>
+            <p>© 2024 Cloudritz Tech. All rights reserved.</p>
           </div>
         </div>
       </div>

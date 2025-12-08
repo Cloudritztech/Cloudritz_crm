@@ -15,18 +15,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    const result = await register(formData);
-    
-    if (result.success) {
-      toast.success('Registration successful!');
-      navigate('/');
-    } else {
-      toast.error(result.message);
-    }
-    
-    setLoading(false);
+    toast.error('Please use organization onboarding. Contact admin@cloudritz.com');
   };
 
   const handleChange = (e) => {
@@ -44,7 +33,7 @@ const Register = () => {
             Create Account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Register for Anvi CRM
+            Contact admin@cloudritz.com for organization setup
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -79,11 +68,11 @@ const Register = () => {
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
+            onClick={() => toast.info('Contact admin@cloudritz.com for organization registration')}
             className="btn-primary w-full"
           >
-            {loading ? 'Creating Account...' : 'Register'}
+            Contact Admin
           </button>
 
           <div className="text-center">
