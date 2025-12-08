@@ -69,7 +69,7 @@ const Register = () => {
 
           <button
             type="button"
-            onClick={() => toast.info('Contact admin@cloudritz.com for organization registration')}
+            onClick={() => toast.error('Contact admin@cloudritz.com for organization registration')}
             className="btn-primary w-full"
           >
             Contact Admin
