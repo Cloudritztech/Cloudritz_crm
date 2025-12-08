@@ -24,7 +24,22 @@ const Settings = lazy(() => import('./pages/Settings'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
+    </div>
+  </div>
+);
+
+const SkeletonLoader = () => (
+  <div className="p-6 space-y-6 animate-pulse">
+    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[1,2,3,4].map(i => (
+        <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      ))}
+    </div>
+    <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
   </div>
 );
 
@@ -75,7 +90,7 @@ function App() {
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
                       <ModernLayout>
-                        <Suspense fallback={<PageLoader />}>
+                        <Suspense fallback={<SkeletonLoader />}>
                           <Routes>
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/products" element={<Products />} />

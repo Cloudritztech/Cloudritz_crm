@@ -23,7 +23,7 @@ import SalesSummaryCard from '../components/SalesSummaryCard';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -50,29 +50,12 @@ const Dashboard = () => {
       setLastUpdated(new Date());
     } catch (error) {
       setError(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   window.refreshDashboard = fetchAllData;
 
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-64"></div>
-          </div>
-          <div className="h-10 bg-gray-200 rounded w-24"></div>
-        </div>
-        <SkeletonStats count={4} />
-        <SkeletonCard className="h-64" />
-        <SkeletonCard className="h-96" />
-      </div>
-    );
-  }
+
 
   if (error) {
     return (
