@@ -85,7 +85,7 @@ export const productsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/products', { params });
-    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   getById: async (id) => {
@@ -144,7 +144,7 @@ export const customersAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/customers', { params });
-    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   getById: async (id) => {
@@ -186,7 +186,7 @@ export const invoicesAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/invoices', { params });
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   getById: async (id) => {
@@ -250,7 +250,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports');
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   getSalesAnalytics: async () => {
@@ -293,21 +293,82 @@ export const profileAPI = {
 
 // Employees API
 export const employeesAPI = {
-  getAll: () => api.get('/employees'),
-  getById: (id) => api.get(`/employees?id=${id}`),
-  create: (data) => api.post('/employees', data),
-  update: (id, data) => api.put(`/employees?id=${id}`, data),
-  delete: (id) => api.delete(`/employees?id=${id}`)
+  getAll: async () => {
+    const cached = apiCache.get('employees');
+    if (cached) return { data: cached };
+    const response = await api.get('/employees');
+    apiCache.set('employees', response.data, 300000);
+    return response;
+  },
+  getById: async (id) => {
+    const cached = apiCache.get(`employee_${id}`);
+    if (cached) return { data: cached };
+    const response = await api.get(`/employees?id=${id}`);
+    apiCache.set(`employee_${id}`, response.data, 300000);
+    return response;
+  },
+  create: async (data) => {
+    const response = await api.post('/employees', data);
+    apiCache.clear('employees');
+    return response;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/employees?id=${id}`, data);
+    apiCache.clear('employees');
+    apiCache.clear(`employee_${id}`);
+    return response;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/employees?id=${id}`);
+    apiCache.clear('employees');
+    apiCache.clear(`employee_${id}`);
+    return response;
+  }
 };
 
 // Expenses API
 export const expensesAPI = {
-  getAll: (params) => api.get('/expenses', { params }),
-  getById: (id) => api.get(`/expenses?id=${id}`),
-  getSummary: (params) => api.get('/expenses', { params: { action: 'summary', ...params } }),
-  create: (data) => api.post('/expenses', data),
-  update: (id, data) => api.put(`/expenses?id=${id}`, data),
-  delete: (id) => api.delete(`/expenses?id=${id}`)
+  getAll: async (params) => {
+    const cacheKey = `expenses_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    const response = await api.get('/expenses', { params });
+    apiCache.set(cacheKey, response.data, 180000);
+    return response;
+  },
+  getById: async (id) => {
+    const cached = apiCache.get(`expense_${id}`);
+    if (cached) return { data: cached };
+    const response = await api.get(`/expenses?id=${id}`);
+    apiCache.set(`expense_${id}`, response.data, 300000);
+    return response;
+  },
+  getSummary: async (params) => {
+    const cacheKey = `expenseSummary_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    const response = await api.get('/expenses', { params: { action: 'summary', ...params } });
+    apiCache.set(cacheKey, response.data, 180000);
+    return response;
+  },
+  create: async (data) => {
+    const response = await api.post('/expenses', data);
+    apiCache.clear('expenses_');
+    apiCache.clear('expenseSummary_');
+    return response;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/expenses?id=${id}`, data);
+    apiCache.clear('expenses_');
+    apiCache.clear(`expense_${id}`);
+    return response;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/expenses?id=${id}`);
+    apiCache.clear('expenses_');
+    apiCache.clear(`expense_${id}`);
+    return response;
+  }
 };
 
 // Payments API (now part of invoices)
