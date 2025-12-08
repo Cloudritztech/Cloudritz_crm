@@ -1,7 +1,8 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../lib/models/User.js';
+import Organization from '../lib/models/Organization.js';
 import jwt from 'jsonwebtoken';
-import { authenticate } from '../lib/middleware/auth.js';
+import { authenticate } from '../lib/middleware/tenant.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -45,6 +46,7 @@ export default async function handler(req, res) {
           id: user._id,
           name: user.name,
           email: user.email,
+          role: user.role,
           profileImage: user.profileImage || ''
         }
       });
@@ -62,8 +64,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
 
-      const user = await User.findOne({ email });
-      if (!user) {
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user || !user.isActive) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
@@ -72,11 +74,18 @@ export default async function handler(req, res) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      let organization = null;
+      if (user.role !== 'superadmin') {
+        organization = await Organization.findById(user.organizationId);
+        if (!organization || !organization.isActive) {
+          return res.status(403).json({ message: 'Organization inactive' });
+        }
+        if (organization.subscription.status !== 'active') {
+          return res.status(403).json({ message: 'Subscription expired' });
+        }
+      }
+
+      const token = user.generateAuthToken();
 
       res.json({
         success: true,
@@ -85,47 +94,23 @@ export default async function handler(req, res) {
           id: user._id,
           name: user.name,
           email: user.email,
+          role: user.role,
           profileImage: user.profileImage || ''
-        }
+        },
+        organization: organization ? {
+          id: organization._id,
+          name: organization.name,
+          subdomain: organization.subdomain,
+          subscription: organization.subscription,
+          features: organization.features
+        } : null
       });
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   } else if (action === 'register' && req.method === 'POST') {
-    try {
-      const { name, email, password } = req.body;
-
-      if (!name || !email || !password) {
-        return res.status(400).json({ message: 'All fields are required' });
-      }
-
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
-      }
-
-      const user = await User.create({ name, email, password });
-
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.status(201).json({
-        success: true,
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          profileImage: user.profileImage || ''
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ message: 'Server error' });
-    }
+    return res.status(400).json({ message: 'Use /api/onboarding for new registrations' });
   } else {
     res.status(405).json({ message: 'Method not allowed' });
   }
