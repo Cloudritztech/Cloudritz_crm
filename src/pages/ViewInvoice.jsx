@@ -14,6 +14,22 @@ const ViewInvoice = () => {
   const [sharing, setSharing] = useState(false);
   const [template, setTemplate] = useState('compact');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const generatePaymentQR = async () => {
+    if (!profile?.upiId || qrCodeUrl) return;
+    
+    const amount = invoice.pendingAmount || invoice.grandTotal || invoice.total;
+    const upiString = `upi://pay?pa=${profile.upiId}&pn=${encodeURIComponent(profile.businessName || 'Business')}&am=${amount}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoice.invoiceNumber)}`;
+    const qrUrl = await QRCode.toDataURL(upiString, { width: 400, margin: 2 });
+    setQrCodeUrl(qrUrl);
+  };
+
+  useEffect(() => {
+    if (showPaymentModal && !qrCodeUrl) {
+      generatePaymentQR();
+    }
+  }, [showPaymentModal]);
 
   useEffect(() => {
     fetchData();
@@ -42,12 +58,7 @@ const ViewInvoice = () => {
         setTemplate(settingsRes.settings.template);
       }
 
-      // Generate QR code for UPI payment
-      if (invoiceRes.data?.invoice?.paymentMethod === 'upi' && profileRes.data?.profile?.upiId) {
-        const upiString = `upi://pay?pa=${profileRes.data.profile.upiId}&pn=${encodeURIComponent(profileRes.data.profile.businessName || 'Business')}&am=${invoiceRes.data.invoice.grandTotal || invoiceRes.data.invoice.total}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceRes.data.invoice.invoiceNumber)}`;
-        const qrUrl = await QRCode.toDataURL(upiString, { width: 200, margin: 1 });
-        setQrCodeUrl(qrUrl);
-      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load invoice');
@@ -166,6 +177,11 @@ const ViewInvoice = () => {
           <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Printer className="h-4 w-4" />Print
           </button>
+          {invoice.paymentStatus !== 'paid' && profile?.upiId && (
+            <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+              Show Payment QR
+            </button>
+          )}
         </div>
       </div>
 
@@ -331,14 +347,7 @@ const ViewInvoice = () => {
               </>
             )}
             
-            {/* UPI QR Code for Professional Template */}
-            {invoice.paymentMethod === 'upi' && qrCodeUrl && (
-              <div style={{marginTop: '10px', textAlign: 'center'}}>
-                <div style={{fontWeight: '700', marginBottom: '4px', fontSize: '10px'}}>Scan to Pay via UPI:</div>
-                <img src={qrCodeUrl} alt="UPI QR" style={{width: '80px', height: '80px', border: '2px solid #000', margin: '0 auto'}} />
-                {profile?.upiId && <div style={{fontSize: '9px', marginTop: '2px'}}>{profile.upiId}</div>}
-              </div>
-            )}
+
             
             <div style={{marginTop: '10px', fontSize: '10px'}}>Declaration: We declare that this invoice shows the actual price of the goods described.</div>
           </div>
@@ -455,14 +464,7 @@ const ViewInvoice = () => {
             <div className="text-center mt-3 pt-2 border-t border-dashed border-gray-400 text-xs">
               <p>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</p>
               
-              {/* UPI QR Code */}
-              {invoice.paymentMethod === 'upi' && qrCodeUrl && (
-                <div className="mt-3 flex flex-col items-center">
-                  <p className="font-semibold mb-2">Scan to Pay via UPI</p>
-                  <img src={qrCodeUrl} alt="UPI QR Code" className="w-32 h-32 border-2 border-gray-300 rounded" />
-                  {profile?.upiId && <p className="text-xs mt-1 text-gray-600">{profile.upiId}</p>}
-                </div>
-              )}
+
               
               <p className="mt-2">Thank you! Visit again</p>
             </div>
@@ -470,6 +472,36 @@ const ViewInvoice = () => {
         </div>
       )}
       </div>
+
+      {/* Payment QR Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowPaymentModal(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-2">Scan to Pay</h2>
+            <p className="text-gray-600 mb-4">Amount: ₹{(invoice.pendingAmount || invoice.grandTotal || invoice.total).toFixed(2)}</p>
+            
+            {qrCodeUrl ? (
+              <div className="flex flex-col items-center">
+                <img src={qrCodeUrl} alt="Payment QR" className="w-64 h-64 border-4 border-gray-300 rounded-lg mb-4" />
+                {profile?.upiId && <p className="text-sm text-gray-600 mb-2">UPI ID: {profile.upiId}</p>}
+                <p className="text-xs text-gray-500">Invoice: {invoice.invoiceNumber}</p>
+              </div>
+            ) : (
+              <div className="py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Generating QR Code...</p>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="mt-6 px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 w-full"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Professional Invoice Styles */}
       <style>{`
