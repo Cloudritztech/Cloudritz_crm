@@ -28,6 +28,7 @@ const SalesReports = () => {
   const [error, setError] = useState(null);
   const [aiInsights, setAiInsights] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [hoveredSegment, setHoveredSegment] = useState(null);
 
   const quickFilters = [
     { key: 'today', label: 'Today' },
@@ -303,7 +304,7 @@ const SalesReports = () => {
         <Loading text="Loading sales data..." />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <StatCard
               icon={TrendingUp}
               title="Total Sales"
@@ -324,13 +325,6 @@ const SalesReports = () => {
               value={formatCurrency(expenseData.total)}
               subtitle={`${expenseData.count} transactions`}
               color="danger"
-            />
-            <StatCard
-              icon={TrendingUp}
-              title="Revenue"
-              value={formatCurrency(salesData.totalAmount - expenseData.total)}
-              subtitle="Sales - Expenses"
-              color={salesData.totalAmount - expenseData.total >= 0 ? 'success' : 'danger'}
             />
           </div>
           
@@ -395,123 +389,83 @@ const SalesReports = () => {
 
       {/* Sales Visualization - Pie Chart */}
       {!loading && (() => {
-        const total = salesData.totalAmount + expenseData.total;
-        const salesPercent = total > 0 ? (salesData.totalAmount / total) * 100 : 50;
-        const expensePercent = total > 0 ? (expenseData.total / total) * 100 : 50;
+        const pieData = [
+          { label: 'Total Sales', value: salesData.totalAmount, color: '#10b981', orders: salesData.totalOrders },
+          { label: 'Total Expenses', value: expenseData.total, color: '#ef4444', count: expenseData.count }
+        ];
         
-        // Calculate pie chart segments
-        const radius = 80;
-        const circumference = 2 * Math.PI * radius;
-        const salesDash = (salesPercent / 100) * circumference;
-        const expenseDash = (expensePercent / 100) * circumference;
+        const total = pieData.reduce((sum, item) => sum + item.value, 0);
+        let currentAngle = 0;
         
         return (
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Financial Overview</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Pie Chart */}
-              <div className="flex items-center justify-center">
-                <div className="relative">
-                  <svg width="240" height="240" viewBox="0 0 240 240" className="transform -rotate-90">
-                    {/* Background circle */}
-                    <circle cx="120" cy="120" r="80" fill="#f3f4f6" />
-                    
-                    {/* Sales segment */}
-                    <circle
-                      cx="120"
-                      cy="120"
-                      r="80"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="60"
-                      strokeDasharray={`${salesDash} ${circumference}`}
-                      strokeDashoffset="0"
-                      className="transition-all duration-700"
-                    />
-                    
-                    {/* Expenses segment */}
-                    <circle
-                      cx="120"
-                      cy="120"
-                      r="80"
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth="60"
-                      strokeDasharray={`${expenseDash} ${circumference}`}
-                      strokeDashoffset={`-${salesDash}`}
-                      className="transition-all duration-700"
-                    />
-                    
-                    {/* Center white circle */}
-                    <circle cx="120" cy="120" r="50" fill="white" />
-                  </svg>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Overview</h3>
+            <div className="flex flex-col items-center">
+              <svg width="300" height="300" viewBox="0 0 300 300">
+                {pieData.map((item, index) => {
+                  const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                  const angle = (percentage / 100) * 360;
+                  const startAngle = currentAngle;
+                  const endAngle = currentAngle + angle;
+                  currentAngle = endAngle;
                   
-                  {/* Center text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-2xl font-bold text-gray-900 bg-white px-2 rounded">{formatCurrency(total)}</div>
-                    <div className="text-sm text-gray-500 bg-white px-2 rounded mt-1">Total</div>
+                  const startRad = (startAngle - 90) * (Math.PI / 180);
+                  const endRad = (endAngle - 90) * (Math.PI / 180);
+                  
+                  const x1 = 150 + 120 * Math.cos(startRad);
+                  const y1 = 150 + 120 * Math.sin(startRad);
+                  const x2 = 150 + 120 * Math.cos(endRad);
+                  const y2 = 150 + 120 * Math.sin(endRad);
+                  
+                  const largeArc = angle > 180 ? 1 : 0;
+                  const path = `M 150 150 L ${x1} ${y1} A 120 120 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                  
+                  return (
+                    <path
+                      key={index}
+                      d={path}
+                      fill={item.color}
+                      stroke="white"
+                      strokeWidth="3"
+                      className="cursor-pointer transition-all duration-300 hover:opacity-80"
+                      onMouseEnter={() => setHoveredSegment(item)}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  );
+                })}
+              </svg>
+              
+              <div className="mt-6 w-full max-w-md">
+                {hoveredSegment ? (
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center border-2" style={{ borderColor: hoveredSegment.color }}>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{hoveredSegment.label}</p>
+                    <p className="text-3xl font-bold mb-2" style={{ color: hoveredSegment.color }}>
+                      {formatCurrency(hoveredSegment.value)}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {hoveredSegment.orders ? `${hoveredSegment.orders} orders` : `${hoveredSegment.count} transactions`}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                      {total > 0 ? ((hoveredSegment.value / total) * 100).toFixed(1) : 0}% of total
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Hover over chart to see details</p>
+                  </div>
+                )}
               </div>
               
-              {/* Legend and Stats */}
-              <div className="flex flex-col justify-center space-y-6">
-                {/* Sales */}
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">Total Sales</div>
-                      <div className="text-xs text-gray-500">{salesData.totalOrders} orders</div>
+              <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-md">
+                {pieData.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{item.label}</p>
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{formatCurrency(item.value)}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-green-600">{formatCurrency(salesData.totalAmount)}</div>
-                    <div className="text-xs text-gray-500">{salesPercent.toFixed(1)}%</div>
-                  </div>
-                </div>
-                
-                {/* Expenses */}
-                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">Total Expenses</div>
-                      <div className="text-xs text-gray-500">{expenseData.count} transactions</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-red-600">{formatCurrency(expenseData.total)}</div>
-                    <div className="text-xs text-gray-500">{expensePercent.toFixed(1)}%</div>
-                  </div>
-                </div>
-                
-                {/* Revenue */}
-                <div className={`flex items-center justify-between p-4 rounded-lg border ${
-                  salesData.totalAmount - expenseData.total >= 0
-                    ? 'bg-blue-50 border-blue-200'
-                    : 'bg-orange-50 border-orange-200'
-                }`}>
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded-full ${
-                      salesData.totalAmount - expenseData.total >= 0 ? 'bg-blue-500' : 'bg-orange-500'
-                    }`}></div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">Revenue</div>
-                      <div className="text-xs text-gray-500">Sales - Expenses</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-bold ${
-                      salesData.totalAmount - expenseData.total >= 0 ? 'text-blue-600' : 'text-orange-600'
-                    }`}>
-                      {formatCurrency(salesData.totalAmount - expenseData.total)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {salesData.totalAmount > 0 ? ((Math.abs(salesData.totalAmount - expenseData.total) / salesData.totalAmount) * 100).toFixed(1) : 0}% margin
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
