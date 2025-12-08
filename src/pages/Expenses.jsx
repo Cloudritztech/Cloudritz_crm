@@ -27,6 +27,8 @@ const Expenses = () => {
   const fetchExpenses = async () => {
     try {
       const res = await expensesAPI.getAll();
+      console.log('📊 Expenses API Response:', res.data);
+      console.log('📊 Total expenses found:', res.data.expenses?.length || 0);
       setExpenses(res.data.expenses || []);
     } catch (error) {
       console.error('Fetch expenses error:', error);

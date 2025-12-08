@@ -66,14 +66,14 @@ const ProductCard = ({ product, onStockUpdate }) => {
       <div className="flex gap-2">
         <button
           onClick={(e) => handleStockAction('IN', e)}
-          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center justify-center text-xs sm:text-sm"
+          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center justify-center text-xs sm:text-sm font-medium transition-colors"
         >
           <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           IN
         </button>
         <button
           onClick={(e) => handleStockAction('OUT', e)}
-          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 flex items-center justify-center text-xs sm:text-sm"
+          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 flex items-center justify-center text-xs sm:text-sm font-medium transition-colors"
         >
           <Minus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           OUT

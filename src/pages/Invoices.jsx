@@ -15,6 +15,9 @@ const InvoiceManagement = () => {
   const debouncedSearch = useDebounce(search, 300);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchInvoices = async () => {
     try {
@@ -63,13 +66,48 @@ const InvoiceManagement = () => {
     }
   };
 
-  const filtered = useMemo(() => 
-    invoices.filter(
-      (inv) =>
-        inv.customer?.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        inv.invoiceNumber?.toLowerCase().includes(debouncedSearch.toLowerCase())
-    ), [invoices, debouncedSearch]
-  );
+  const filtered = useMemo(() => {
+    let result = invoices;
+    
+    // Search filter
+    if (debouncedSearch) {
+      result = result.filter(
+        (inv) =>
+          inv.customer?.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          inv.invoiceNumber?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+    }
+    
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(inv => inv.status === statusFilter || inv.paymentStatus === statusFilter);
+    }
+    
+    // Date filter
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      
+      result = result.filter(inv => {
+        const invDate = new Date(inv.createdAt);
+        
+        if (dateFilter === 'today') {
+          return invDate >= today;
+        } else if (dateFilter === 'week') {
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return invDate >= weekAgo;
+        } else if (dateFilter === 'month') {
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return invDate >= monthAgo;
+        }
+        return true;
+      });
+    }
+    
+    return result;
+  }, [invoices, debouncedSearch, statusFilter, dateFilter]);
 
   if (loading) {
     return (
@@ -216,11 +254,43 @@ const InvoiceManagement = () => {
           <Button
             variant="outline"
             icon={Filter}
+            onClick={() => setShowFilters(!showFilters)}
             className="sm:w-auto"
           >
             Filters
           </Button>
         </div>
+        
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="input-field w-full"
+              >
+                <option value="all">All Status</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="input-field w-full"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}

@@ -33,15 +33,15 @@ export default async function handler(req, res) {
         return res.json({
           success: true,
           settings: {
-            invoicePrefix: settings.invoicePrefix || 'INV',
-            invoiceStartNumber: settings.invoiceStartNumber || 1,
-            taxRate: settings.taxRate || 18,
-            termsAndConditions: settings.termsAndConditions || 'Payment due within 30 days',
-            companyName: businessProfile.businessName || '',
-            companyAddress: businessProfile.address || '',
-            companyPhone: businessProfile.phone || '',
-            companyEmail: businessProfile.email || '',
-            companyGSTIN: businessProfile.gstin || ''
+            prefix: settings.invoicePrefix || 'INV',
+            startingNumber: settings.invoiceStartNumber || 1001,
+            template: settings.template || 'compact',
+            termsAndConditions: settings.termsAndConditions || 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
+            footerNote: settings.footerNote || 'Thank you for your business!',
+            showLogo: settings.showLogo !== false,
+            showBankDetails: settings.showBankDetails !== false,
+            showSignature: settings.showSignature !== false,
+            autoIncrement: true
           }
         });
       }
@@ -55,10 +55,14 @@ export default async function handler(req, res) {
       if (section === 'invoice') {
         await User.findByIdAndUpdate(req.user._id, {
           $set: {
-            'settings.invoicePrefix': updates.invoicePrefix,
-            'settings.invoiceStartNumber': updates.invoiceStartNumber,
-            'settings.taxRate': updates.taxRate,
-            'settings.termsAndConditions': updates.termsAndConditions
+            'settings.invoicePrefix': updates.prefix,
+            'settings.invoiceStartNumber': updates.startingNumber,
+            'settings.template': updates.template,
+            'settings.termsAndConditions': updates.termsAndConditions,
+            'settings.footerNote': updates.footerNote,
+            'settings.showLogo': updates.showLogo,
+            'settings.showBankDetails': updates.showBankDetails,
+            'settings.showSignature': updates.showSignature
           }
         });
       } else {

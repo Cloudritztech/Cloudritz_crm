@@ -396,43 +396,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Low Stock Alerts */}
-      {stats?.lowStockItems?.length > 0 && (
-        <div className="card bg-red-50 border-red-200 animate-slide-up">
-          <div className="flex items-center mb-6">
-            <div className="p-2 bg-red-100 rounded-xl mr-3">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-red-800">Low Stock Alerts</h3>
-              <p className="text-sm text-red-600">{stats.lowStockItems.length} items need restocking</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.lowStockItems.map((item, index) => (
-              <div key={index} className="bg-white p-4 rounded-xl border border-red-200 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-gray-900 text-sm break-words">{item.name}</p>
-                  <span className="badge-danger text-xs">
-                    Low Stock
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mb-2 capitalize break-words">
-                  {item.category?.replace('_', ' ')}
-                </p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-red-600 font-medium">
-                    Stock: {item.stock}
-                  </span>
-                  <span className="text-gray-500">
-                    Min: {item.lowStockLimit || item.minStock || 10}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

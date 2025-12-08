@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, DollarSign, FileText, CreditCard, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
-import { customersAPI, invoicesAPI, paymentsAPI } from '../services/api';
+import { customersAPI, invoicesAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const CustomerDetail = () => {
@@ -28,15 +28,29 @@ const CustomerDetail = () => {
   const fetchCustomerData = async () => {
     setLoading(true);
     try {
-      const [customerRes, invoicesRes, paymentsRes] = await Promise.all([
+      const [customerRes, invoicesRes] = await Promise.all([
         customersAPI.getById(id),
-        invoicesAPI.getAll({ customer: id }),
-        paymentsAPI.getByCustomer(id)
+        invoicesAPI.getAll({ customer: id })
       ]);
 
       setCustomer(customerRes.data.customer);
-      setInvoices(invoicesRes.data.invoices || []);
-      setPayments(paymentsRes.data.payments || []);
+      const invoiceList = invoicesRes.data.invoices || [];
+      setInvoices(invoiceList);
+      
+      const paymentHistory = invoiceList
+        .filter(inv => inv.paidAmount > 0)
+        .map(inv => ({
+          _id: inv._id,
+          invoiceNumber: inv.invoiceNumber,
+          amount: inv.paidAmount,
+          paymentDate: inv.paymentDate || inv.updatedAt,
+          paymentMethod: inv.paymentMethod,
+          notes: inv.paymentNotes,
+          status: inv.paymentStatus
+        }))
+        .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+      
+      setPayments(paymentHistory);
     } catch (error) {
       console.error('Failed to fetch customer data:', error);
       toast.error('Failed to load customer details');
@@ -57,10 +71,14 @@ const CustomerDetail = () => {
   const submitPayment = async (e) => {
     e.preventDefault();
     try {
-      await paymentsAPI.create({
-        invoice: selectedInvoice._id,
-        ...paymentForm,
-        amount: parseFloat(paymentForm.amount)
+      const paymentAmount = parseFloat(paymentForm.amount);
+      const newPaidAmount = selectedInvoice.paidAmount + paymentAmount;
+      
+      await invoicesAPI.updatePayment(selectedInvoice._id, {
+        paidAmount: newPaidAmount,
+        paymentMethod: paymentForm.paymentMethod,
+        paymentDate: paymentForm.paymentDate,
+        paymentNotes: paymentForm.notes
       });
 
       toast.success('Payment recorded successfully');
@@ -82,12 +100,11 @@ const CustomerDetail = () => {
     if (!window.confirm(`Mark invoice ${invoice.invoiceNumber} as fully paid?`)) return;
     
     try {
-      await paymentsAPI.create({
-        invoice: invoice._id,
-        amount: invoice.pendingAmount,
+      await invoicesAPI.updatePayment(invoice._id, {
+        paidAmount: invoice.grandTotal,
         paymentMethod: 'cash',
         paymentDate: new Date().toISOString(),
-        notes: 'Marked as paid'
+        paymentNotes: 'Marked as paid'
       });
 
       toast.success('Invoice marked as paid');
@@ -294,18 +311,18 @@ const CustomerDetail = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Received By</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {payments.map((payment) => (
+              {payments.length > 0 ? payments.map((payment) => (
                 <tr key={payment._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm">
                     {new Date(payment.paymentDate).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-blue-600">
-                    {payment.invoice?.invoiceNumber}
+                    {payment.invoiceNumber}
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-green-600">
                     ₹{payment.amount.toFixed(2)}
@@ -315,10 +332,20 @@ const CustomerDetail = () => {
                       {payment.paymentMethod}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm">{payment.receivedBy?.name}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs ${payment.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {payment.status?.toUpperCase()}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{payment.notes || '-'}</td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    No payment history found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

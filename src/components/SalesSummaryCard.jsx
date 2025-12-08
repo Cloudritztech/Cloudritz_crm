@@ -3,12 +3,9 @@ import { TrendingUp, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { reportsAPI } from '../services/api';
 import Button from './ui/Button';
-import Input from './ui/Input';
 
 const SalesSummaryCard = ({ stats }) => {
   const navigate = useNavigate();
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
   const [yearlyData, setYearlyData] = useState({ total: 0, count: 0 });
   const [loading, setLoading] = useState(false);
 
@@ -92,34 +89,7 @@ const SalesSummaryCard = ({ stats }) => {
         ))}
       </div>
 
-      {/* Custom Range */}
-      <div className="border-t border-gray-200 pt-4">
-        <p className="text-sm font-medium text-gray-700 mb-3">Custom Range</p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            type="date"
-            value={customStartDate}
-            onChange={(e) => setCustomStartDate(e.target.value)}
-            placeholder="Start Date"
-            className="flex-1"
-          />
-          <Input
-            type="date"
-            value={customEndDate}
-            onChange={(e) => setCustomEndDate(e.target.value)}
-            placeholder="End Date"
-            className="flex-1"
-          />
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!customStartDate || !customEndDate}
-            onClick={() => navigate(`/sales-reports?start=${customStartDate}&end=${customEndDate}`)}
-          >
-            View
-          </Button>
-        </div>
-      </div>
+
     </div>
   );
 };
