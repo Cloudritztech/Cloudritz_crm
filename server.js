@@ -26,29 +26,22 @@ const auth = (await import('./api/auth.js')).default;
 const customers = (await import('./api/customers.js')).default;
 const products = (await import('./api/products.js')).default;
 const reports = (await import('./api/reports.js')).default;
-const invoices = (await import('./api/invoices/index.js')).default;
-const invoice = (await import('./api/invoice.js')).default;
+const invoices = (await import('./api/invoices.js')).default;
+const onboarding = (await import('./api/onboarding.js')).default;
+const admin = (await import('./api/admin.js')).default;
+const account = (await import('./api/account.js')).default;
+const test = (await import('./api/test.js')).default;
 
 // API Routes
 app.all('/api/auth', auth);
+app.all('/api/onboarding', onboarding);
+app.all('/api/admin', admin);
+app.all('/api/account', account);
+app.all('/api/test', test);
 app.all('/api/customers', customers);
-app.all('/api/customers/:id', (req, res) => {
-  req.params.id = req.params.id;
-  customers(req, res);
-});
 app.all('/api/products', products);
-app.all('/api/products/:id', (req, res) => {
-  req.params.id = req.params.id;
-  products(req, res);
-});
-app.all('/api/products/:id/:action', (req, res) => {
-  req.params.id = req.params.id;
-  req.params.action = req.params.action;
-  products(req, res);
-});
 app.all('/api/reports', reports);
 app.all('/api/invoices', invoices);
-app.all('/api/invoice', invoice);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
