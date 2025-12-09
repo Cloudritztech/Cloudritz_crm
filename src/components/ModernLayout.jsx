@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, FileText, DollarSign, UserCheck } from 'lucide-react';
+import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
 import NotificationCenter from './NotificationCenter';
 
 const ModernLayout = ({ children }) => {
   const location = useLocation();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [businessName, setBusinessName] = useState('Anvi CRM');
+  const [businessName, setBusinessName] = useState('Cloudritz CRM');
 
   useEffect(() => {
     const fetchBusinessName = async () => {
@@ -33,7 +35,10 @@ const ModernLayout = ({ children }) => {
     fetchBusinessName();
   }, []);
 
-  const navigation = [
+  const navigation = user?.role === 'superadmin' ? [
+    { name: 'Super Admin', href: '/superadmin', icon: Shield },
+    { name: 'Organizations', href: '/superadmin/organizations', icon: Home },
+  ] : [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Customers', href: '/customers', icon: Users },
@@ -55,7 +60,7 @@ const ModernLayout = ({ children }) => {
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
-              <span className="text-white font-bold text-sm">A</span>
+              <span className="text-white font-bold text-sm">C</span>
             </div>
             <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
           </div>
@@ -92,7 +97,7 @@ const ModernLayout = ({ children }) => {
             {/* Left: Logo (Mobile Only) */}
             <div className="flex items-center space-x-3 lg:hidden">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
-                <span className="text-white font-bold text-sm">A</span>
+                <span className="text-white font-bold text-sm">C</span>
               </div>
               <span className="text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
             </div>
