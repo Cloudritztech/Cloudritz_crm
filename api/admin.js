@@ -17,8 +17,7 @@ export default async function handler(req, res) {
       const existing = await User.findOne({ role: 'superadmin' });
       if (existing) return res.json({ success: true, message: 'Already seeded' });
       for (const plan of plans) await SubscriptionPlan.findOneAndUpdate({ name: plan.name }, plan, { upsert: true });
-      const hashedPassword = await bcrypt.hash('Cloudritz@2024', 12);
-      await User.create({ name: 'Cloudritz Admin', email: 'admin@cloudritz.com', password: hashedPassword, role: 'superadmin', isActive: true });
+      await User.create({ name: 'Cloudritz Admin', email: 'admin@cloudritz.com', password: 'Cloudritz@2024', role: 'superadmin', isActive: true });
       return res.json({ success: true, message: 'Database seeded' });
     } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
