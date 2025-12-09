@@ -23,7 +23,7 @@ export default function WhiteLabel() {
 
   const loadBranding = async () => {
     try {
-      const { data } = await api.get('/branding?action=current');
+      const { data } = await api.get('/account?type=branding&action=current');
       setOrganization(data.organization);
       setBranding({ ...branding, ...data.branding });
     } catch (error) {
@@ -40,7 +40,7 @@ export default function WhiteLabel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/branding?action=update', { branding });
+      await api.put('/account?type=branding&action=update', { branding });
       toast.success('Branding updated successfully!');
       // Reload page to apply new branding
       setTimeout(() => window.location.reload(), 1000);
