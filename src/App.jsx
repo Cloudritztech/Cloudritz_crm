@@ -25,6 +25,7 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Billing = lazy(() => import('./pages/Billing'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -137,6 +138,7 @@ function App() {
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/settings/*" element={<Settings />} />
+                            <Route path="/billing" element={<Billing />} />
                           </Routes>
                         </Suspense>
                       </ModernLayout>

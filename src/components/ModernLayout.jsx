@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield } from 'lucide-react';
+import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
@@ -45,6 +45,7 @@ const ModernLayout = ({ children }) => {
     { name: 'Invoices', href: '/invoices', icon: FileText },
     { name: 'Expenses', href: '/expenses', icon: DollarSign },
     { name: 'Employees', href: '/employees', icon: UserCheck },
+    { name: 'Billing', href: '/billing', icon: CreditCard },
   ];
 
   const isActive = (href) => {
