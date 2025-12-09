@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       
-      return { success: true };
+      return { success: true, user };
     } catch (error) {
       console.error('Login error:', error);
       return { 

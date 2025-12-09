@@ -24,7 +24,9 @@ const Login = () => {
     if (result.success) {
       toast.success('Login successful!');
       setTimeout(() => {
-        navigate('/', { replace: true });
+        // Redirect super admin to super admin dashboard
+        const redirectPath = result.user?.role === 'superadmin' ? '/superadmin' : '/';
+        navigate(redirectPath, { replace: true });
       }, 100);
     } else {
       toast.error(result.message);
