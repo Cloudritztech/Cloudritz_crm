@@ -65,8 +65,12 @@ export default async function handler(req, res) {
       }
 
       const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user || !user.isActive) {
+      if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      if (user.isActive === false) {
+        return res.status(401).json({ message: 'Account deactivated' });
       }
 
       const isMatch = await user.comparePassword(password);
@@ -75,7 +79,7 @@ export default async function handler(req, res) {
       }
 
       let organization = null;
-      if (user.role !== 'superadmin') {
+      if (user.role && user.role !== 'superadmin' && user.organizationId) {
         organization = await Organization.findById(user.organizationId);
         if (!organization || !organization.isActive) {
           return res.status(403).json({ message: 'Organization inactive' });
@@ -86,7 +90,7 @@ export default async function handler(req, res) {
       }
 
       const token = jwt.sign(
-        { userId: user._id, organizationId: user.organizationId, role: user.role, email: user.email },
+        { userId: user._id, organizationId: user.organizationId || null, role: user.role || 'staff', email: user.email },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE || '7d' }
       );
@@ -98,7 +102,7 @@ export default async function handler(req, res) {
           id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: user.role || 'staff',
           profileImage: user.profileImage || ''
         },
         organization: organization ? {
