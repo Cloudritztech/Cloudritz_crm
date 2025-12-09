@@ -145,10 +145,10 @@ const Login = () => {
               <p className="text-sm text-secondary-600">
                 Don't have an account?{' '}
                 <Link 
-                  to="/register" 
+                  to="/onboarding" 
                   className="font-medium text-primary-600 hover:text-primary-700 transition-colors"
                 >
-                  Register here
+                  Start Free Trial
                 </Link>
               </p>
             </div>
