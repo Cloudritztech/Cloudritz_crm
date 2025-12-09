@@ -12,6 +12,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
 const SuperAdminOrganizations = lazy(() => import('./pages/superadmin/Organizations'));
 const CreateOrganization = lazy(() => import('./pages/superadmin/CreateOrganization'));
 const OrganizationDetail = lazy(() => import('./pages/superadmin/OrganizationDetail'));
+const SuperAdminUsers = lazy(() => import('./pages/superadmin/Users'));
 const Products = lazy(() => import('./pages/Products'));
 const Customers = lazy(() => import('./pages/Customers'));
 const Invoices = lazy(() => import('./pages/Invoices'));
@@ -135,6 +136,11 @@ function App() {
                             <Route path="/superadmin/organizations/:id" element={
                               <SuperAdminRoute>
                                 <OrganizationDetail />
+                              </SuperAdminRoute>
+                            } />
+                            <Route path="/superadmin/users" element={
+                              <SuperAdminRoute>
+                                <SuperAdminUsers />
                               </SuperAdminRoute>
                             } />
                             <Route path="/products" element={<Products />} />

@@ -40,7 +40,9 @@ const UserMenu = () => {
     fetchLogo();
   }, []);
 
-  const menuItems = [
+  const menuItems = user?.role === 'superadmin' ? [
+    { icon: HelpCircle, label: 'Help & Support', action: () => navigate('/help') },
+  ] : [
     { icon: User, label: 'Profile', action: () => navigate('/profile') },
     { icon: Building2, label: 'Business Profile', action: () => navigate('/business-profile') },
     { icon: Settings, label: 'Settings', action: () => navigate('/settings') },

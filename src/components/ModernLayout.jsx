@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield, CreditCard, Palette } from 'lucide-react';
+import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield, CreditCard, Palette, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
@@ -36,8 +36,9 @@ const ModernLayout = ({ children }) => {
   }, []);
 
   const navigation = user?.role === 'superadmin' ? [
-    { name: 'Super Admin', href: '/superadmin', icon: Shield },
-    { name: 'Organizations', href: '/superadmin/organizations', icon: Home },
+    { name: 'Dashboard', href: '/superadmin', icon: Home },
+    { name: 'Organizations', href: '/superadmin/organizations', icon: Building2 },
+    { name: 'Users', href: '/superadmin/users', icon: Users },
   ] : [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Products', href: '/products', icon: Package },
@@ -107,9 +108,9 @@ const ModernLayout = ({ children }) => {
             {/* Desktop: Empty space to push right items */}
             <div className="hidden lg:block"></div>
 
-            {/* Right: Notifications & User Menu */}
+            {/* Right: User Menu (no notifications for superadmin) */}
             <div className="flex items-center space-x-3">
-              <NotificationCenter />
+              {user?.role !== 'superadmin' && <NotificationCenter />}
               <UserMenu />
             </div>
           </div>
