@@ -1,25 +1,49 @@
 import connectDB from '../lib/mongodb.js';
-import { authenticate, requireRole, tenantIsolation } from '../lib/middleware/tenant.js';
+import { authenticate } from '../lib/middleware/tenant.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
 import SubscriptionPlan from '../lib/models/SubscriptionPlan.js';
 import bcrypt from 'bcryptjs';
 
-const plans = [{name:'trial',displayName:'Free Trial',price:0,billingCycle:'monthly',limits:{maxUsers:2,maxProducts:100,maxInvoices:50,maxCustomers:100,storageGB:1},features:{whatsappIntegration:false,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},{name:'basic',displayName:'Basic Plan',price:999,billingCycle:'monthly',limits:{maxUsers:5,maxProducts:500,maxInvoices:200,maxCustomers:500,storageGB:5},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},{name:'professional',displayName:'Professional Plan',price:2499,billingCycle:'monthly',limits:{maxUsers:15,maxProducts:2000,maxInvoices:1000,maxCustomers:2000,storageGB:20},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:false,prioritySupport:true},trialDays:14},{name:'enterprise',displayName:'Enterprise Plan',price:4999,billingCycle:'monthly',limits:{maxUsers:999,maxProducts:999999,maxInvoices:999999,maxCustomers:999999,storageGB:100},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:true,prioritySupport:true},trialDays:14}];
+const plans = [
+  {name:'trial',displayName:'Free Trial',price:0,billingCycle:'monthly',limits:{maxUsers:2,maxProducts:100,maxInvoices:50,maxCustomers:100,storageGB:1},features:{whatsappIntegration:false,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
+  {name:'basic',displayName:'Basic Plan',price:999,billingCycle:'monthly',limits:{maxUsers:5,maxProducts:500,maxInvoices:200,maxCustomers:500,storageGB:5},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
+  {name:'professional',displayName:'Professional Plan',price:2499,billingCycle:'monthly',limits:{maxUsers:15,maxProducts:2000,maxInvoices:1000,maxCustomers:2000,storageGB:20},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:false,prioritySupport:true},trialDays:14},
+  {name:'enterprise',displayName:'Enterprise Plan',price:4999,billingCycle:'monthly',limits:{maxUsers:999,maxProducts:999999,maxInvoices:999999,maxCustomers:999999,storageGB:100},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:true,prioritySupport:true},trialDays:14}
+];
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   await connectDB();
   const { method, query } = req;
-  const { action, type } = query;
+  const { action, type, id } = query;
 
+  // Seed endpoint (no auth required)
   if (type === 'seed') {
     try {
       const existing = await User.findOne({ role: 'superadmin' });
       if (existing) return res.json({ success: true, message: 'Already seeded' });
-      for (const plan of plans) await SubscriptionPlan.findOneAndUpdate({ name: plan.name }, plan, { upsert: true });
-      await User.create({ name: 'Cloudritz Admin', email: 'admin@cloudritz.com', password: 'Cloudritz@2024', role: 'superadmin', isActive: true });
-      return res.json({ success: true, message: 'Database seeded' });
+      
+      for (const plan of plans) {
+        await SubscriptionPlan.findOneAndUpdate({ name: plan.name }, plan, { upsert: true });
+      }
+      
+      await User.create({ 
+        name: 'Cloudritz Admin', 
+        email: 'admin@cloudritz.com', 
+        password: 'Cloudritz@2024', 
+        role: 'superadmin', 
+        isActive: true 
+      });
+      
+      return res.json({ success: true, message: 'Database seeded successfully' });
     } catch (error) {
+      console.error('Seed error:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -27,111 +51,197 @@ export default async function handler(req, res) {
   try {
     await authenticate(req, res, async () => {
       
-      // SUPERADMIN ROUTES
-      if (type === 'superadmin') {
-        await requireRole('superadmin')(req, res, async () => {
-          if (method === 'GET') {
-            if (action === 'organizations') {
-              const orgs = await Organization.find().populate('createdBy', 'name email').sort({ createdAt: -1 });
-              return res.json({ success: true, data: orgs });
-            }
-            if (action === 'stats') {
-              const totalOrgs = await Organization.countDocuments();
-              const activeOrgs = await Organization.countDocuments({ isActive: true, 'subscription.status': 'active' });
-              const totalUsers = await User.countDocuments({ role: { $ne: 'superadmin' } });
-              return res.json({ success: true, data: { totalOrgs, activeOrgs, totalUsers } });
-            }
-            if (action === 'organization' && query.id) {
-              const org = await Organization.findById(query.id).populate('createdBy', 'name email');
-              const users = await User.find({ organizationId: query.id }).select('-password');
-              return res.json({ success: true, data: { organization: org, users } });
-            }
-          }
-          if (method === 'POST' && action === 'create-organization') {
-            const { organization, admin } = req.body;
-            const existingOrg = await Organization.findOne({ subdomain: organization.subdomain });
-            if (existingOrg) return res.status(400).json({ success: false, message: 'Subdomain already exists' });
-
-            const newOrg = await Organization.create({
-              ...organization,
-              createdBy: req.userId,
-              subscription: { plan: 'trial', status: 'active', startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) }
-            });
-
-            const hashedPassword = await bcrypt.hash(admin.password, 12);
-            const newAdmin = await User.create({
-              organizationId: newOrg._id,
-              name: admin.name,
-              email: admin.email,
-              password: hashedPassword,
-              role: 'admin',
-              isActive: true
-            });
-
-            return res.json({ success: true, message: 'Organization created', data: { organization: newOrg, admin: { id: newAdmin._id, email: newAdmin.email } } });
-          }
-          if (method === 'PUT') {
-            if (action === 'update-organization' && query.id) {
-              const { name, email, phone, address } = req.body;
-              const org = await Organization.findByIdAndUpdate(query.id, { name, email, phone, address }, { new: true });
-              return res.json({ success: true, message: 'Organization updated', data: org });
-            }
-            if (action === 'update-subscription' && query.id) {
-              const { plan, status, endDate, limits, features } = req.body;
-              const org = await Organization.findByIdAndUpdate(query.id, { 
-                'subscription.plan': plan, 'subscription.status': status, 'subscription.endDate': endDate,
-                'subscription.maxUsers': limits?.maxUsers, 'subscription.maxProducts': limits?.maxProducts,
-                'subscription.maxInvoices': limits?.maxInvoices, features
-              }, { new: true });
-              return res.json({ success: true, message: 'Subscription updated', data: org });
-            }
-            if (action === 'toggle-status' && query.id) {
-              const org = await Organization.findById(query.id);
-              org.isActive = !org.isActive;
-              await org.save();
-              return res.json({ success: true, message: 'Status updated', data: org });
-            }
-          }
-          if (method === 'DELETE' && query.id) {
-            await Organization.findByIdAndDelete(query.id);
-            await User.deleteMany({ organizationId: query.id });
-            return res.json({ success: true, message: 'Organization deleted' });
-          }
+      // Check if user is superadmin for protected routes
+      const isSuperAdmin = req.user.role === 'superadmin';
+      
+      // ============ SUPERADMIN ROUTES ============
+      
+      // Get dashboard stats
+      if (type === 'superadmin' && action === 'stats' && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const totalOrgs = await Organization.countDocuments();
+        const activeOrgs = await Organization.countDocuments({ isActive: true, 'subscription.status': 'active' });
+        const trialOrgs = await Organization.countDocuments({ 'subscription.plan': 'trial' });
+        const totalUsers = await User.countDocuments({ role: { $ne: 'superadmin' } });
+        
+        return res.json({ success: true, data: { totalOrgs, activeOrgs, trialOrgs, totalUsers } });
+      }
+      
+      // Get all organizations
+      if (type === 'superadmin' && action === 'organizations' && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const orgs = await Organization.find()
+          .populate('createdBy', 'name email')
+          .sort({ createdAt: -1 });
+        
+        return res.json({ success: true, data: orgs });
+      }
+      
+      // Get single organization details
+      if (type === 'superadmin' && action === 'organization' && id && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const org = await Organization.findById(id).populate('createdBy', 'name email');
+        const users = await User.find({ organizationId: id }).select('-password');
+        
+        return res.json({ success: true, data: { organization: org, users } });
+      }
+      
+      // Create organization
+      if (type === 'superadmin' && action === 'create-organization' && method === 'POST') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const { organization, admin } = req.body;
+        
+        const existingOrg = await Organization.findOne({ subdomain: organization.subdomain.toLowerCase() });
+        if (existingOrg) {
+          return res.status(400).json({ success: false, message: 'Subdomain already exists' });
+        }
+        
+        const existingEmail = await User.findOne({ email: admin.email.toLowerCase() });
+        if (existingEmail) {
+          return res.status(400).json({ success: false, message: 'Admin email already exists' });
+        }
+        
+        const newOrg = await Organization.create({
+          name: organization.name,
+          subdomain: organization.subdomain.toLowerCase(),
+          email: organization.email,
+          phone: organization.phone,
+          address: organization.address,
+          createdBy: req.userId,
+          subscription: {
+            plan: 'trial',
+            status: 'active',
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+            maxUsers: 2,
+            maxProducts: 100,
+            maxInvoices: 50
+          },
+          features: {
+            whatsappIntegration: false,
+            aiInsights: true,
+            multiCurrency: false,
+            advancedReports: false,
+            apiAccess: false
+          },
+          isActive: true
+        });
+        
+        const hashedPassword = await bcrypt.hash(admin.password, 12);
+        const newAdmin = await User.create({
+          organizationId: newOrg._id,
+          name: admin.name,
+          email: admin.email.toLowerCase(),
+          password: hashedPassword,
+          role: 'admin',
+          isActive: true
+        });
+        
+        return res.json({ 
+          success: true, 
+          message: 'Organization created successfully', 
+          data: { 
+            organization: newOrg, 
+            admin: { id: newAdmin._id, email: newAdmin.email } 
+          } 
         });
       }
-
-      // USER MANAGEMENT ROUTES
-      if (type === 'users') {
-        await tenantIsolation(req, res, async () => {
-          await requireRole('admin', 'manager')(req, res, async () => {
-            if (method === 'GET') {
-              const users = await User.find({ organizationId: req.organizationId }).select('-password');
-              return res.json({ success: true, data: users });
-            }
-            if (method === 'POST') {
-              const { name, email, password, role } = req.body;
-              const hashedPassword = await bcrypt.hash(password, 12);
-              const user = await User.create({
-                organizationId: req.organizationId,
-                name, email, password: hashedPassword, role, isActive: true
-              });
-              return res.json({ success: true, data: user });
-            }
-            if (method === 'PUT' && query.id) {
-              const user = await User.findByIdAndUpdate(query.id, req.body, { new: true }).select('-password');
-              return res.json({ success: true, data: user });
-            }
-            if (method === 'DELETE' && query.id) {
-              await User.findByIdAndUpdate(query.id, { isActive: false });
-              return res.json({ success: true, message: 'User deactivated' });
-            }
-          });
-        });
+      
+      // Update organization
+      if (type === 'superadmin' && action === 'update-organization' && id && method === 'PUT') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const { name, email, phone, address } = req.body;
+        const org = await Organization.findByIdAndUpdate(
+          id, 
+          { name, email, phone, address }, 
+          { new: true }
+        );
+        
+        return res.json({ success: true, message: 'Organization updated', data: org });
       }
-
-      res.status(400).json({ success: false, message: 'Invalid action' });
+      
+      // Update subscription
+      if (type === 'superadmin' && action === 'update-subscription' && id && method === 'PUT') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const { plan, status, endDate, limits, features } = req.body;
+        
+        const updateData = {};
+        if (plan) updateData['subscription.plan'] = plan;
+        if (status) updateData['subscription.status'] = status;
+        if (endDate) updateData['subscription.endDate'] = endDate;
+        if (limits?.maxUsers) updateData['subscription.maxUsers'] = limits.maxUsers;
+        if (limits?.maxProducts) updateData['subscription.maxProducts'] = limits.maxProducts;
+        if (limits?.maxInvoices) updateData['subscription.maxInvoices'] = limits.maxInvoices;
+        if (features) updateData['features'] = features;
+        
+        const org = await Organization.findByIdAndUpdate(id, updateData, { new: true });
+        
+        return res.json({ success: true, message: 'Subscription updated', data: org });
+      }
+      
+      // Toggle organization status
+      if (type === 'superadmin' && action === 'toggle-status' && id && method === 'PUT') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const org = await Organization.findById(id);
+        org.isActive = !org.isActive;
+        await org.save();
+        
+        return res.json({ success: true, message: 'Status updated', data: org });
+      }
+      
+      // Delete organization
+      if (type === 'superadmin' && id && method === 'DELETE') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        await Organization.findByIdAndDelete(id);
+        await User.deleteMany({ organizationId: id });
+        
+        return res.json({ success: true, message: 'Organization deleted' });
+      }
+      
+      // Get organizations list (for users page)
+      if (type === 'organizations' && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const orgs = await Organization.find()
+          .select('_id name subdomain')
+          .sort({ name: 1 });
+        
+        return res.json({ success: true, organizations: orgs });
+      }
+      
+      // Get users by organization
+      if (type === 'users' && query.organizationId && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const users = await User.find({ organizationId: query.organizationId })
+          .select('-password')
+          .sort({ createdAt: -1 });
+        
+        return res.json({ success: true, users });
+      }
+      
+      // Update user (activate/deactivate)
+      if (type === 'user' && id && method === 'PUT') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const updates = req.body;
+        const user = await User.findByIdAndUpdate(id, updates, { new: true }).select('-password');
+        
+        return res.json({ success: true, message: 'User updated', user });
+      }
+      
+      return res.status(400).json({ success: false, message: 'Invalid request' });
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Admin API error:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 }

@@ -50,6 +50,10 @@ export default async function handler(req, res) {
       // PROFILE
       if (type === 'profile') {
         if (req.method === 'GET') {
+          // Super admin doesn't have organizationId
+          if (req.user.role === 'superadmin') {
+            return res.json({ success: true, profile: { businessName: 'Cloudritz CRM' } });
+          }
           const org = await Organization.findById(req.organizationId);
           return res.json({ success: true, profile: org || {} });
         }
