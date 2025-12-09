@@ -3,7 +3,7 @@ import Expense from '../lib/models/Expense.js';
 import Employee from '../lib/models/Employee.js';
 import SalaryHistory from '../lib/models/SalaryHistory.js';
 import User from '../lib/models/User.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    await runMiddleware(req, res, auth);
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { method, query } = req;
 
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
           const { startDate, endDate, type } = query;
           let matchQuery = {};
           
+          matchQuery.organizationId = req.organizationId;
           if (startDate && endDate) {
             matchQuery.expenseDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
           }
@@ -66,7 +68,7 @@ export default async function handler(req, res) {
 
         try {
           const { startDate, endDate, type } = query;
-          let filter = {};
+          let filter = { organizationId: req.organizationId };
           if (startDate && endDate) {
             filter.expenseDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
           }
@@ -128,6 +130,7 @@ export default async function handler(req, res) {
 
           const expense = await Expense.create({
             ...cleanData,
+            organizationId: req.organizationId,
             createdBy: req.user._id
           });
 
@@ -145,7 +148,7 @@ export default async function handler(req, res) {
           return res.status(201).json({ success: true, expense });
         }
 
-        const expense = await Expense.create({ ...cleanData, createdBy: req.user._id });
+        const expense = await Expense.create({ ...cleanData, organizationId: req.organizationId, createdBy: req.user._id });
         return res.status(201).json({ success: true, expense });
 
       case 'PUT':
@@ -169,6 +172,8 @@ export default async function handler(req, res) {
       default:
         return res.status(405).json({ success: false, message: `Method ${method} Not Allowed` });
     }
+      });
+    });
   } catch (error) {
     console.error('Expense API error:', error);
     return res.status(500).json({ success: false, message: error.message });

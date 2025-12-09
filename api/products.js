@@ -2,7 +2,7 @@ import connectDB from '../lib/mongodb.js';
 import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -25,7 +25,10 @@ export default async function handler(req, res) {
   }
 
   await connectDB();
-  await runMiddleware(req, res, auth);
+  
+  try {
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
   const { method, query } = req;
   const { id, action } = query;
@@ -34,8 +37,8 @@ export default async function handler(req, res) {
   const productId = id || req.params?.id;
   const productAction = action || req.params?.action;
 
-  // Get single product
-  if (productId && method === 'GET' && !productAction) {
+        // Get single product
+        if (productId && method === 'GET' && !productAction) {
     try {
       const product = await Product.findById(productId);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
@@ -199,6 +202,7 @@ export default async function handler(req, res) {
           ];
         }
 
+        queryObj.organizationId = req.organizationId;
         const products = await Product.find(queryObj).sort({ createdAt: -1 });
         return res.json({ success: true, products });
       } catch (error) {
@@ -206,8 +210,9 @@ export default async function handler(req, res) {
       }
 
     case 'POST':
-      try {
-        const product = await Product.create(req.body);
+      await checkSubscriptionLimit('products')(req, res, async () => {
+        try {
+          const product = await Product.create({ ...req.body, organizationId: req.organizationId });
         
         await InventoryHistory.create({
           product: product._id,
@@ -234,12 +239,18 @@ export default async function handler(req, res) {
           });
         }
 
-        return res.status(201).json({ success: true, product });
-      } catch (error) {
-        return res.status(500).json({ message: error.message });
-      }
+          return res.status(201).json({ success: true, product });
+        } catch (error) {
+          return res.status(500).json({ message: error.message });
+        }
+      });
 
     default:
       return res.status(405).json({ message: 'Method not allowed' });
+  }
+      });
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 }

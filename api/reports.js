@@ -3,7 +3,7 @@ import Invoice from '../lib/models/Invoice.js';
 import Customer from '../lib/models/Customer.js';
 import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -34,7 +34,8 @@ export default async function handler(req, res) {
     }
 
     await connectDB();
-    await runMiddleware(req, res, auth);
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { action } = req.query;
 
@@ -79,55 +80,57 @@ export default async function handler(req, res) {
     ] = await Promise.all([
       // Today's sales
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: today, $lte: endOfDay } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: today, $lte: endOfDay } } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ]),
       // Weekly sales
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: startOfWeek } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: startOfWeek } } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ]),
       // Monthly sales
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: startOfMonth } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ]),
       // Total revenue
       Invoice.aggregate([
+        { $match: { organizationId: req.organizationId } },
         { $group: { _id: null, total: { $sum: "$total" } } }
       ]),
       // Total customers
-      Customer.countDocuments(),
+      Customer.countDocuments({ organizationId: req.organizationId }),
       // Low stock count
-      Product.countDocuments({ $expr: { $lte: ["$stock", "$lowStockLimit"] } }),
+      Product.countDocuments({ organizationId: req.organizationId, $expr: { $lte: ["$stock", "$lowStockLimit"] } }),
       // Low stock items details
-      Product.find({ $expr: { $lte: ["$stock", "$lowStockLimit"] } })
+      Product.find({ organizationId: req.organizationId, $expr: { $lte: ["$stock", "$lowStockLimit"] } })
         .select('name category stock lowStockLimit')
         .sort({ stock: 1 })
         .limit(20)
         .lean(),
       // Total products
-      Product.countDocuments(),
+      Product.countDocuments({ organizationId: req.organizationId }),
       // Total invoices
-      Invoice.countDocuments(),
+      Invoice.countDocuments({ organizationId: req.organizationId }),
       // Inventory value
       Product.aggregate([
-
+        { $match: { organizationId: req.organizationId } },
         { $group: { _id: null, totalValue: { $sum: { $multiply: ["$stock", "$purchasePrice"] } } } }
       ]),
       // Recent invoices
-      Invoice.find()
+      Invoice.find({ organizationId: req.organizationId })
         .populate('customer', 'name')
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
       // Pending payments
       Invoice.aggregate([
-        { $match: { status: 'pending' } },
+        { $match: { organizationId: req.organizationId, status: 'pending' } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ]),
       // Total tiles sold (from tiles category)
       Invoice.aggregate([
+        { $match: { organizationId: req.organizationId } },
         { $unwind: "$items" },
         { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'product' } },
         { $unwind: "$product" },
@@ -136,6 +139,7 @@ export default async function handler(req, res) {
       ]),
       // Top selling products
       Invoice.aggregate([
+        { $match: { organizationId: req.organizationId } },
         { $unwind: "$items" },
         { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'product' } },
         { $unwind: "$product" },
@@ -151,11 +155,12 @@ export default async function handler(req, res) {
       ]),
       // Total expenses
       Expense.aggregate([
+        { $match: { organizationId: req.organizationId } },
         { $group: { _id: null, total: { $sum: "$amount" } } }
       ]),
       // Monthly expenses
       Expense.aggregate([
-        { $match: { expenseDate: { $gte: startOfMonth } } },
+        { $match: { organizationId: req.organizationId, expenseDate: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: "$amount" } } }
       ])
     ]);
@@ -194,6 +199,10 @@ export default async function handler(req, res) {
       message: 'Failed to fetch dashboard data',
       error: error.message 
     });
+      });
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 }
 
@@ -254,7 +263,7 @@ async function handleSalesReports(req, res) {
     const [salesData, previousPeriodData] = await Promise.all([
       // Current period sales
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
         { $group: { 
           _id: null, 
           totalAmount: { $sum: "$total" }, 
@@ -265,6 +274,7 @@ async function handleSalesReports(req, res) {
       // Previous period for growth calculation
       Invoice.aggregate([
         { $match: { 
+          organizationId: req.organizationId,
           createdAt: { 
             $gte: new Date(filterStartDate.getTime() - (filterEndDate.getTime() - filterStartDate.getTime())),
             $lt: filterStartDate
@@ -319,11 +329,11 @@ async function handleSalesAnalytics(req, res) {
     
     const [todayData, yesterdayData] = await Promise.all([
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: new Date(today.setHours(0, 0, 0, 0)), $lte: new Date(today.setHours(23, 59, 59, 999)) } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(today.setHours(0, 0, 0, 0)), $lte: new Date(today.setHours(23, 59, 59, 999)) } } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ]),
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: new Date(yesterday.setHours(0, 0, 0, 0)), $lte: new Date(yesterday.setHours(23, 59, 59, 999)) } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(yesterday.setHours(0, 0, 0, 0)), $lte: new Date(yesterday.setHours(23, 59, 59, 999)) } } },
         { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
       ])
     ]);

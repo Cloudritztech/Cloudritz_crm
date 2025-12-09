@@ -4,7 +4,7 @@ import Invoice from '../lib/models/Invoice.js';
 import Product from '../lib/models/Product.js';
 import Customer from '../lib/models/Customer.js';
 import Expense from '../lib/models/Expense.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 import { generateDailyInsights } from '../lib/notificationGenerator.js';
 
 async function runMiddleware(req, res, fn) {
@@ -25,7 +25,8 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    await runMiddleware(req, res, auth);
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { method, query } = req;
 
@@ -37,6 +38,7 @@ export default async function handler(req, res) {
         
         if (query.action === 'unread-count') {
           const count = await Notification.countDocuments({ 
+            organizationId: req.organizationId,
             userId: req.user._id, 
             isRead: false 
           });
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
         }
 
         const { limit = 20, unreadOnly } = query;
-        const filter = { userId: req.user._id };
+        const filter = { organizationId: req.organizationId, userId: req.user._id };
         if (unreadOnly === 'true') filter.isRead = false;
 
         const notifications = await Notification.find(filter)
@@ -56,6 +58,7 @@ export default async function handler(req, res) {
       case 'POST':
         const notification = await Notification.create({
           ...req.body,
+          organizationId: req.organizationId,
           userId: req.user._id
         });
         return res.status(201).json({ success: true, notification });
@@ -92,6 +95,8 @@ export default async function handler(req, res) {
       default:
         return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
+      });
+    });
   } catch (error) {
     console.error('Notification API error:', error);
     return res.status(500).json({ success: false, message: error.message });
@@ -105,24 +110,25 @@ async function generateDaily(req, res) {
     
     const [todaySales, weeklySales, monthlySales, customers, lowStock, pending, expenses] = await Promise.all([
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: today } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: today } } },
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]),
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000) } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000) } } },
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]),
       Invoice.aggregate([
-        { $match: { createdAt: { $gte: new Date(today.getFullYear(), today.getMonth(), 1) } } },
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(today.getFullYear(), today.getMonth(), 1) } } },
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]),
-      Customer.countDocuments(),
-      Product.countDocuments({ $expr: { $lte: ['$stock', '$minStock'] } }),
+      Customer.countDocuments({ organizationId: req.organizationId }),
+      Product.countDocuments({ organizationId: req.organizationId, $expr: { $lte: ['$stock', '$minStock'] } }),
       Invoice.aggregate([
-        { $match: { status: 'pending' } },
+        { $match: { organizationId: req.organizationId, status: 'pending' } },
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]),
       Expense.aggregate([
+        { $match: { organizationId: req.organizationId } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ])
     ]);
@@ -142,6 +148,7 @@ async function generateDaily(req, res) {
     
     // Delete old AI insights
     await Notification.deleteMany({
+      organizationId: req.organizationId,
       userId: req.user._id,
       category: 'ai-insight',
       createdAt: { $lt: today }
@@ -151,6 +158,7 @@ async function generateDaily(req, res) {
     const created = await Notification.insertMany(
       aiNotifications.map(n => ({
         ...n,
+        organizationId: req.organizationId,
         userId: req.user._id,
         category: 'ai-insight',
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours

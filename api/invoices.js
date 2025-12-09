@@ -4,7 +4,7 @@ import Customer from '../lib/models/Customer.js';
 import Product from '../lib/models/Product.js';
 import Payment from '../lib/models/Payment.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 import { generateInvoicePDF } from '../lib/pdfGenerator.js';
 import { numberToWords } from '../lib/numberToWords.js';
 
@@ -26,7 +26,8 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    await runMiddleware(req, res, auth);
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { method, query } = req;
     const { id, action } = query;
@@ -54,9 +55,15 @@ export default async function handler(req, res) {
 
     // List/Create invoices
     if (method === 'GET') return await listInvoices(req, res, query);
-    if (method === 'POST') return await createInvoice(req, res);
+    if (method === 'POST') {
+      return await checkSubscriptionLimit('invoices')(req, res, async () => {
+        return await createInvoice(req, res);
+      });
+    }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
+      });
+    });
   } catch (error) {
     console.error('❌ Invoice API error:', error);
     return res.status(500).json({ success: false, message: error.message });
@@ -67,7 +74,7 @@ export default async function handler(req, res) {
 async function listInvoices(req, res, query) {
   try {
     const { search, status, startDate, endDate, customer, limit = 50 } = query;
-    const filter = {};
+    const filter = { organizationId: req.organizationId };
     
     if (customer) filter.customer = customer;
     if (status) filter.status = status;
@@ -298,6 +305,7 @@ async function createInvoice(req, res) {
     const amountInWords = numberToWords(grandTotal);
 
     const invoice = await Invoice.create({
+      organizationId: req.organizationId,
       customer,
       buyerDetails: {
         name: customerExists.name,

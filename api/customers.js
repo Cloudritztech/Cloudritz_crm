@@ -1,6 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Customer from '../lib/models/Customer.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -25,10 +25,9 @@ export default async function handler(req, res) {
   try {
     console.log('👥 Customer API called:', req.method);
     await connectDB();
-    console.log('✅ Database connected');
     
-    await runMiddleware(req, res, auth);
-    console.log('✅ Authentication passed');
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { method, query } = req;
     const { id } = query;
@@ -89,7 +88,7 @@ export default async function handler(req, res) {
             ];
           }
 
-          console.log('🔍 Fetching customers with query:', queryObj);
+          queryObj.organizationId = req.organizationId;
           const customers = await Customer.find(queryObj).sort({ createdAt: -1 });
           console.log(`✅ Found ${customers.length} customers`);
           
@@ -104,8 +103,7 @@ export default async function handler(req, res) {
 
       case 'POST':
         try {
-          console.log('📝 Creating customer:', req.body);
-          const customer = await Customer.create(req.body);
+          const customer = await Customer.create({ ...req.body, organizationId: req.organizationId });
           console.log('✅ Customer created:', customer.name);
           return res.status(201).json({ success: true, customer });
         } catch (error) {
@@ -124,11 +122,10 @@ export default async function handler(req, res) {
         }
 
       default:
-        return res.status(405).json({ 
-          success: false,
-          message: 'Method not allowed' 
-        });
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
+      });
+    });
   } catch (error) {
     console.error('❌ Customer handler error:', error);
     return res.status(500).json({

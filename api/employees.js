@@ -1,6 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Employee from '../lib/models/Employee.js';
-import { auth } from '../lib/middleware/auth.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -20,7 +20,8 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    await runMiddleware(req, res, auth);
+    await authenticate(req, res, async () => {
+      await tenantIsolation(req, res, async () => {
 
     const { method, query } = req;
 
@@ -32,11 +33,11 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, employee });
         }
         
-        const employees = await Employee.find().sort({ createdAt: -1 });
+        const employees = await Employee.find({ organizationId: req.organizationId }).sort({ createdAt: -1 });
         return res.status(200).json({ success: true, employees });
 
       case 'POST':
-        const employee = await Employee.create({ ...req.body, createdBy: req.user._id });
+        const employee = await Employee.create({ ...req.body, organizationId: req.organizationId, createdBy: req.user._id });
         return res.status(201).json({ success: true, employee });
 
       case 'PUT':
@@ -54,6 +55,8 @@ export default async function handler(req, res) {
       default:
         return res.status(405).json({ success: false, message: `Method ${method} Not Allowed` });
     }
+      });
+    });
   } catch (error) {
     console.error('Employee API error:', error);
     return res.status(500).json({ success: false, message: error.message });
