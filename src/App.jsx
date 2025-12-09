@@ -6,7 +6,6 @@ import Toast from './components/ui/Toast';
 
 const ModernLayout = lazy(() => import('./components/ModernLayout'));
 const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
 const SuperAdminOrganizations = lazy(() => import('./pages/superadmin/Organizations'));
@@ -27,7 +26,6 @@ const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Billing = lazy(() => import('./pages/Billing'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
 const WhiteLabel = lazy(() => import('./pages/WhiteLabel'));
 
 const PageLoader = () => (
@@ -89,26 +87,7 @@ function App() {
                   </PublicRoute>
                 } 
               />
-              <Route 
-                path="/register" 
-                element={
-                  <PublicRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Register />
-                    </Suspense>
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/onboarding" 
-                element={
-                  <PublicRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Onboarding />
-                    </Suspense>
-                  </PublicRoute>
-                } 
-              />
+
               <Route 
                 path="/*" 
                 element={

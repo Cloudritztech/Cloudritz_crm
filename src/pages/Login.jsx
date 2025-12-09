@@ -143,17 +143,7 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-secondary-600">
-                Don't have an account?{' '}
-                <Link 
-                  to="/onboarding" 
-                  className="font-medium text-primary-600 hover:text-primary-700 transition-colors"
-                >
-                  Start Free Trial
-                </Link>
-              </p>
-            </div>
+
           </div>
 
           {/* Footer */}

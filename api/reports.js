@@ -25,6 +25,8 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  await connectDB();
+  
   try {
     if (req.method !== 'GET') {
       return res.status(405).json({ 
@@ -33,9 +35,9 @@ export default async function handler(req, res) {
       });
     }
 
-    await connectDB();
     await authenticate(req, res, async () => {
       await tenantIsolation(req, res, async () => {
+        try {
 
     const { action } = req.query;
 
@@ -192,17 +194,23 @@ export default async function handler(req, res) {
       success: true, 
       stats 
     });
-  } catch (error) {
-    console.error('❌ Dashboard error:', error);
-    return res.status(500).json({ 
-      success: false,
-      message: 'Failed to fetch dashboard data',
-      error: error.message 
-    });
+        } catch (innerError) {
+          console.error('❌ Dashboard inner error:', innerError);
+          return res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch dashboard data',
+            error: innerError.message 
+          });
+        }
       });
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('❌ Reports API error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error',
+      error: error.message 
+    });
   }
 }
 
