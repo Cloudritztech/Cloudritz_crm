@@ -3,7 +3,6 @@ import { authenticate } from '../lib/middleware/tenant.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
 import SubscriptionPlan from '../lib/models/SubscriptionPlan.js';
-import bcrypt from 'bcryptjs';
 
 const plans = [
   {name:'trial',displayName:'Free Trial',price:0,billingCycle:'monthly',limits:{maxUsers:2,maxProducts:100,maxInvoices:50,maxCustomers:100,storageGB:1},features:{whatsappIntegration:false,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
@@ -131,12 +130,11 @@ export default async function handler(req, res) {
           isActive: true
         });
         
-        const hashedPassword = await bcrypt.hash(admin.password, 12);
         const newAdmin = await User.create({
           organizationId: newOrg._id,
           name: admin.name,
           email: admin.email.toLowerCase(),
-          password: hashedPassword,
+          password: admin.password,
           role: 'admin',
           isActive: true
         });

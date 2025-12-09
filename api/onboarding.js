@@ -1,7 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
@@ -45,12 +44,11 @@ export default async function handler(req, res) {
         isActive: true
       });
 
-      const hashedPassword = await bcrypt.hash(admin.password, 12);
       const newAdmin = await User.create({
         organizationId: newOrg._id,
         name: admin.name,
         email: admin.email.toLowerCase(),
-        password: hashedPassword,
+        password: admin.password,
         role: 'admin',
         isActive: true
       });
