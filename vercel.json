@@ -4,20 +4,7 @@
       "maxDuration": 30
     }
   },
-  "crons": [
-    {
-      "path": "/api/billing?action=cron&type=invoices",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/billing?action=cron&type=reminders",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/billing?action=cron&type=expire",
-      "schedule": "0 1 * * *"
-    }
-  ],
+
   "rewrites": [
     {
       "source": "/((?!api).*)",

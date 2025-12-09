@@ -26,17 +26,13 @@ export default async function handler(req, res) {
       return await handleWebhook(req, res);
     }
 
-    // Cron job endpoints (protected by secret)
+    // Cron job endpoint (protected by secret) - runs all billing tasks
     if (action === 'cron') {
       const secret = req.headers['x-cron-secret'];
       if (secret !== process.env.CRON_SECRET) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }
-
-      if (type === 'invoices') return await handleCronInvoices(req, res);
-      if (type === 'reminders') return await handleCronReminders(req, res);
-      if (type === 'expire') return await handleCronExpire(req, res);
-      return res.status(400).json({ success: false, message: 'Invalid cron type' });
+      return await handleCronAll(req, res);
     }
 
     // Protected endpoints
@@ -267,18 +263,12 @@ async function handleWebhook(req, res) {
   return res.json({ success: true });
 }
 
-// Cron handlers
-async function handleCronInvoices(req, res) {
-  const result = await generateMonthlyInvoices();
-  return res.json(result);
-}
-
-async function handleCronReminders(req, res) {
-  const result = await sendTrialReminders();
-  return res.json(result);
-}
-
-async function handleCronExpire(req, res) {
-  const result = await expireOverdueSubscriptions();
-  return res.json(result);
+// Consolidated cron handler - runs all billing tasks
+async function handleCronAll(req, res) {
+  const results = {
+    invoices: await generateMonthlyInvoices(),
+    reminders: await sendTrialReminders(),
+    expire: await expireOverdueSubscriptions()
+  };
+  return res.json({ success: true, results });
 }
