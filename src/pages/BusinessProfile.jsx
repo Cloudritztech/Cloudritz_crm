@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Upload, Save, AlertTriangle, Loader } from 'lucide-react';
+import { Building2, Upload, Save, AlertTriangle, Loader, Palette, Globe, Eye } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { profileAPI } from '../services/api';
@@ -22,7 +22,13 @@ const BusinessProfile = () => {
       ifscCode: '',
       branch: ''
     },
-    upiId: ''
+    upiId: '',
+    branding: {
+      primaryColor: '#2563eb',
+      secondaryColor: '#3b82f6',
+      customDomain: '',
+      hideCloudiritzBranding: false
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,6 +68,14 @@ const BusinessProfile = () => {
         ...prev,
         bankDetails: {
           ...prev.bankDetails,
+          ...value
+        }
+      }));
+    } else if (field === 'branding') {
+      setProfile(prev => ({
+        ...prev,
+        branding: {
+          ...prev.branding,
           ...value
         }
       }));
@@ -320,6 +334,117 @@ const BusinessProfile = () => {
               placeholder="yourname@paytm"
               helperText="QR code will be shown on UPI payment invoices"
             />
+          </div>
+
+          {/* White Label Branding */}
+          <div className="card">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-purple-100 rounded-xl">
+                <Palette className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Brand Colors</h3>
+                <p className="text-sm text-gray-600">Customize your CRM theme</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={profile.branding?.primaryColor || '#2563eb'}
+                    onChange={(e) => handleInputChange('branding', { primaryColor: e.target.value })}
+                    className="w-16 h-12 rounded border border-gray-300 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={profile.branding?.primaryColor || '#2563eb'}
+                    onChange={(e) => handleInputChange('branding', { primaryColor: e.target.value })}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="#2563eb"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={profile.branding?.secondaryColor || '#3b82f6'}
+                    onChange={(e) => handleInputChange('branding', { secondaryColor: e.target.value })}
+                    className="w-16 h-12 rounded border border-gray-300 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={profile.branding?.secondaryColor || '#3b82f6'}
+                    onChange={(e) => handleInputChange('branding', { secondaryColor: e.target.value })}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="#3b82f6"
+                  />
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Eye className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Color Preview</span>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    className="px-4 py-2 rounded-lg text-white font-medium text-sm"
+                    style={{ backgroundColor: profile.branding?.primaryColor || '#2563eb' }}
+                  >
+                    Primary
+                  </button>
+                  <button 
+                    className="px-4 py-2 rounded-lg text-white font-medium text-sm"
+                    style={{ backgroundColor: profile.branding?.secondaryColor || '#3b82f6' }}
+                  >
+                    Secondary
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Custom Domain */}
+          <div className="card">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-blue-100 rounded-xl">
+                <Globe className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Custom Domain</h3>
+                <p className="text-sm text-gray-600">Use your own domain</p>
+              </div>
+            </div>
+
+            <Input
+              label="Custom Domain"
+              value={profile.branding?.customDomain || ''}
+              onChange={(e) => handleInputChange('branding', { customDomain: e.target.value })}
+              placeholder="crm.yourcompany.com"
+              helperText="Contact support to configure DNS settings"
+            />
+
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <label className="flex items-start">
+                <input
+                  type="checkbox"
+                  checked={profile.branding?.hideCloudiritzBranding || false}
+                  onChange={(e) => handleInputChange('branding', { hideCloudiritzBranding: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded mt-0.5"
+                />
+                <span className="ml-3 text-sm text-gray-700">
+                  Hide "Powered by Cloudritz" branding
+                  <span className="block text-xs text-gray-500 mt-1">Available for Enterprise plans</span>
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 
