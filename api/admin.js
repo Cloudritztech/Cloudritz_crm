@@ -71,6 +71,11 @@ export default async function handler(req, res) {
             return res.json({ success: true, message: 'Organization created', data: { organization: newOrg, admin: { id: newAdmin._id, email: newAdmin.email } } });
           }
           if (method === 'PUT') {
+            if (action === 'update-organization' && query.id) {
+              const { name, email, phone, address } = req.body;
+              const org = await Organization.findByIdAndUpdate(query.id, { name, email, phone, address }, { new: true });
+              return res.json({ success: true, message: 'Organization updated', data: org });
+            }
             if (action === 'update-subscription' && query.id) {
               const { plan, status, endDate, limits, features } = req.body;
               const org = await Organization.findByIdAndUpdate(query.id, { 

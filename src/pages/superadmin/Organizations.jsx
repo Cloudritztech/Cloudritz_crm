@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 
 const Organizations = () => {
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -35,7 +37,7 @@ const Organizations = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Organizations</h1>
-        <Button icon={Plus}>Create Organization</Button>
+        <Button icon={Plus} onClick={() => navigate('/superadmin/organizations/create')}>Create Organization</Button>
       </div>
 
       <div className="relative">
@@ -51,7 +53,7 @@ const Organizations = () => {
 
       <div className="grid gap-4">
         {filtered.map(org => (
-          <Card key={org._id}>
+          <Card key={org._id} className="cursor-pointer hover:shadow-lg transition" onClick={() => navigate(`/superadmin/organizations/${org._id}`)}>
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-xl font-bold">{org.name}</h3>
@@ -67,6 +69,7 @@ const Organizations = () => {
                 <p className="text-sm text-gray-600 mt-2">
                   {org.subscription.maxUsers} users • {org.subscription.maxProducts} products
                 </p>
+                <Button size="sm" variant="outline" icon={Eye} className="mt-2" onClick={(e) => { e.stopPropagation(); navigate(`/superadmin/organizations/${org._id}`); }}>View</Button>
               </div>
             </div>
           </Card>
