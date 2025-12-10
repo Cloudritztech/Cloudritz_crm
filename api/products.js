@@ -111,7 +111,7 @@ export default async function handler(req, res) {
             results.unchanged++;
           }
         } else {
-          bulkOps.push({ insertOne: { document: { name, stock, sellingPrice, purchasePrice, stockSaleValue, stockPurchaseValue, unit: 'piece', category: 'accessories', lowStockLimit: 5, taxIncluded: false, importedFromExcel: true, stockHistory: [] } } });
+          bulkOps.push({ insertOne: { document: { organizationId: req.organizationId, name, stock, sellingPrice, purchasePrice, stockSaleValue, stockPurchaseValue, unit: 'piece', category: 'accessories', lowStockLimit: 5, taxIncluded: false, importedFromExcel: true, stockHistory: [] } } });
           results.added++;
         }
       }
