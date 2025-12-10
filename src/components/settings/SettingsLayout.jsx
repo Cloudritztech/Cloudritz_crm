@@ -15,7 +15,6 @@ const SettingsLayout = ({ children }) => {
     { id: 'product', name: 'Product', icon: Package, path: '/settings/product' },
     { id: 'backup', name: 'Data Backup', icon: Database, path: '/settings/backup' },
     { id: 'integrations', name: 'Integrations', icon: Plug, path: '/settings/integrations' },
-    { id: 'notifications', name: 'Notifications', icon: Bell, path: '/settings/notifications' },
   ];
 
   const isActive = (path) => location.pathname === path;

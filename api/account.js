@@ -127,6 +127,7 @@ export default async function handler(req, res) {
               const settings = {
                 prefix: org.settings?.invoicePrefix || 'INV',
                 startingNumber: org.settings?.invoiceStartNumber || 1001,
+                template: org.settings?.template || 'compact',
                 termsAndConditions: org.settings?.termsAndConditions || 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
                 footerNote: org.settings?.footerNote || 'Thank you for your business!',
                 showLogo: org.settings?.showLogo !== false,
@@ -168,10 +169,11 @@ export default async function handler(req, res) {
             org.settings = org.settings || {};
 
             if (section === 'invoice') {
-              const { prefix, startingNumber, termsAndConditions, footerNote, showLogo, showBankDetails, showSignature, autoIncrement } = req.body;
+              const { prefix, startingNumber, template, termsAndConditions, footerNote, showLogo, showBankDetails, showSignature, autoIncrement } = req.body;
               
               if (prefix) org.settings.invoicePrefix = prefix;
               if (startingNumber) org.settings.invoiceStartNumber = startingNumber;
+              if (template) org.settings.template = template;
               if (termsAndConditions !== undefined) org.settings.termsAndConditions = termsAndConditions;
               if (footerNote !== undefined) org.settings.footerNote = footerNote;
               if (showLogo !== undefined) org.settings.showLogo = showLogo;

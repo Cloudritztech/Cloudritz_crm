@@ -158,34 +158,34 @@ export default function SuperAdminSupport() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
-        <p className="text-gray-600">Manage customer support requests</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage customer support requests</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Total Tickets</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        <div className="bg-white dark:bg-[#141619] rounded-lg shadow p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Total Tickets</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Open</p>
+        <div className="bg-white dark:bg-[#141619] rounded-lg shadow p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Open</p>
           <p className="text-2xl font-bold text-blue-600">{stats.open}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">In Progress</p>
+        <div className="bg-white dark:bg-[#141619] rounded-lg shadow p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">In Progress</p>
           <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Resolved</p>
+        <div className="bg-white dark:bg-[#141619] rounded-lg shadow p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Resolved</p>
           <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-24rem)]">
         {/* Tickets List */}
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden flex flex-col">
-          <div className="p-4 border-b bg-gray-50 space-y-3">
+        <div className="lg:col-span-1 bg-white dark:bg-[#1a1d21] rounded-lg shadow overflow-hidden flex flex-col">
+          <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0F1113] space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -193,13 +193,13 @@ export default function SuperAdminSupport() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search tickets..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1d21] text-gray-900 dark:text-white rounded-lg text-sm"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1d21] text-gray-900 dark:text-white rounded-lg text-sm"
             >
               <option value="all">All Status</option>
               <option value="open">Open</option>
@@ -211,8 +211,8 @@ export default function SuperAdminSupport() {
           
           <div className="flex-1 overflow-y-auto">
             {filteredTickets.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p>No tickets found</p>
               </div>
             ) : (
@@ -222,14 +222,14 @@ export default function SuperAdminSupport() {
                   <div
                     key={ticket._id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${
-                      selectedTicket?._id === ticket._id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                    className={`p-4 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0F1113] transition ${
+                      selectedTicket?._id === ticket._id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-600' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-1">{ticket.subject}</h3>
-                        <p className="text-xs text-gray-500 mt-1">{ticket.organizationName}</p>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">{ticket.subject}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ticket.organizationName}</p>
                       </div>
                       {ticket.unreadCount?.admin > 0 && (
                         <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-2">
@@ -246,7 +246,7 @@ export default function SuperAdminSupport() {
                         {ticket.priority}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(ticket.lastMessageAt).toLocaleString()}
                     </p>
                   </div>
@@ -257,15 +257,15 @@ export default function SuperAdminSupport() {
         </div>
 
         {/* Chat Area */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow flex flex-col">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1a1d21] rounded-lg shadow flex flex-col">
           {selectedTicket ? (
             <>
               {/* Chat Header */}
-              <div className="p-4 border-b bg-gray-50">
+              <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0F1113]">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-semibold text-gray-900">{selectedTicket.subject}</h2>
-                    <p className="text-sm text-gray-500">
+                    <h2 className="font-semibold text-gray-900 dark:text-white">{selectedTicket.subject}</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {selectedTicket.organizationName} • {selectedTicket.userEmail}
                     </p>
                   </div>
@@ -302,12 +302,12 @@ export default function SuperAdminSupport() {
                     key={idx}
                     className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[70%] ${msg.sender === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-100'} rounded-lg p-3`}>
-                      <p className={`text-xs font-medium mb-1 ${msg.sender === 'admin' ? 'text-blue-100' : 'text-gray-600'}`}>
+                    <div className={`max-w-[70%] ${msg.sender === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-[#0F1113] text-gray-900 dark:text-white'} rounded-lg p-3`}>
+                      <p className={`text-xs font-medium mb-1 ${msg.sender === 'admin' ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'}`}>
                         {msg.senderName}
                       </p>
                       <p className="text-sm">{msg.message}</p>
-                      <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-blue-100' : 'text-gray-500'}`}>
+                      <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
@@ -317,14 +317,14 @@ export default function SuperAdminSupport() {
               </div>
 
               {/* Message Input */}
-              <form onSubmit={sendMessage} className="p-4 border-t bg-gray-50">
+              <form onSubmit={sendMessage} className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-[#0F1113]">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your response..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1d21] text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="submit"
@@ -338,9 +338,9 @@ export default function SuperAdminSupport() {
               </form>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                 <p>Select a ticket to view conversation</p>
               </div>
             </div>

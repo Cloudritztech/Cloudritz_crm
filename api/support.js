@@ -17,12 +17,11 @@ export default async function handler(req, res) {
   const { action, id } = req.query;
 
   try {
-    const authResult = await authenticate(req);
-    if (!authResult.success) {
-      return res.status(401).json({ success: false, message: authResult.message });
-    }
-
-    const { userId, organizationId, role, email } = authResult;
+    await authenticate(req, res, async () => {
+      const userId = req.userId;
+      const organizationId = req.organizationId;
+      const role = req.user.role;
+      const email = req.user.email;
 
     if (method === 'GET') {
       if (id) {
@@ -160,8 +159,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, ticket });
     }
 
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    });
   } catch (error) {
     console.error('Support API Error:', error);
     return res.status(500).json({ success: false, message: error.message });

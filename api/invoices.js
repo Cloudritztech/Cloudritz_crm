@@ -2,7 +2,6 @@ import connectDB from '../lib/mongodb.js';
 import Invoice from '../lib/models/Invoice.js';
 import Customer from '../lib/models/Customer.js';
 import Product from '../lib/models/Product.js';
-import Payment from '../lib/models/Payment.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 import { generateInvoicePDF } from '../lib/pdfGenerator.js';
@@ -35,9 +34,6 @@ export default async function handler(req, res) {
     // Payment operations
     if (action === 'payment') {
       if (method === 'PUT' && id) return await updateInvoicePayment(req, res, id);
-      if (method === 'GET') return await getPayments(req, res, query);
-      if (method === 'POST') return await createPayment(req, res);
-      if (method === 'DELETE' && id) return await deletePayment(req, res, id);
       return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
 
@@ -407,136 +403,4 @@ async function updateInvoicePayment(req, res, id) {
   }
 }
 
-// Get payments
-async function getPayments(req, res, query) {
-  try {
-    if (query.invoiceId) {
-      const payments = await Payment.find({ invoice: query.invoiceId })
-        .populate('receivedBy', 'name')
-        .sort({ paymentDate: -1 });
-      return res.status(200).json({ success: true, payments });
-    }
 
-    if (query.customerId) {
-      const payments = await Payment.find({ customer: query.customerId })
-        .populate('invoice', 'invoiceNumber grandTotal')
-        .populate('receivedBy', 'name')
-        .sort({ paymentDate: -1 });
-      return res.status(200).json({ success: true, payments });
-    }
-
-    const payments = await Payment.find()
-      .populate('invoice', 'invoiceNumber grandTotal')
-      .populate('customer', 'name phone')
-      .populate('receivedBy', 'name')
-      .sort({ paymentDate: -1 })
-      .limit(100);
-
-    return res.status(200).json({ success: true, payments });
-  } catch (error) {
-    console.error('❌ Get payments error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}
-
-// Create payment
-async function createPayment(req, res) {
-  try {
-    const { invoice: invoiceId, amount, paymentMethod, paymentDate, transactionId, notes } = req.body;
-
-    if (!invoiceId || !amount || !paymentMethod || !paymentDate) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-
-    const invoice = await Invoice.findById(invoiceId);
-    if (!invoice) {
-      return res.status(404).json({ success: false, message: 'Invoice not found' });
-    }
-
-    const paymentAmount = parseFloat(amount);
-    const newPaidAmount = invoice.paidAmount + paymentAmount;
-    const newPendingAmount = invoice.grandTotal - newPaidAmount;
-
-    if (newPaidAmount > invoice.grandTotal) {
-      return res.status(400).json({
-        success: false,
-        message: `Payment exceeds pending amount. Pending: ₹${invoice.pendingAmount.toFixed(2)}`
-      });
-    }
-
-    const payment = await Payment.create({
-      invoice: invoiceId,
-      customer: invoice.customer,
-      amount: paymentAmount,
-      paymentMethod,
-      paymentDate: new Date(paymentDate),
-      transactionId,
-      notes,
-      receivedBy: req.user._id
-    });
-
-    let paymentStatus = 'pending';
-    if (newPendingAmount <= 0) {
-      paymentStatus = 'paid';
-    } else if (newPaidAmount > 0) {
-      paymentStatus = 'partial';
-    }
-
-    await Invoice.findByIdAndUpdate(invoiceId, {
-      paidAmount: newPaidAmount,
-      pendingAmount: newPendingAmount,
-      paymentStatus,
-      status: paymentStatus === 'paid' ? 'paid' : 'pending'
-    });
-
-    const populatedPayment = await Payment.findById(payment._id)
-      .populate('invoice', 'invoiceNumber grandTotal')
-      .populate('customer', 'name phone')
-      .populate('receivedBy', 'name');
-
-    return res.status(201).json({
-      success: true,
-      payment: populatedPayment,
-      message: `Payment of ₹${paymentAmount.toFixed(2)} recorded`
-    });
-  } catch (error) {
-    console.error('❌ Create payment error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}
-
-// Delete payment
-async function deletePayment(req, res, id) {
-  try {
-    const payment = await Payment.findById(id);
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment not found' });
-    }
-
-    const invoice = await Invoice.findById(payment.invoice);
-    if (invoice) {
-      const updatedPaidAmount = invoice.paidAmount - payment.amount;
-      const updatedPendingAmount = invoice.grandTotal - updatedPaidAmount;
-
-      let updatedStatus = 'pending';
-      if (updatedPendingAmount <= 0) {
-        updatedStatus = 'paid';
-      } else if (updatedPaidAmount > 0) {
-        updatedStatus = 'partial';
-      }
-
-      await Invoice.findByIdAndUpdate(payment.invoice, {
-        paidAmount: updatedPaidAmount,
-        pendingAmount: updatedPendingAmount,
-        paymentStatus: updatedStatus,
-        status: updatedStatus === 'paid' ? 'paid' : 'pending'
-      });
-    }
-
-    await Payment.findByIdAndDelete(id);
-    return res.status(200).json({ success: true, message: 'Payment deleted' });
-  } catch (error) {
-    console.error('❌ Delete payment error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}
