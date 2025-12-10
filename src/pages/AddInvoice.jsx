@@ -507,8 +507,8 @@ const AddInvoice = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qty</label>
                   <input
                     type="number"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value))}
+                    value={item.quantity || ''}
+                    onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     min="1"
                     required
@@ -520,8 +520,8 @@ const AddInvoice = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rate</label>
                   <input
                     type="number"
-                    value={item.price}
-                    onChange={(e) => updateItem(index, "price", parseFloat(e.target.value))}
+                    value={item.price || ''}
+                    onChange={(e) => updateItem(index, "price", parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     step="0.01"
                     required
@@ -683,7 +683,7 @@ const AddInvoice = () => {
                 <div className="flex gap-2">
                   <input
                     type="number"
-                    value={formData.discount}
+                    value={formData.discount || ''}
                     onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     step="0.01"

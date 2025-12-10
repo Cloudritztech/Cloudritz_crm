@@ -41,7 +41,7 @@ const ViewInvoice = () => {
       const [invoiceRes, profileRes, settingsRes] = await Promise.all([
         invoicesAPI.getById(id),
         profileAPI.getProfile(),
-        fetch('/api/settings?section=invoice', {
+        fetch('/api/account?type=settings&section=invoice', {
           headers: { Authorization: `Bearer ${token}` }
         }).then(r => r.json()).catch(() => ({ settings: { template: 'compact' } }))
       ]);
