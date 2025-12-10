@@ -92,7 +92,7 @@ function App() {
               {blockedInfo && (
                 <BlockedAccountModal
                   message={blockedInfo.message}
-                  monthlyFee={blockedInfo.monthlyFee}
+                  quarterlyFee={blockedInfo.quarterlyFee}
                   contactInfo={blockedInfo.contactInfo}
                 />
               )}

@@ -153,30 +153,29 @@ export default async function handler(req, res) {
         return res.json({ success: true, message: 'Organization updated', data: org });
       }
       
-      // Update subscription
+      // Update subscription (Block/Unblock)
       if (type === 'superadmin' && action === 'update-subscription' && id && method === 'PUT') {
         if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
         
-        const { plan, status, endDate, limits, features, isBlocked, blockReason, monthlyFee } = req.body;
+        const { isBlocked, blockReason, quarterlyMaintenanceFee, lastPaymentDate, nextPaymentDue, limits, features } = req.body;
         
         const updateData = {};
-        if (plan) updateData['subscription.plan'] = plan;
-        if (status) updateData['subscription.status'] = status;
-        if (endDate) updateData['subscription.endDate'] = endDate;
-        if (limits?.maxUsers) updateData['subscription.maxUsers'] = limits.maxUsers;
-        if (limits?.maxProducts) updateData['subscription.maxProducts'] = limits.maxProducts;
-        if (limits?.maxInvoices) updateData['subscription.maxInvoices'] = limits.maxInvoices;
-        if (features) updateData['features'] = features;
         if (isBlocked !== undefined) {
           updateData['subscription.isBlocked'] = isBlocked;
           updateData['subscription.status'] = isBlocked ? 'blocked' : 'active';
         }
         if (blockReason !== undefined) updateData['subscription.blockReason'] = blockReason;
-        if (monthlyFee !== undefined) updateData['subscription.monthlyFee'] = monthlyFee;
+        if (quarterlyMaintenanceFee !== undefined) updateData['subscription.quarterlyMaintenanceFee'] = quarterlyMaintenanceFee;
+        if (lastPaymentDate) updateData['subscription.lastPaymentDate'] = lastPaymentDate;
+        if (nextPaymentDue) updateData['subscription.nextPaymentDue'] = nextPaymentDue;
+        if (limits?.maxUsers) updateData['subscription.maxUsers'] = limits.maxUsers;
+        if (limits?.maxProducts) updateData['subscription.maxProducts'] = limits.maxProducts;
+        if (limits?.maxInvoices) updateData['subscription.maxInvoices'] = limits.maxInvoices;
+        if (features) updateData['features'] = features;
         
         const org = await Organization.findByIdAndUpdate(id, updateData, { new: true });
         
-        return res.json({ success: true, message: 'Subscription updated', data: org });
+        return res.json({ success: true, message: isBlocked ? 'Organization blocked' : 'Organization activated', data: org });
       }
       
       // Toggle organization status

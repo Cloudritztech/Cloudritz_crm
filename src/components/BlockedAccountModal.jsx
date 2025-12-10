@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, Phone, Mail, IndianRupee } from 'lucide-react';
 
-export default function BlockedAccountModal({ message, monthlyFee, contactInfo }) {
+export default function BlockedAccountModal({ message, quarterlyFee, contactInfo }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
@@ -21,14 +21,14 @@ export default function BlockedAccountModal({ message, monthlyFee, contactInfo }
         
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Subscription Fee:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quarterly Maintenance Charges:</span>
             <div className="flex items-center gap-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
               <IndianRupee className="w-6 h-6" />
-              {monthlyFee?.toLocaleString() || '999'}
+              {quarterlyFee?.toLocaleString() || '2,999'}
             </div>
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            Pay this amount to continue using Cloudritz CRM
+            Pay quarterly maintenance to continue using Cloudritz CRM
           </p>
         </div>
         
