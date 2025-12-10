@@ -52,9 +52,10 @@ export default async function handler(req, res) {
     // List/Create invoices
     if (method === 'GET') return await listInvoices(req, res, query);
     if (method === 'POST') {
-      return await checkSubscriptionLimit('invoices')(req, res, async () => {
+      await checkSubscriptionLimit('invoices')(req, res, async () => {
         return await createInvoice(req, res);
       });
+      return;
     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
@@ -346,7 +347,7 @@ async function createInvoice(req, res) {
       notes: notes || '',
       dueDate: dueDate ? new Date(dueDate) : null,
       terms: terms || 'Payment due within 30 days',
-      createdBy: req.user?._id || null
+      createdBy: req.userId || null
     });
 
     try {
