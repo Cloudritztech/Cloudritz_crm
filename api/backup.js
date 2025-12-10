@@ -1,13 +1,19 @@
-const connectDB = require('../lib/mongodb');
-const Organization = require('../lib/models/Organization');
-const Product = require('../lib/models/Product');
-const Customer = require('../lib/models/Customer');
-const Invoice = require('../lib/models/Invoice');
-const Employee = require('../lib/models/Employee');
-const Expense = require('../lib/models/Expense');
-const { authenticate } = require('../lib/middleware/tenant');
+import connectDB from '../lib/mongodb.js';
+import Organization from '../lib/models/Organization.js';
+import Product from '../lib/models/Product.js';
+import Customer from '../lib/models/Customer.js';
+import Invoice from '../lib/models/Invoice.js';
+import Employee from '../lib/models/Employee.js';
+import Expense from '../lib/models/Expense.js';
+import { authenticate } from '../lib/middleware/tenant.js';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   await connectDB();
 
   const { method } = req;
@@ -25,7 +31,6 @@ module.exports = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Super admin cannot access backup' });
     }
 
-    // EXPORT - Create full backup
     if (method === 'GET' && action === 'export') {
       const [products, customers, invoices, employees, expenses, organization] = await Promise.all([
         Product.find({ organizationId }).lean(),
@@ -58,7 +63,6 @@ module.exports = async (req, res) => {
         }
       };
 
-      // Update last backup time
       await Organization.findByIdAndUpdate(organizationId, {
         'settings.lastBackup': new Date()
       });
@@ -66,23 +70,21 @@ module.exports = async (req, res) => {
       return res.json({ success: true, backup });
     }
 
-    // IMPORT - Restore from backup
     if (method === 'POST' && action === 'import') {
-      const { backup, mode } = req.body; // mode: 'merge' or 'replace'
+      const { backup, mode } = req.body;
 
       if (!backup || !backup.data) {
         return res.status(400).json({ success: false, message: 'Invalid backup data' });
       }
 
       const results = {
-        products: { added: 0, updated: 0, skipped: 0 },
-        customers: { added: 0, updated: 0, skipped: 0 },
-        invoices: { added: 0, updated: 0, skipped: 0 },
-        employees: { added: 0, updated: 0, skipped: 0 },
-        expenses: { added: 0, updated: 0, skipped: 0 }
+        products: { added: 0, updated: 0 },
+        customers: { added: 0, updated: 0 },
+        invoices: { added: 0 },
+        employees: { added: 0, updated: 0 },
+        expenses: { added: 0 }
       };
 
-      // Replace mode - delete existing data
       if (mode === 'replace') {
         await Promise.all([
           Product.deleteMany({ organizationId }),
@@ -93,18 +95,13 @@ module.exports = async (req, res) => {
         ]);
       }
 
-      // Import Products
       if (backup.data.products) {
         for (const product of backup.data.products) {
           const { _id, ...productData } = product;
           productData.organizationId = organizationId;
           
           if (mode === 'merge') {
-            const existing = await Product.findOne({ 
-              organizationId, 
-              name: productData.name 
-            });
-            
+            const existing = await Product.findOne({ organizationId, name: productData.name });
             if (existing) {
               await Product.findByIdAndUpdate(existing._id, productData);
               results.products.updated++;
@@ -119,18 +116,13 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Import Customers
       if (backup.data.customers) {
         for (const customer of backup.data.customers) {
           const { _id, ...customerData } = customer;
           customerData.organizationId = organizationId;
           
           if (mode === 'merge') {
-            const existing = await Customer.findOne({ 
-              organizationId, 
-              phone: customerData.phone 
-            });
-            
+            const existing = await Customer.findOne({ organizationId, phone: customerData.phone });
             if (existing) {
               await Customer.findByIdAndUpdate(existing._id, customerData);
               results.customers.updated++;
@@ -145,18 +137,13 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Import Employees
       if (backup.data.employees) {
         for (const employee of backup.data.employees) {
           const { _id, ...employeeData } = employee;
           employeeData.organizationId = organizationId;
           
           if (mode === 'merge') {
-            const existing = await Employee.findOne({ 
-              organizationId, 
-              phone: employeeData.phone 
-            });
-            
+            const existing = await Employee.findOne({ organizationId, phone: employeeData.phone });
             if (existing) {
               await Employee.findByIdAndUpdate(existing._id, employeeData);
               results.employees.updated++;
@@ -171,7 +158,6 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Import Expenses
       if (backup.data.expenses) {
         for (const expense of backup.data.expenses) {
           const { _id, ...expenseData } = expense;
@@ -181,13 +167,11 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Import Invoices (last, as they reference customers)
       if (backup.data.invoices) {
         for (const invoice of backup.data.invoices) {
           const { _id, ...invoiceData } = invoice;
           invoiceData.organizationId = organizationId;
           
-          // Try to match customer by phone
           if (invoiceData.customer && typeof invoiceData.customer === 'object') {
             const customerPhone = invoiceData.customer.phone;
             const matchedCustomer = await Customer.findOne({ organizationId, phone: customerPhone });
@@ -210,27 +194,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    // GET Backup History
-    if (method === 'GET' && action === 'history') {
-      // For now, return last backup info from organization settings
-      const org = await Organization.findById(organizationId).select('settings.lastBackup');
-      
-      const history = [];
-      if (org.settings?.lastBackup) {
-        history.push({
-          date: org.settings.lastBackup,
-          type: 'Manual',
-          size: 'N/A'
-        });
-      }
-
-      return res.json({ success: true, history });
-    }
-
     return res.status(400).json({ success: false, message: 'Invalid action' });
 
   } catch (error) {
     console.error('Backup API Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
-};
+}

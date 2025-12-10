@@ -52,7 +52,6 @@ const ModernLayout = ({ children }) => {
     { name: 'Expenses', href: '/expenses', icon: DollarSign },
     { name: 'Employees', href: '/employees', icon: UserCheck },
     { name: 'Subscription', href: '/subscription', icon: CreditCard },
-    { name: 'Support', href: '/support', icon: MessageCircle },
   ];
 
   const isActive = (href) => {

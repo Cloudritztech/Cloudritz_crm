@@ -85,9 +85,6 @@ const BottomNav = () => {
                   <Link to="/subscription" onClick={() => setShowMore(false)} className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
                     Subscription
                   </Link>
-                  <Link to="/support" onClick={() => setShowMore(false)} className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
-                    Support
-                  </Link>
                   <Link to="/business-profile" onClick={() => setShowMore(false)} className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
                     Business Profile
                   </Link>

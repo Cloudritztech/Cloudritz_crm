@@ -143,7 +143,7 @@ function App() {
                             <Route path="/employees" element={<Employees />} />
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
-                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/settings/*" element={<Settings />} />
                             <Route path="/subscription" element={<Subscription />} />
                             <Route path="/superadmin/plans" element={
                               <SuperAdminRoute>

@@ -1,17 +1,22 @@
-const connectDB = require('../lib/mongodb');
-const SupportTicket = require('../lib/models/SupportTicket');
-const User = require('../lib/models/User');
-const Organization = require('../lib/models/Organization');
-const { authenticate, requireRole } = require('../lib/middleware/tenant');
+import connectDB from '../lib/mongodb.js';
+import SupportTicket from '../lib/models/SupportTicket.js';
+import User from '../lib/models/User.js';
+import Organization from '../lib/models/Organization.js';
+import { authenticate } from '../lib/middleware/tenant.js';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   await connectDB();
 
   const { method } = req;
   const { action, id } = req.query;
 
   try {
-    // Authenticate user
     const authResult = await authenticate(req);
     if (!authResult.success) {
       return res.status(401).json({ success: false, message: authResult.message });
@@ -19,22 +24,18 @@ module.exports = async (req, res) => {
 
     const { userId, organizationId, role, email } = authResult;
 
-    // GET - List tickets or get single ticket
     if (method === 'GET') {
       if (id) {
-        // Get single ticket with messages
         const ticket = await SupportTicket.findById(id);
         
         if (!ticket) {
           return res.status(404).json({ success: false, message: 'Ticket not found' });
         }
 
-        // Check access
         if (role !== 'superadmin' && ticket.organizationId.toString() !== organizationId) {
           return res.status(403).json({ success: false, message: 'Access denied' });
         }
 
-        // Mark messages as read
         if (role === 'superadmin') {
           ticket.messages.forEach(msg => {
             if (msg.sender === 'user') msg.read = true;
@@ -51,16 +52,13 @@ module.exports = async (req, res) => {
         return res.status(200).json({ success: true, ticket });
       }
 
-      // List tickets
       if (role === 'superadmin') {
-        // Super admin sees all tickets
         const tickets = await SupportTicket.find()
           .sort({ lastMessageAt: -1 })
           .limit(100);
         
         return res.status(200).json({ success: true, tickets });
       } else {
-        // Regular users see only their org tickets
         const tickets = await SupportTicket.find({ organizationId })
           .sort({ lastMessageAt: -1 })
           .limit(50);
@@ -69,19 +67,16 @@ module.exports = async (req, res) => {
       }
     }
 
-    // POST - Create ticket or send message
     if (method === 'POST') {
       const { subject, message, category, priority, ticketId } = req.body;
 
       if (ticketId) {
-        // Add message to existing ticket
         const ticket = await SupportTicket.findById(ticketId);
         
         if (!ticket) {
           return res.status(404).json({ success: false, message: 'Ticket not found' });
         }
 
-        // Check access
         if (role !== 'superadmin' && ticket.organizationId.toString() !== organizationId) {
           return res.status(403).json({ success: false, message: 'Access denied' });
         }
@@ -98,7 +93,6 @@ module.exports = async (req, res) => {
         ticket.messages.push(newMessage);
         ticket.lastMessageAt = new Date();
         
-        // Update unread count
         if (role === 'superadmin') {
           ticket.unreadCount.user += 1;
           ticket.status = 'in-progress';
@@ -110,7 +104,6 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({ success: true, ticket });
       } else {
-        // Create new ticket
         if (!subject || !message) {
           return res.status(400).json({ success: false, message: 'Subject and message required' });
         }
@@ -143,7 +136,6 @@ module.exports = async (req, res) => {
       }
     }
 
-    // PUT - Update ticket status
     if (method === 'PUT') {
       if (!id) {
         return res.status(400).json({ success: false, message: 'Ticket ID required' });
@@ -156,7 +148,6 @@ module.exports = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Ticket not found' });
       }
 
-      // Only superadmin can update status/priority
       if (role !== 'superadmin') {
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
@@ -175,4 +166,4 @@ module.exports = async (req, res) => {
     console.error('Support API Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
-};
+}
