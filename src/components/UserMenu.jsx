@@ -41,7 +41,7 @@ const UserMenu = () => {
   }, []);
 
   const menuItems = user?.role === 'superadmin' ? [
-    { icon: HelpCircle, label: 'Help & Support', action: () => navigate('/help') },
+    // Superadmin has no profile menu items - only theme and logout
   ] : [
     { icon: User, label: 'Profile', action: () => navigate('/profile') },
     { icon: Building2, label: 'Business Profile', action: () => navigate('/business-profile') },

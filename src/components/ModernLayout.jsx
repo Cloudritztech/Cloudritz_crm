@@ -41,7 +41,8 @@ const ModernLayout = ({ children }) => {
     { name: 'Dashboard', href: '/superadmin', icon: Home },
     { name: 'Organizations', href: '/superadmin/organizations', icon: Building2 },
     { name: 'Users', href: '/superadmin/users', icon: Users },
-    { name: 'Support', href: '/superadmin/support', icon: MessageCircle },
+    { name: 'Support Tickets', href: '/superadmin/support', icon: MessageCircle },
+    { name: 'System Settings', href: '/superadmin/settings', icon: Shield },
   ] : [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Products', href: '/products', icon: Package },

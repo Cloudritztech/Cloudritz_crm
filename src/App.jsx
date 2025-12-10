@@ -14,6 +14,7 @@ const CreateOrganization = lazy(() => import('./pages/superadmin/CreateOrganizat
 const OrganizationDetail = lazy(() => import('./pages/superadmin/OrganizationDetail'));
 const SuperAdminUsers = lazy(() => import('./pages/superadmin/Users'));
 const SuperAdminSupport = lazy(() => import('./pages/superadmin/Support'));
+const SystemSettings = lazy(() => import('./pages/superadmin/SystemSettings'));
 const Support = lazy(() => import('./pages/Support'));
 const Products = lazy(() => import('./pages/Products'));
 const Customers = lazy(() => import('./pages/Customers'));
@@ -67,13 +68,20 @@ const SuperAdminRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
   
   if (loading) return <PageLoader />;
-  return !isAuthenticated ? children : <Navigate to="/" />;
+  
+  if (isAuthenticated) {
+    // Redirect to appropriate dashboard based on role
+    return <Navigate to={user?.role === 'superadmin' ? '/superadmin' : '/'} replace />;
+  }
+  
+  return children;
 };
 
-function App() {
+function AppContent() {
+  const { user } = useAuth();
   const [blockedInfo, setBlockedInfo] = useState(null);
 
   useEffect(() => {
@@ -85,8 +93,6 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="App">
               {blockedInfo && (
@@ -116,7 +122,9 @@ function App() {
                       <ModernLayout>
                         <Suspense fallback={<SkeletonLoader />}>
                           <Routes>
-                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/" element={
+                              user?.role === 'superadmin' ? <Navigate to="/superadmin" replace /> : <Dashboard />
+                            } />
                             <Route path="/superadmin" element={
                               <SuperAdminRoute>
                                 <SuperAdminDashboard />
@@ -147,6 +155,11 @@ function App() {
                                 <SuperAdminSupport />
                               </SuperAdminRoute>
                             } />
+                            <Route path="/superadmin/settings" element={
+                              <SuperAdminRoute>
+                                <SystemSettings />
+                              </SuperAdminRoute>
+                            } />
                             <Route path="/support" element={<Support />} />
                             <Route path="/products" element={<Products />} />
                             <Route path="/products/:id" element={<ProductDetail />} />
@@ -173,6 +186,14 @@ function App() {
               <Toast />
             </div>
           </Router>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   );
