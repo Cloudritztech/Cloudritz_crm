@@ -38,9 +38,10 @@ export default function Support() {
     try {
       const { data } = await api.get('/support');
       setTickets(data.tickets || []);
+      setLoading(false);
     } catch (error) {
       console.error('Failed to load tickets:', error);
-    } finally {
+      setTickets([]);
       setLoading(false);
     }
   };
@@ -48,7 +49,9 @@ export default function Support() {
   const loadTicketMessages = async (ticketId) => {
     try {
       const { data } = await api.get(`/support?id=${ticketId}`);
-      setSelectedTicket(data.ticket);
+      if (data.ticket) {
+        setSelectedTicket(data.ticket);
+      }
     } catch (error) {
       console.error('Failed to load messages:', error);
     }

@@ -22,17 +22,16 @@ export default function Subscription() {
 
   const loadData = async () => {
     try {
-      const [plansRes, subRes, invoicesRes, paymentsRes] = await Promise.all([
+      const [plansRes, subRes, invoicesRes] = await Promise.all([
         api.get('/subscriptions?action=plans'),
         api.get('/subscriptions?action=current'),
-        api.get('/subscriptions?action=invoices'),
-        api.get('/subscriptions?action=payments')
+        api.get('/subscriptions?action=invoices')
       ]);
       setPlans(plansRes.data.plans || []);
       setCurrentSubscription(subRes.data.subscription);
       setInvoices(invoicesRes.data.invoices || []);
-      setPayments(paymentsRes.data.payments || []);
     } catch (error) {
+      console.error('Load subscription data error:', error);
       toast.error('Failed to load subscription data');
     } finally {
       setLoading(false);
@@ -386,7 +385,10 @@ export default function Subscription() {
                         </button>
                       )}
                       {invoice.status === 'paid' && (
-                        <button className="text-gray-600 hover:underline flex items-center gap-1">
+                        <button 
+                          onClick={() => window.open(`/api/subscriptions?action=download-invoice&id=${invoice._id}`, '_blank')}
+                          className="text-gray-600 hover:underline flex items-center gap-1"
+                        >
                           <Download className="w-4 h-4" />
                           Download
                         </button>

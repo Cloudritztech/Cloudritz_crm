@@ -7,7 +7,7 @@ import { getOrganizationBranding } from '../lib/subdomainMiddleware.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -115,7 +115,7 @@ export default async function handler(req, res) {
           return res.status(403).json({ success: false, message: 'Super admin cannot access settings' });
         }
 
-        await tenantIsolation(req, res, async () => {
+        return await tenantIsolation(req, res, async () => {
           if (req.method === 'GET') {
             const org = await Organization.findById(req.organizationId);
             
@@ -200,11 +200,12 @@ export default async function handler(req, res) {
             return res.json({ success: true, message: 'Settings updated successfully', settings: org.settings });
           }
         });
+        return;
       }
 
       // BRANDING
       if (type === 'branding') {
-        await tenantIsolation(req, res, async () => {
+        return await tenantIsolation(req, res, async () => {
           if (action === 'current' && req.method === 'GET') {
             const org = await Organization.findById(req.organizationId)
               .select('name subdomain branding logo');
@@ -247,11 +248,12 @@ export default async function handler(req, res) {
             });
           }
         });
+        return;
       }
 
       // EMPLOYEES
       if (type === 'employees') {
-        await tenantIsolation(req, res, async () => {
+        return await tenantIsolation(req, res, async () => {
           if (req.method === 'GET') {
             if (action === 'single' && req.query.id) {
               const employee = await Employee.findById(req.query.id);
@@ -282,6 +284,7 @@ export default async function handler(req, res) {
             return res.json({ success: true, message: 'Employee deleted' });
           }
         });
+        return;
       }
 
       res.status(400).json({ success: false, message: 'Invalid type' });

@@ -268,12 +268,13 @@ async function createInvoice(req, res) {
 
       try {
         await InventoryHistory.create({
+          organizationId: req.organizationId,
           product: product._id,
           type: 'sale',
           quantity: -qty,
           previousStock: product.stock + qty,
           newStock: product.stock,
-          updatedBy: req.user?._id || null
+          updatedBy: req.userId
         });
       } catch (invErr) {
         console.warn('⚠️ Failed to log inventory:', invErr.message);

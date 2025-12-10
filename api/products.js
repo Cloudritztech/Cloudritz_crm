@@ -139,13 +139,14 @@ export default async function handler(req, res) {
         await product.save();
 
         await InventoryHistory.create({
+          organizationId: req.organizationId,
           product: product._id,
           type: 'adjustment',
           quantity: adjustment,
           previousStock,
           newStock: product.stock,
           reason: reason || 'Manual adjustment',
-          updatedBy: req.user._id
+          updatedBy: req.userId
         });
 
         return res.json({ success: true, product });
@@ -160,13 +161,14 @@ export default async function handler(req, res) {
 
         if (previousStock !== updatedProduct.stock) {
           await InventoryHistory.create({
+            organizationId: req.organizationId,
             product: updatedProduct._id,
             type: 'adjustment',
             quantity: updatedProduct.stock - previousStock,
             previousStock,
             newStock: updatedProduct.stock,
             reason: 'Manual adjustment',
-            updatedBy: req.user._id
+            updatedBy: req.userId
           });
         }
 
@@ -215,19 +217,21 @@ export default async function handler(req, res) {
           const product = await Product.create({ ...req.body, organizationId: req.organizationId });
         
         await InventoryHistory.create({
+          organizationId: req.organizationId,
           product: product._id,
           type: 'adjustment',
           quantity: product.stock,
           previousStock: 0,
           newStock: product.stock,
           reason: 'Initial stock',
-          updatedBy: req.user._id
+          updatedBy: req.userId
         });
 
         // Auto-create purchase expense
         if (product.purchasePrice && product.stock > 0) {
           const Expense = (await import('../lib/models/Expense.js')).default;
           await Expense.create({
+            organizationId: req.organizationId,
             title: `Purchase: ${product.name}`,
             type: 'purchase',
             description: `Initial stock purchase - ${product.stock} units`,
@@ -235,7 +239,7 @@ export default async function handler(req, res) {
             paymentMethod: 'bank',
             expenseDate: new Date(),
             product: product._id,
-            createdBy: req.user._id
+            createdBy: req.userId
           });
         }
 
