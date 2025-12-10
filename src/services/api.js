@@ -273,53 +273,53 @@ export const reportsAPI = {
   },
 };
 
-// Profile API with caching (now part of user)
+// Profile API with caching (now part of account)
 export const profileAPI = {
   getProfile: async () => {
     const cacheKey = 'businessProfile';
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
-    const response = await api.get('/user?action=profile');
+    const response = await api.get('/account?type=profile');
     apiCache.set(cacheKey, response.data, 300000); // 5 min
     return response;
   },
   updateProfile: async (profileData) => {
-    const response = await api.post('/user?action=profile', profileData);
+    const response = await api.put('/account?type=profile', profileData);
     apiCache.clear('businessProfile');
     return response;
   },
 };
 
-// Employees API
+// Employees API (now part of account)
 export const employeesAPI = {
   getAll: async () => {
     const cached = apiCache.get('employees');
     if (cached) return { data: cached };
-    const response = await api.get('/employees');
+    const response = await api.get('/account?type=employees');
     apiCache.set('employees', response.data, 300000);
     return response;
   },
   getById: async (id) => {
     const cached = apiCache.get(`employee_${id}`);
     if (cached) return { data: cached };
-    const response = await api.get(`/employees?id=${id}`);
+    const response = await api.get(`/account?type=employees&action=single&id=${id}`);
     apiCache.set(`employee_${id}`, response.data, 300000);
     return response;
   },
   create: async (data) => {
-    const response = await api.post('/employees', data);
+    const response = await api.post('/account?type=employees', data);
     apiCache.clear('employees');
     return response;
   },
   update: async (id, data) => {
-    const response = await api.put(`/employees?id=${id}`, data);
+    const response = await api.put(`/account?type=employees&id=${id}`, data);
     apiCache.clear('employees');
     apiCache.clear(`employee_${id}`);
     return response;
   },
   delete: async (id) => {
-    const response = await api.delete(`/employees?id=${id}`);
+    const response = await api.delete(`/account?type=employees&id=${id}`);
     apiCache.clear('employees');
     apiCache.clear(`employee_${id}`);
     return response;

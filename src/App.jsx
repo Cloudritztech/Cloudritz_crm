@@ -12,6 +12,8 @@ const SuperAdminOrganizations = lazy(() => import('./pages/superadmin/Organizati
 const CreateOrganization = lazy(() => import('./pages/superadmin/CreateOrganization'));
 const OrganizationDetail = lazy(() => import('./pages/superadmin/OrganizationDetail'));
 const SuperAdminUsers = lazy(() => import('./pages/superadmin/Users'));
+const SuperAdminSupport = lazy(() => import('./pages/superadmin/Support'));
+const Support = lazy(() => import('./pages/Support'));
 const Products = lazy(() => import('./pages/Products'));
 const Customers = lazy(() => import('./pages/Customers'));
 const Invoices = lazy(() => import('./pages/Invoices'));
@@ -25,7 +27,9 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Billing = lazy(() => import('./pages/Billing'));
+const Subscription = lazy(() => import('./pages/Subscription'));
+const SuperAdminPlans = lazy(() => import('./pages/superadmin/SubscriptionPlans'));
+const SuperAdminPayments = lazy(() => import('./pages/superadmin/Payments'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -121,6 +125,12 @@ function App() {
                                 <SuperAdminUsers />
                               </SuperAdminRoute>
                             } />
+                            <Route path="/superadmin/support" element={
+                              <SuperAdminRoute>
+                                <SuperAdminSupport />
+                              </SuperAdminRoute>
+                            } />
+                            <Route path="/support" element={<Support />} />
                             <Route path="/products" element={<Products />} />
                             <Route path="/products/:id" element={<ProductDetail />} />
                             <Route path="/customers" element={<Customers />} />
@@ -134,7 +144,17 @@ function App() {
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/settings" element={<Settings />} />
-                            <Route path="/billing" element={<Billing />} />
+                            <Route path="/subscription" element={<Subscription />} />
+                            <Route path="/superadmin/plans" element={
+                              <SuperAdminRoute>
+                                <SuperAdminPlans />
+                              </SuperAdminRoute>
+                            } />
+                            <Route path="/superadmin/payments" element={
+                              <SuperAdminRoute>
+                                <SuperAdminPayments />
+                              </SuperAdminRoute>
+                            } />
                           </Routes>
                         </Suspense>
                       </ModernLayout>

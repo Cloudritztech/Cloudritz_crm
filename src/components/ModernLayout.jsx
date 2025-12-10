@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield, CreditCard, Building2 } from 'lucide-react';
+import { Home, Package, Users, FileText, DollarSign, UserCheck, Shield, CreditCard, Building2, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
@@ -18,18 +18,20 @@ const ModernLayout = ({ children }) => {
         const token = localStorage.getItem('token');
         if (!token) return;
         
-        const response = await fetch('/api/profile', {
+        const response = await fetch('/api/account?type=profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         if (response.ok) {
           const data = await response.json();
-          if (data.profile?.businessName) {
+          if (data.profile?.name) {
+            setBusinessName(data.profile.name);
+          } else if (data.profile?.businessName) {
             setBusinessName(data.profile.businessName);
           }
         }
       } catch (error) {
-        console.error('Failed to fetch business name:', error);
+        console.error('Failed to fetch logo:', error);
       }
     };
     fetchBusinessName();
@@ -39,6 +41,9 @@ const ModernLayout = ({ children }) => {
     { name: 'Dashboard', href: '/superadmin', icon: Home },
     { name: 'Organizations', href: '/superadmin/organizations', icon: Building2 },
     { name: 'Users', href: '/superadmin/users', icon: Users },
+    { name: 'Plans', href: '/superadmin/plans', icon: CreditCard },
+    { name: 'Payments', href: '/superadmin/payments', icon: DollarSign },
+    { name: 'Support', href: '/superadmin/support', icon: MessageCircle },
   ] : [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Products', href: '/products', icon: Package },
@@ -46,7 +51,8 @@ const ModernLayout = ({ children }) => {
     { name: 'Invoices', href: '/invoices', icon: FileText },
     { name: 'Expenses', href: '/expenses', icon: DollarSign },
     { name: 'Employees', href: '/employees', icon: UserCheck },
-    { name: 'Billing', href: '/billing', icon: CreditCard },
+    { name: 'Subscription', href: '/subscription', icon: CreditCard },
+    { name: 'Support', href: '/support', icon: MessageCircle },
   ];
 
   const isActive = (href) => {

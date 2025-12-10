@@ -1,6 +1,7 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../lib/models/User.js';
 import Organization from '../lib/models/Organization.js';
+import Employee from '../lib/models/Employee.js';
 import { authenticate, tenantIsolation, requireRole } from '../lib/middleware/tenant.js';
 import { getOrganizationBranding } from '../lib/subdomainMiddleware.js';
 
@@ -57,46 +58,146 @@ export default async function handler(req, res) {
           const org = await Organization.findById(req.organizationId);
           return res.json({ success: true, profile: org || {} });
         }
+        
+        if (req.method === 'PUT') {
+          // Super admin can't update profile
+          if (req.user.role === 'superadmin') {
+            return res.status(403).json({ success: false, message: 'Super admin cannot update profile' });
+          }
+          
+          const updates = req.body;
+          const org = await Organization.findById(req.organizationId);
+          
+          if (!org) {
+            return res.status(404).json({ success: false, message: 'Organization not found' });
+          }
+          
+          // Update organization fields
+          if (updates.businessName) org.name = updates.businessName;
+          if (updates.ownerName) org.ownerName = updates.ownerName;
+          if (updates.businessAddress) org.address = updates.businessAddress;
+          if (updates.gstin) org.gstin = updates.gstin;
+          if (updates.phone) org.phone = updates.phone;
+          if (updates.email) org.email = updates.email;
+          if (updates.logoUrl !== undefined) org.logo = updates.logoUrl;
+          if (updates.signatureUrl !== undefined) org.signatureUrl = updates.signatureUrl;
+          if (updates.upiId !== undefined) org.bankDetails = org.bankDetails || {}; org.bankDetails.upiId = updates.upiId;
+          
+          // Update bank details
+          if (updates.bankDetails) {
+            org.bankDetails = org.bankDetails || {};
+            if (updates.bankDetails.bankName !== undefined) org.bankDetails.bankName = updates.bankDetails.bankName;
+            if (updates.bankDetails.accountNo !== undefined) org.bankDetails.accountNumber = updates.bankDetails.accountNo;
+            if (updates.bankDetails.ifscCode !== undefined) org.bankDetails.ifscCode = updates.bankDetails.ifscCode;
+            if (updates.bankDetails.branch !== undefined) org.bankDetails.branch = updates.bankDetails.branch;
+          }
+          
+          // Update branding if provided
+          if (updates.branding) {
+            org.branding = org.branding || {};
+            if (updates.branding.primaryColor) org.branding.primaryColor = updates.branding.primaryColor;
+            if (updates.branding.secondaryColor) org.branding.secondaryColor = updates.branding.secondaryColor;
+            if (updates.branding.customDomain !== undefined) org.branding.customDomain = updates.branding.customDomain;
+            if (updates.branding.hideCloudiritzBranding !== undefined && org.subscription.plan === 'enterprise') {
+              org.branding.hideCloudiritzBranding = updates.branding.hideCloudiritzBranding;
+            }
+          }
+          
+          await org.save();
+          
+          return res.json({ success: true, message: 'Profile updated successfully', profile: org });
+        }
       }
 
-      // SETTINGS
+      // SETTINGS (merged from settings.js)
       if (type === 'settings') {
+        if (req.user.role === 'superadmin') {
+          return res.status(403).json({ success: false, message: 'Super admin cannot access settings' });
+        }
+
         await tenantIsolation(req, res, async () => {
           if (req.method === 'GET') {
             const org = await Organization.findById(req.organizationId);
             
+            if (!org) {
+              return res.status(404).json({ success: false, message: 'Organization not found' });
+            }
+
             if (section === 'invoice') {
               const settings = {
-                prefix: org?.settings?.invoicePrefix || 'INV',
-                startingNumber: org?.settings?.invoiceStartNumber || 1001,
-                termsAndConditions: 'Payment due within 30 days.\\nGoods once sold will not be taken back.\\nSubject to local jurisdiction.',
-                footerNote: 'Thank you for your business!',
-                showLogo: true,
-                showBankDetails: true,
-                showSignature: true,
-                autoIncrement: true
+                prefix: org.settings?.invoicePrefix || 'INV',
+                startingNumber: org.settings?.invoiceStartNumber || 1001,
+                termsAndConditions: org.settings?.termsAndConditions || 'Payment due within 30 days.\nGoods once sold will not be taken back.\nSubject to local jurisdiction.',
+                footerNote: org.settings?.footerNote || 'Thank you for your business!',
+                showLogo: org.settings?.showLogo !== false,
+                showBankDetails: org.settings?.showBankDetails !== false,
+                showSignature: org.settings?.showSignature !== false,
+                autoIncrement: org.settings?.autoIncrement !== false
+              };
+              return res.json({ success: true, settings });
+            }
+
+            if (section === 'integrations') {
+              const settings = {
+                whatsapp: org.settings?.whatsapp || { enabled: false, apiKey: '', phoneNumber: '' },
+                googleDrive: org.settings?.googleDrive || { enabled: false, connected: false, email: '' }
+              };
+              return res.json({ success: true, settings });
+            }
+
+            if (section === 'backup') {
+              const settings = {
+                autoBackup: org.settings?.autoBackup !== false,
+                backupFrequency: org.settings?.backupFrequency || 'daily',
+                cloudBackup: org.settings?.cloudBackup || false,
+                lastBackup: org.settings?.lastBackup || null
               };
               return res.json({ success: true, settings });
             }
             
-            return res.json({ success: true, settings: org?.settings || {} });
+            return res.json({ success: true, settings: org.settings || {} });
           }
 
-          if (req.method === 'PUT') {
-            const updates = req.body;
+          if (req.method === 'PUT' || req.method === 'POST') {
+            const org = await Organization.findById(req.organizationId);
             
-            if (section === 'invoice') {
-              await Organization.findByIdAndUpdate(req.organizationId, {
-                $set: {
-                  'settings.invoicePrefix': updates.prefix,
-                  'settings.invoiceStartNumber': updates.startingNumber
-                }
-              });
-            } else {
-              await Organization.findByIdAndUpdate(req.organizationId, { $set: { settings: updates } });
+            if (!org) {
+              return res.status(404).json({ success: false, message: 'Organization not found' });
             }
 
-            return res.json({ success: true, message: 'Settings updated' });
+            org.settings = org.settings || {};
+
+            if (section === 'invoice') {
+              const { prefix, startingNumber, termsAndConditions, footerNote, showLogo, showBankDetails, showSignature, autoIncrement } = req.body;
+              
+              if (prefix) org.settings.invoicePrefix = prefix;
+              if (startingNumber) org.settings.invoiceStartNumber = startingNumber;
+              if (termsAndConditions !== undefined) org.settings.termsAndConditions = termsAndConditions;
+              if (footerNote !== undefined) org.settings.footerNote = footerNote;
+              if (showLogo !== undefined) org.settings.showLogo = showLogo;
+              if (showBankDetails !== undefined) org.settings.showBankDetails = showBankDetails;
+              if (showSignature !== undefined) org.settings.showSignature = showSignature;
+              if (autoIncrement !== undefined) org.settings.autoIncrement = autoIncrement;
+            }
+
+            if (section === 'integrations') {
+              const { whatsapp, googleDrive } = req.body;
+              
+              if (whatsapp) org.settings.whatsapp = { ...org.settings.whatsapp, ...whatsapp };
+              if (googleDrive) org.settings.googleDrive = { ...org.settings.googleDrive, ...googleDrive };
+            }
+
+            if (section === 'backup') {
+              const { autoBackup, backupFrequency, cloudBackup } = req.body;
+              
+              if (autoBackup !== undefined) org.settings.autoBackup = autoBackup;
+              if (backupFrequency) org.settings.backupFrequency = backupFrequency;
+              if (cloudBackup !== undefined) org.settings.cloudBackup = cloudBackup;
+            }
+
+            await org.save();
+
+            return res.json({ success: true, message: 'Settings updated successfully', settings: org.settings });
           }
         });
       }
@@ -144,6 +245,41 @@ export default async function handler(req, res) {
                 branding: org.branding 
               });
             });
+          }
+        });
+      }
+
+      // EMPLOYEES
+      if (type === 'employees') {
+        await tenantIsolation(req, res, async () => {
+          if (req.method === 'GET') {
+            if (action === 'single' && req.query.id) {
+              const employee = await Employee.findById(req.query.id);
+              if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+              return res.json({ success: true, employee });
+            }
+            
+            const employees = await Employee.find({ organizationId: req.organizationId }).sort({ createdAt: -1 });
+            return res.json({ success: true, employees });
+          }
+
+          if (req.method === 'POST') {
+            const employee = await Employee.create({ ...req.body, organizationId: req.organizationId, createdBy: req.userId });
+            return res.status(201).json({ success: true, employee });
+          }
+
+          if (req.method === 'PUT') {
+            if (!req.query.id) return res.status(400).json({ success: false, message: 'Employee ID required' });
+            const updated = await Employee.findByIdAndUpdate(req.query.id, req.body, { new: true });
+            if (!updated) return res.status(404).json({ success: false, message: 'Employee not found' });
+            return res.json({ success: true, employee: updated });
+          }
+
+          if (req.method === 'DELETE') {
+            if (!req.query.id) return res.status(400).json({ success: false, message: 'Employee ID required' });
+            const deleted = await Employee.findByIdAndDelete(req.query.id);
+            if (!deleted) return res.status(404).json({ success: false, message: 'Employee not found' });
+            return res.json({ success: true, message: 'Employee deleted' });
           }
         });
       }

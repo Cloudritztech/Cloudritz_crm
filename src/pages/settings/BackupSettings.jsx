@@ -23,31 +23,21 @@ const BackupSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const [products, customers, invoices] = await Promise.all([
-        axios.get('/api/products', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/customers', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/api/invoices', { headers: { Authorization: `Bearer ${token}` } })
-      ]);
+      const response = await axios.get('/api/backup?action=export', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      const backup = {
-        exportDate: new Date(),
-        data: {
-          products: products.data.products,
-          customers: customers.data.customers,
-          invoices: invoices.data.invoices
-        }
-      };
-      
+      const backup = response.data.backup;
       const dataStr = JSON.stringify(backup, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `anvi-crm-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `cloudritz-backup-${new Date().toISOString().split('T')[0]}.json`;
       link.click();
       URL.revokeObjectURL(url);
       
-      toast.success('Data exported successfully!');
+      toast.success(`Backup exported! ${backup.counts.products} products, ${backup.counts.customers} customers, ${backup.counts.invoices} invoices`);
     } catch (error) {
       toast.error('Failed to export data');
     } finally {
@@ -180,7 +170,57 @@ const BackupSettings = () => {
     const file = e.target.files[0];
     if (!file) return;
     
-    toast.info('Import feature requires manual data restoration');
+    setLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const backup = JSON.parse(event.target.result);
+          
+          const confirmed = window.confirm(
+            `This will import:\n` +
+            `- ${backup.counts?.products || 0} products\n` +
+            `- ${backup.counts?.customers || 0} customers\n` +
+            `- ${backup.counts?.invoices || 0} invoices\n\n` +
+            `Choose:\n` +
+            `OK = Merge with existing data\n` +
+            `Cancel = Replace all data (WARNING: Deletes existing data)`
+          );
+          
+          const mode = confirmed ? 'merge' : 'replace';
+          
+          if (!confirmed) {
+            const doubleConfirm = window.confirm('Are you SURE you want to REPLACE all data? This cannot be undone!');
+            if (!doubleConfirm) {
+              setLoading(false);
+              return;
+            }
+          }
+          
+          const token = localStorage.getItem('token');
+          const response = await axios.post('/api/backup?action=import', 
+            { backup, mode },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          const results = response.data.results;
+          toast.success(
+            `Import completed!\n` +
+            `Products: ${results.products.added} added, ${results.products.updated} updated\n` +
+            `Customers: ${results.customers.added} added, ${results.customers.updated} updated\n` +
+            `Invoices: ${results.invoices.added} added`
+          );
+        } catch (error) {
+          toast.error('Invalid backup file or import failed');
+        } finally {
+          setLoading(false);
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      toast.error('Failed to read backup file');
+      setLoading(false);
+    }
     e.target.value = '';
   };
 

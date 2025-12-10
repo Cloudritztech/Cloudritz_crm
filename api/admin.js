@@ -3,6 +3,7 @@ import { authenticate } from '../lib/middleware/tenant.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
 import SubscriptionPlan from '../lib/models/SubscriptionPlan.js';
+import Payment from '../lib/models/Payment.js';
 
 const plans = [
   {name:'trial',displayName:'Free Trial',price:0,billingCycle:'monthly',limits:{maxUsers:2,maxProducts:100,maxInvoices:50,maxCustomers:100,storageGB:1},features:{whatsappIntegration:false,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
@@ -234,6 +235,69 @@ export default async function handler(req, res) {
         const user = await User.findByIdAndUpdate(id, updates, { new: true }).select('-password');
         
         return res.json({ success: true, message: 'User updated', user });
+      }
+      
+      // ============ SUBSCRIPTION PLAN MANAGEMENT ============
+      
+      // Get all subscription plans
+      if (action === 'subscription-plans' && method === 'GET') {
+        const plans = await SubscriptionPlan.find().sort({ sortOrder: 1 });
+        return res.json({ success: true, plans });
+      }
+      
+      // Create subscription plan
+      if (action === 'create-plan' && method === 'POST') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const plan = await SubscriptionPlan.create(req.body);
+        return res.json({ success: true, message: 'Plan created', plan });
+      }
+      
+      // Update subscription plan
+      if (action === 'update-plan' && id && method === 'PUT') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true });
+        return res.json({ success: true, message: 'Plan updated', plan });
+      }
+      
+      // Delete subscription plan
+      if (action === 'delete-plan' && id && method === 'DELETE') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        await SubscriptionPlan.findByIdAndDelete(id);
+        return res.json({ success: true, message: 'Plan deleted' });
+      }
+      
+      // ============ PAYMENT MANAGEMENT ============
+      
+      // Get all payments
+      if (action === 'payments' && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const payments = await Payment.find()
+          .populate('organizationId', 'name')
+          .sort({ createdAt: -1 })
+          .limit(200);
+        
+        // Add organizationName to each payment
+        const paymentsWithOrgName = payments.map(p => ({
+          ...p.toObject(),
+          organizationName: p.organizationId?.name || p.organizationName
+        }));
+        
+        return res.json({ success: true, payments: paymentsWithOrgName });
+      }
+      
+      // Get organizations list (for dropdowns)
+      if (action === 'organizations' && method === 'GET') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const orgs = await Organization.find({ isActive: true })
+          .select('_id name subdomain')
+          .sort({ name: 1 });
+        
+        return res.json({ success: true, organizations: orgs });
       }
       
       return res.status(400).json({ success: false, message: 'Invalid request' });

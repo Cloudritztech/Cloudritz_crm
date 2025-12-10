@@ -38,7 +38,7 @@ const ExcelSync = () => {
       formData.append('file', file);
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('/api/products/sync-excel', formData, {
+      const response = await axios.post('/api/products?action=import-excel', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
@@ -63,25 +63,34 @@ const ExcelSync = () => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="mb-4">
             <h2 className="text-lg font-semibold mb-2">Required Excel Format</h2>
-            <div className="bg-gray-50 p-4 rounded border">
+            <div className="bg-gray-50 p-4 rounded border overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">Item Name</th>
-                    <th className="text-left p-2">Stock Count</th>
-                    <th className="text-left p-2">Current Sale Price</th>
-                    <th className="text-left p-2">Stock Value (Purchase Price)</th>
+                    <th className="text-left p-2">Product Name</th>
+                    <th className="text-left p-2">Category</th>
+                    <th className="text-left p-2">Purchase Price</th>
+                    <th className="text-left p-2">Selling Price</th>
+                    <th className="text-left p-2">Stock Quantity</th>
+                    <th className="text-left p-2">Unit</th>
+                    <th className="text-left p-2">HSN Code</th>
+                    <th className="text-left p-2">GST Rate</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td className="p-2 text-gray-600">Product A</td>
-                    <td className="p-2 text-gray-600">100</td>
-                    <td className="p-2 text-gray-600">500</td>
+                    <td className="p-2 text-gray-600">Tiles</td>
                     <td className="p-2 text-gray-600">400</td>
+                    <td className="p-2 text-gray-600">500</td>
+                    <td className="p-2 text-gray-600">100</td>
+                    <td className="p-2 text-gray-600">pcs</td>
+                    <td className="p-2 text-gray-600">6907</td>
+                    <td className="p-2 text-gray-600">18</td>
                   </tr>
                 </tbody>
               </table>
+              <p className="text-xs text-gray-500 mt-2">Alternative column names also supported: "Item Name", "Stock Count", "Current Sale Price", "Stock Value (Purchase Price)"</p>
             </div>
           </div>
 
