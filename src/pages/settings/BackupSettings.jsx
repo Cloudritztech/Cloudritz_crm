@@ -146,7 +146,7 @@ const BackupSettings = () => {
       XLSX.writeFile(wb, fileName);
       
       // Check if Google Drive backup is enabled
-      const settingsRes = await axios.get('/api/settings?section=integrations', {
+      const settingsRes = await axios.get('/api/account?type=settings&section=integrations', {
         headers: { Authorization: `Bearer ${token}` }
       });
       

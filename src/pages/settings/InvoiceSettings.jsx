@@ -29,7 +29,7 @@ const InvoiceSettings = () => {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/settings?section=invoice', {
+      const response = await axios.get('/api/account?type=settings&section=invoice', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success && response.data.settings) {
@@ -49,7 +49,7 @@ const InvoiceSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put('/api/settings?section=invoice', formData, {
+      await axios.put('/api/account?type=settings&section=invoice', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Invoice settings saved successfully!');

@@ -129,8 +129,8 @@ export default function Support() {
     <div className="h-[calc(100vh-8rem)]">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Help & Support</h1>
-          <p className="text-gray-600">Get help from our support team</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Help & Support</h1>
+          <p className="text-gray-600 dark:text-gray-400">Get help from our support team</p>
         </div>
         <button
           onClick={() => setShowNewTicket(true)}
@@ -143,9 +143,9 @@ export default function Support() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100%-6rem)]">
         {/* Tickets List */}
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-4 border-b bg-gray-50">
-            <h2 className="font-semibold text-gray-900">Your Tickets</h2>
+        <div className="lg:col-span-1 bg-white dark:bg-[#1a1d21] rounded-lg shadow overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 dark:bg-[#0F1113] dark:border-gray-700">
+            <h2 className="font-semibold text-gray-900 dark:text-white">Your Tickets</h2>
           </div>
           <div className="overflow-y-auto h-[calc(100%-4rem)]">
             {tickets.length === 0 ? (
@@ -158,12 +158,12 @@ export default function Support() {
                 <div
                   key={ticket._id}
                   onClick={() => setSelectedTicket(ticket)}
-                  className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${
-                    selectedTicket?._id === ticket._id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                  className={`p-4 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0F1113] transition ${
+                    selectedTicket?._id === ticket._id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-600' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium text-gray-900 text-sm line-clamp-1">{ticket.subject}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">{ticket.subject}</h3>
                     {ticket.unreadCount?.user > 0 && (
                       <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {ticket.unreadCount.user}
@@ -178,7 +178,7 @@ export default function Support() {
                       {ticket.priority}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(ticket.lastMessageAt).toLocaleString()}
                   </p>
                 </div>
@@ -188,25 +188,25 @@ export default function Support() {
         </div>
 
         {/* Chat Area */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow flex flex-col">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1a1d21] rounded-lg shadow flex flex-col">
           {showNewTicket ? (
             <div className="flex-1 p-6">
-              <h2 className="text-xl font-semibold mb-4">Create New Ticket</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create New Ticket</h2>
               <form onSubmit={createTicket} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
                   <input
                     type="text"
                     name="subject"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0F1113] text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Brief description of your issue"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                    <select name="category" className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select name="category" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0F1113] text-gray-900 dark:text-white rounded-lg">
                       <option value="general">General</option>
                       <option value="technical">Technical</option>
                       <option value="billing">Billing</option>
@@ -215,8 +215,8 @@ export default function Support() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                    <select name="priority" className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                    <select name="priority" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0F1113] text-gray-900 dark:text-white rounded-lg">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -225,12 +225,12 @@ export default function Support() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
                   <textarea
                     name="message"
                     required
                     rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0F1113] text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Describe your issue in detail..."
                   />
                 </div>
@@ -255,11 +255,11 @@ export default function Support() {
           ) : selectedTicket ? (
             <>
               {/* Chat Header */}
-              <div className="p-4 border-b bg-gray-50">
+              <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0F1113]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-semibold text-gray-900">{selectedTicket.subject}</h2>
-                    <p className="text-sm text-gray-500">Ticket #{selectedTicket._id.slice(-8)}</p>
+                    <h2 className="font-semibold text-gray-900 dark:text-white">{selectedTicket.subject}</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Ticket #{selectedTicket._id.slice(-8)}</p>
                   </div>
                   <span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(selectedTicket.status)}`}>
                     {selectedTicket.status}
@@ -274,12 +274,12 @@ export default function Support() {
                     key={idx}
                     className={`flex ${msg.sender === 'admin' ? 'justify-start' : 'justify-end'}`}
                   >
-                    <div className={`max-w-[70%] ${msg.sender === 'admin' ? 'bg-gray-100' : 'bg-blue-600 text-white'} rounded-lg p-3`}>
-                      <p className={`text-xs font-medium mb-1 ${msg.sender === 'admin' ? 'text-gray-600' : 'text-blue-100'}`}>
+                    <div className={`max-w-[70%] ${msg.sender === 'admin' ? 'bg-gray-100 dark:bg-[#0F1113] text-gray-900 dark:text-white' : 'bg-blue-600 text-white'} rounded-lg p-3`}>
+                      <p className={`text-xs font-medium mb-1 ${msg.sender === 'admin' ? 'text-gray-600 dark:text-gray-400' : 'text-blue-100'}`}>
                         {msg.senderName}
                       </p>
                       <p className="text-sm">{msg.message}</p>
-                      <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-gray-500' : 'text-blue-100'}`}>
+                      <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-gray-500 dark:text-gray-400' : 'text-blue-100'}`}>
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
@@ -289,14 +289,14 @@ export default function Support() {
               </div>
 
               {/* Message Input */}
-              <form onSubmit={sendMessage} className="p-4 border-t bg-gray-50">
+              <form onSubmit={sendMessage} className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-[#0F1113]">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1d21] text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="submit"
@@ -310,9 +310,9 @@ export default function Support() {
               </form>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                 <p>Select a ticket to view conversation</p>
               </div>
             </div>

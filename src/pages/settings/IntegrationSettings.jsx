@@ -31,7 +31,7 @@ const IntegrationSettings = () => {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/settings?section=integrations', {
+      const response = await axios.get('/api/account?type=settings&section=integrations', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success && response.data.settings) {
@@ -50,7 +50,7 @@ const IntegrationSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put('/api/settings?section=integrations', 
+      await axios.put('/api/account?type=settings&section=integrations', 
         { whatsapp, googleDrive },
         { headers: { Authorization: `Bearer ${token}` } }
       );

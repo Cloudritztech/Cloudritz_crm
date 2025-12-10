@@ -18,12 +18,8 @@ export default async function handler(req, res) {
   const { action, id } = req.query;
 
   try {
-    const authResult = await authenticate(req);
-    if (!authResult.success) {
-      return res.status(401).json({ success: false, message: authResult.message });
-    }
-
-    const { userId, organizationId, role } = authResult;
+    await authenticate(req, res, async () => {
+      const { userId, organizationId, role } = req.user;
 
     if (method === 'GET') {
       if (action === 'plans') {
@@ -135,8 +131,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid action' });
     }
 
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    });
   } catch (error) {
     console.error('Subscriptions API Error:', error);
     return res.status(500).json({ success: false, message: error.message });
