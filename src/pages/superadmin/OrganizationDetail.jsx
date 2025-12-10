@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Users, Lock, Unlock, IndianRupee } from 'lucide-react';
 import api from '../../services/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -52,8 +52,9 @@ const OrganizationDetail = () => {
     try {
       await api.put(`/admin?type=superadmin&action=update-subscription&id=${id}`, {
         plan: subData.plan,
-        status: subData.status,
-        endDate: subData.endDate,
+        isBlocked: subData.isBlocked,
+        blockReason: subData.blockReason,
+        monthlyFee: subData.monthlyFee,
         limits: {
           maxUsers: subData.maxUsers,
           maxProducts: subData.maxProducts,
@@ -65,6 +66,21 @@ const OrganizationDetail = () => {
       fetchOrganization();
     } catch (error) {
       toast.error('Failed to update subscription');
+    }
+  };
+
+  const toggleBlock = async () => {
+    const newBlockStatus = !org.subscription.isBlocked;
+    try {
+      await api.put(`/admin?type=superadmin&action=update-subscription&id=${id}`, {
+        isBlocked: newBlockStatus,
+        blockReason: newBlockStatus ? 'Payment pending' : '',
+        monthlyFee: org.subscription.monthlyFee || 999
+      });
+      toast.success(newBlockStatus ? 'Organization blocked' : 'Organization unblocked');
+      fetchOrganization();
+    } catch (error) {
+      toast.error('Failed to toggle block status');
     }
   };
 
@@ -112,15 +128,30 @@ const OrganizationDetail = () => {
         <Card>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Subscription</h2>
-            <Button size="sm" onClick={() => setShowSubModal(true)} icon={Edit}>Edit</Button>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant={org.subscription.isBlocked ? 'primary' : 'outline'}
+                onClick={toggleBlock} 
+                icon={org.subscription.isBlocked ? Unlock : Lock}
+              >
+                {org.subscription.isBlocked ? 'Unblock' : 'Block'}
+              </Button>
+              <Button size="sm" onClick={() => setShowSubModal(true)} icon={Edit}>Edit</Button>
+            </div>
           </div>
           <div className="space-y-2">
             <p><strong>Plan:</strong> <span className="capitalize">{org.subscription.plan}</span></p>
-            <p><strong>Status:</strong> <span className={org.subscription.status === 'active' ? 'text-green-600' : 'text-red-600'}>{org.subscription.status}</span></p>
+            <p><strong>Status:</strong> <span className={org.subscription.isBlocked ? 'text-red-600' : org.subscription.status === 'active' ? 'text-green-600' : 'text-yellow-600'}>
+              {org.subscription.isBlocked ? 'BLOCKED' : org.subscription.status}
+            </span></p>
+            <p><strong>Monthly Fee:</strong> <span className="flex items-center gap-1"><IndianRupee className="w-4 h-4" />{org.subscription.monthlyFee || 999}</span></p>
+            {org.subscription.isBlocked && org.subscription.blockReason && (
+              <p><strong>Block Reason:</strong> <span className="text-red-600">{org.subscription.blockReason}</span></p>
+            )}
             <p><strong>Users:</strong> {org.subscription.maxUsers}</p>
             <p><strong>Products:</strong> {org.subscription.maxProducts}</p>
             <p><strong>Invoices/month:</strong> {org.subscription.maxInvoices}</p>
-            <p><strong>End Date:</strong> {new Date(org.subscription.endDate).toLocaleDateString()}</p>
           </div>
         </Card>
       </div>
@@ -169,18 +200,35 @@ const OrganizationDetail = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select value={subData.status} onChange={(e) => setSubData({...subData, status: e.target.value})} className="w-full border rounded px-3 py-2">
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="expired">Expired</option>
-            </select>
+            <label className="flex items-center gap-2 mb-2">
+              <input 
+                type="checkbox" 
+                checked={subData.isBlocked || false} 
+                onChange={(e) => setSubData({...subData, isBlocked: e.target.checked})} 
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Block Access</span>
+            </label>
           </div>
-          <Input label="Max Users" type="number" value={subData.maxUsers} onChange={(e) => setSubData({...subData, maxUsers: e.target.value})} />
-          <Input label="Max Products" type="number" value={subData.maxProducts} onChange={(e) => setSubData({...subData, maxProducts: e.target.value})} />
-          <Input label="Max Invoices" type="number" value={subData.maxInvoices} onChange={(e) => setSubData({...subData, maxInvoices: e.target.value})} />
-          <Input label="End Date" type="date" value={subData.endDate?.split('T')[0]} onChange={(e) => setSubData({...subData, endDate: e.target.value})} />
+          {subData.isBlocked && (
+            <>
+              <Input 
+                label="Block Reason" 
+                value={subData.blockReason || ''} 
+                onChange={(e) => setSubData({...subData, blockReason: e.target.value})} 
+                placeholder="e.g., Payment pending"
+              />
+              <Input 
+                label="Monthly Fee (₹)" 
+                type="number" 
+                value={subData.monthlyFee || 999} 
+                onChange={(e) => setSubData({...subData, monthlyFee: Number(e.target.value)})} 
+              />
+            </>
+          )}
+          <Input label="Max Users" type="number" value={subData.maxUsers} onChange={(e) => setSubData({...subData, maxUsers: Number(e.target.value)})} />
+          <Input label="Max Products" type="number" value={subData.maxProducts} onChange={(e) => setSubData({...subData, maxProducts: Number(e.target.value)})} />
+          <Input label="Max Invoices" type="number" value={subData.maxInvoices} onChange={(e) => setSubData({...subData, maxInvoices: Number(e.target.value)})} />
           <div className="flex gap-2">
             <Button onClick={handleUpdateSubscription}>Save</Button>
             <Button variant="outline" onClick={() => setShowSubModal(false)}>Cancel</Button>

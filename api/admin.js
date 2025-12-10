@@ -2,15 +2,8 @@ import connectDB from '../lib/mongodb.js';
 import { authenticate } from '../lib/middleware/tenant.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
-import SubscriptionPlan from '../lib/models/SubscriptionPlan.js';
-import Payment from '../lib/models/Payment.js';
 
-const plans = [
-  {name:'trial',displayName:'Free Trial',price:0,billingCycle:'monthly',limits:{maxUsers:2,maxProducts:100,maxInvoices:50,maxCustomers:100,storageGB:1},features:{whatsappIntegration:false,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
-  {name:'basic',displayName:'Basic Plan',price:999,billingCycle:'monthly',limits:{maxUsers:5,maxProducts:500,maxInvoices:200,maxCustomers:500,storageGB:5},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:false,advancedReports:false,apiAccess:false,prioritySupport:false},trialDays:14},
-  {name:'professional',displayName:'Professional Plan',price:2499,billingCycle:'monthly',limits:{maxUsers:15,maxProducts:2000,maxInvoices:1000,maxCustomers:2000,storageGB:20},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:false,prioritySupport:true},trialDays:14},
-  {name:'enterprise',displayName:'Enterprise Plan',price:4999,billingCycle:'monthly',limits:{maxUsers:999,maxProducts:999999,maxInvoices:999999,maxCustomers:999999,storageGB:100},features:{whatsappIntegration:true,aiInsights:true,multiCurrency:true,advancedReports:true,apiAccess:true,prioritySupport:true},trialDays:14}
-];
+
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,10 +21,6 @@ export default async function handler(req, res) {
     try {
       const existing = await User.findOne({ role: 'superadmin' });
       if (existing) return res.json({ success: true, message: 'Already seeded' });
-      
-      for (const plan of plans) {
-        await SubscriptionPlan.findOneAndUpdate({ name: plan.name }, plan, { upsert: true });
-      }
       
       await User.create({ 
         name: 'Cloudritz Admin', 
@@ -168,7 +157,7 @@ export default async function handler(req, res) {
       if (type === 'superadmin' && action === 'update-subscription' && id && method === 'PUT') {
         if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
         
-        const { plan, status, endDate, limits, features } = req.body;
+        const { plan, status, endDate, limits, features, isBlocked, blockReason, monthlyFee } = req.body;
         
         const updateData = {};
         if (plan) updateData['subscription.plan'] = plan;
@@ -178,6 +167,12 @@ export default async function handler(req, res) {
         if (limits?.maxProducts) updateData['subscription.maxProducts'] = limits.maxProducts;
         if (limits?.maxInvoices) updateData['subscription.maxInvoices'] = limits.maxInvoices;
         if (features) updateData['features'] = features;
+        if (isBlocked !== undefined) {
+          updateData['subscription.isBlocked'] = isBlocked;
+          updateData['subscription.status'] = isBlocked ? 'blocked' : 'active';
+        }
+        if (blockReason !== undefined) updateData['subscription.blockReason'] = blockReason;
+        if (monthlyFee !== undefined) updateData['subscription.monthlyFee'] = monthlyFee;
         
         const org = await Organization.findByIdAndUpdate(id, updateData, { new: true });
         
@@ -237,68 +232,7 @@ export default async function handler(req, res) {
         return res.json({ success: true, message: 'User updated', user });
       }
       
-      // ============ SUBSCRIPTION PLAN MANAGEMENT ============
-      
-      // Get all subscription plans
-      if (action === 'subscription-plans' && method === 'GET') {
-        const plans = await SubscriptionPlan.find().sort({ sortOrder: 1 });
-        return res.json({ success: true, plans });
-      }
-      
-      // Create subscription plan
-      if (action === 'create-plan' && method === 'POST') {
-        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
-        
-        const plan = await SubscriptionPlan.create(req.body);
-        return res.json({ success: true, message: 'Plan created', plan });
-      }
-      
-      // Update subscription plan
-      if (action === 'update-plan' && id && method === 'PUT') {
-        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
-        
-        const plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true });
-        return res.json({ success: true, message: 'Plan updated', plan });
-      }
-      
-      // Delete subscription plan
-      if (action === 'delete-plan' && id && method === 'DELETE') {
-        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
-        
-        await SubscriptionPlan.findByIdAndDelete(id);
-        return res.json({ success: true, message: 'Plan deleted' });
-      }
-      
-      // ============ PAYMENT MANAGEMENT ============
-      
-      // Get all payments
-      if (action === 'payments' && method === 'GET') {
-        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
-        
-        const payments = await Payment.find()
-          .populate('organizationId', 'name')
-          .sort({ createdAt: -1 })
-          .limit(200);
-        
-        // Add organizationName to each payment
-        const paymentsWithOrgName = payments.map(p => ({
-          ...p.toObject(),
-          organizationName: p.organizationId?.name || p.organizationName
-        }));
-        
-        return res.json({ success: true, payments: paymentsWithOrgName });
-      }
-      
-      // Get organizations list (for dropdowns)
-      if (action === 'organizations' && method === 'GET') {
-        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
-        
-        const orgs = await Organization.find({ isActive: true })
-          .select('_id name subdomain')
-          .sort({ name: 1 });
-        
-        return res.json({ success: true, organizations: orgs });
-      }
+
       
       return res.status(400).json({ success: false, message: 'Invalid request' });
     });

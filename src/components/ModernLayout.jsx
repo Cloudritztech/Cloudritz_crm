@@ -41,8 +41,6 @@ const ModernLayout = ({ children }) => {
     { name: 'Dashboard', href: '/superadmin', icon: Home },
     { name: 'Organizations', href: '/superadmin/organizations', icon: Building2 },
     { name: 'Users', href: '/superadmin/users', icon: Users },
-    { name: 'Plans', href: '/superadmin/plans', icon: CreditCard },
-    { name: 'Payments', href: '/superadmin/payments', icon: DollarSign },
     { name: 'Support', href: '/superadmin/support', icon: MessageCircle },
   ] : [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -51,7 +49,6 @@ const ModernLayout = ({ children }) => {
     { name: 'Invoices', href: '/invoices', icon: FileText },
     { name: 'Expenses', href: '/expenses', icon: DollarSign },
     { name: 'Employees', href: '/employees', icon: UserCheck },
-    { name: 'Subscription', href: '/subscription', icon: CreditCard },
   ];
 
   const isActive = (href) => {

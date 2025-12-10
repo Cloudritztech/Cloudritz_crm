@@ -1,8 +1,9 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Toast from './components/ui/Toast';
+import BlockedAccountModal from './components/BlockedAccountModal';
 
 const ModernLayout = lazy(() => import('./components/ModernLayout'));
 const Login = lazy(() => import('./pages/Login'));
@@ -27,9 +28,8 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Subscription = lazy(() => import('./pages/Subscription'));
-const SuperAdminPlans = lazy(() => import('./pages/superadmin/SubscriptionPlans'));
-const SuperAdminPayments = lazy(() => import('./pages/superadmin/Payments'));
+
+
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -74,11 +74,28 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
+  const [blockedInfo, setBlockedInfo] = useState(null);
+
+  useEffect(() => {
+    const handleBlocked = (event) => {
+      setBlockedInfo(event.detail);
+    };
+    window.addEventListener('account-blocked', handleBlocked);
+    return () => window.removeEventListener('account-blocked', handleBlocked);
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="App">
+              {blockedInfo && (
+                <BlockedAccountModal
+                  message={blockedInfo.message}
+                  monthlyFee={blockedInfo.monthlyFee}
+                  contactInfo={blockedInfo.contactInfo}
+                />
+              )}
               <Routes>
               <Route 
                 path="/login" 
@@ -144,17 +161,7 @@ function App() {
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/settings/*" element={<Settings />} />
-                            <Route path="/subscription" element={<Subscription />} />
-                            <Route path="/superadmin/plans" element={
-                              <SuperAdminRoute>
-                                <SuperAdminPlans />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/payments" element={
-                              <SuperAdminRoute>
-                                <SuperAdminPayments />
-                              </SuperAdminRoute>
-                            } />
+
                           </Routes>
                         </Suspense>
                       </ModernLayout>

@@ -54,6 +54,14 @@ api.interceptors.response.use(
       message: error.response?.data?.message || error.message
     });
     
+    // Handle blocked account
+    if (error.response?.status === 403 && error.response?.data?.blocked) {
+      window.dispatchEvent(new CustomEvent('account-blocked', { 
+        detail: error.response.data 
+      }));
+      return Promise.reject(error);
+    }
+    
     // Only handle 401 for protected routes, not auth endpoints
     if (error.response?.status === 401) {
       const isAuthEndpoint = error.config?.url?.includes('/auth');
