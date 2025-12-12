@@ -1,5 +1,6 @@
 /**
  * Upload file directly to Cloudinary from frontend
+ * Note: Old images are automatically deleted by backend when updating
  * @param {File} file - File to upload (image or PDF)
  * @param {string} folder - Optional folder name (default: 'crm/')
  * @returns {Promise<string>} - Cloudinary secure_url
@@ -57,12 +58,25 @@ export const uploadToCloudinary = async (file, folder = 'crm/') => {
 };
 
 /**
- * Delete image from Cloudinary (optional - requires backend implementation)
- * @param {string} publicId - Cloudinary public_id
+ * Extract public_id from Cloudinary URL (for reference)
+ * @param {string} url - Cloudinary URL
+ * @returns {string|null} - Public ID or null
  */
-export const deleteFromCloudinary = async (publicId) => {
-  // Note: Deletion requires authenticated API call from backend
-  // This is just a placeholder for future implementation
-  console.log('Delete from Cloudinary:', publicId);
-  throw new Error('Delete functionality requires backend implementation');
+export const extractPublicId = (url) => {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    
+    const pathParts = parts[1].split('/');
+    const startIndex = pathParts[0].startsWith('v') ? 1 : 0;
+    const publicIdWithExt = pathParts.slice(startIndex).join('/');
+    const publicId = publicIdWithExt.replace(/\.[^/.]+$/, '');
+    
+    return publicId;
+  } catch (error) {
+    console.error('Error extracting public_id:', error);
+    return null;
+  }
 };

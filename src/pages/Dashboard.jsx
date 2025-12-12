@@ -13,8 +13,7 @@ import {
   ShoppingCart,
   DollarSign,
   UserCheck,
-  TrendingUp,
-  TrendingDown
+  TrendingUp
 } from 'lucide-react';
 import { StatCard } from '../components/ui/Card';
 import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
@@ -116,18 +115,18 @@ const Dashboard = () => {
   // Row 1.5: Financial metrics
   const financialMetrics = [
     {
+      title: 'Total Sales',
+      value: `₹${(stats?.totalRevenue || 0).toLocaleString('en-IN')}`,
+      subtitle: `₹${(stats?.monthlyRevenue || 0).toLocaleString('en-IN')} this month`,
+      icon: TrendingUp,
+      color: 'success'
+    },
+    {
       title: 'Total Expenses',
       value: `₹${(stats?.totalExpenses || 0).toLocaleString('en-IN')}`,
       subtitle: `₹${(stats?.monthlyExpenses || 0).toLocaleString('en-IN')} this month`,
       icon: DollarSign,
       color: 'danger'
-    },
-    {
-      title: 'Net Profit',
-      value: `₹${(stats?.profit || 0).toLocaleString('en-IN')}`,
-      subtitle: 'Revenue - Expenses',
-      icon: stats?.profit >= 0 ? TrendingUp : TrendingDown,
-      color: stats?.profit >= 0 ? 'success' : 'danger'
     }
   ];
 

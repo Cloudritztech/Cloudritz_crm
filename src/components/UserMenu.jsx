@@ -40,9 +40,7 @@ const UserMenu = () => {
     fetchLogo();
   }, []);
 
-  const menuItems = user?.role === 'superadmin' ? [
-    // Superadmin has no profile menu items - only theme and logout
-  ] : [
+  const menuItems = [
     { icon: User, label: 'Profile', action: () => navigate('/profile') },
     { icon: Building2, label: 'Business Profile', action: () => navigate('/business-profile') },
     { icon: Settings, label: 'Settings', action: () => navigate('/settings') },

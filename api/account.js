@@ -4,6 +4,7 @@ import Organization from '../lib/models/Organization.js';
 import Employee from '../lib/models/Employee.js';
 import { authenticate, tenantIsolation, requireRole } from '../lib/middleware/tenant.js';
 import { getOrganizationBranding } from '../lib/subdomainMiddleware.js';
+import { deleteImage } from '../lib/cloudinary.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -104,8 +105,18 @@ export default async function handler(req, res) {
           if (updates.businessAddress) org.address = updates.businessAddress;
           if (updates.phone) org.phone = updates.phone;
           if (updates.email) org.email = updates.email;
-          if (updates.logoUrl !== undefined) org.logo = updates.logoUrl;
-          if (updates.signatureUrl !== undefined) org.signatureUrl = updates.signatureUrl;
+          
+          // Delete old logo if new one is uploaded
+          if (updates.logoUrl !== undefined && updates.logoUrl !== org.logo) {
+            if (org.logo) await deleteImage(org.logo);
+            org.logo = updates.logoUrl;
+          }
+          
+          // Delete old signature if new one is uploaded
+          if (updates.signatureUrl !== undefined && updates.signatureUrl !== org.signatureUrl) {
+            if (org.signatureUrl) await deleteImage(org.signatureUrl);
+            org.signatureUrl = updates.signatureUrl;
+          }
           
           // Update bank details and gstin
           org.bankDetails = org.bankDetails || {};

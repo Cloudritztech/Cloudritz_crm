@@ -3,6 +3,7 @@ import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
+import { deleteImage } from '../lib/cloudinary.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -154,6 +155,11 @@ export default async function handler(req, res) {
         const product = await Product.findById(productId);
         if (!product) {
           return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Delete old image if new one is uploaded
+        if (req.body.image && req.body.image !== product.image && product.image) {
+          await deleteImage(product.image);
         }
 
         const previousStock = product.stock;

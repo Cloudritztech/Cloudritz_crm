@@ -74,7 +74,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
           <input
             ref={cameraInputRef}
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
             capture="environment"
             onChange={handleImageUpload}
             className="hidden"

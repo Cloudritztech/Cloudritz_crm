@@ -8,13 +8,6 @@ import BlockedAccountModal from './components/BlockedAccountModal';
 const ModernLayout = lazy(() => import('./components/ModernLayout'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
-const SuperAdminOrganizations = lazy(() => import('./pages/superadmin/Organizations'));
-const CreateOrganization = lazy(() => import('./pages/superadmin/CreateOrganization'));
-const OrganizationDetail = lazy(() => import('./pages/superadmin/OrganizationDetail'));
-const SuperAdminUsers = lazy(() => import('./pages/superadmin/Users'));
-const SuperAdminSupport = lazy(() => import('./pages/superadmin/Support'));
-const SystemSettings = lazy(() => import('./pages/superadmin/SystemSettings'));
 const Support = lazy(() => import('./pages/Support'));
 const Products = lazy(() => import('./pages/Products'));
 const Customers = lazy(() => import('./pages/Customers'));
@@ -59,29 +52,13 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-const SuperAdminRoute = ({ children }) => {
-  const { isAuthenticated, user, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'superadmin') return <Navigate to="/" replace />;
-  return children;
-};
-
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, user, loading } = useAuth();
-  
+  const { isAuthenticated, loading } = useAuth();
   if (loading) return <PageLoader />;
-  
-  if (isAuthenticated) {
-    // Redirect to appropriate dashboard based on role
-    return <Navigate to={user?.role === 'superadmin' ? '/superadmin' : '/'} replace />;
-  }
-  
-  return children;
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
 };
 
 function AppContent() {
-  const { user } = useAuth();
   const [blockedInfo, setBlockedInfo] = useState(null);
 
   useEffect(() => {
@@ -122,44 +99,7 @@ function AppContent() {
                       <ModernLayout>
                         <Suspense fallback={<SkeletonLoader />}>
                           <Routes>
-                            <Route path="/" element={
-                              user?.role === 'superadmin' ? <Navigate to="/superadmin" replace /> : <Dashboard />
-                            } />
-                            <Route path="/superadmin" element={
-                              <SuperAdminRoute>
-                                <SuperAdminDashboard />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/organizations" element={
-                              <SuperAdminRoute>
-                                <SuperAdminOrganizations />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/organizations/create" element={
-                              <SuperAdminRoute>
-                                <CreateOrganization />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/organizations/:id" element={
-                              <SuperAdminRoute>
-                                <OrganizationDetail />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/users" element={
-                              <SuperAdminRoute>
-                                <SuperAdminUsers />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/support" element={
-                              <SuperAdminRoute>
-                                <SuperAdminSupport />
-                              </SuperAdminRoute>
-                            } />
-                            <Route path="/superadmin/settings" element={
-                              <SuperAdminRoute>
-                                <SystemSettings />
-                              </SuperAdminRoute>
-                            } />
+                            <Route path="/" element={<Dashboard />} />
                             <Route path="/support" element={<Support />} />
                             <Route path="/products" element={<Products />} />
                             <Route path="/products/:id" element={<ProductDetail />} />

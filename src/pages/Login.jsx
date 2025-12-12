@@ -22,12 +22,16 @@ const Login = () => {
     const result = await login(formData);
     
     if (result.success) {
+      // Block superadmin from CRM app
+      if (result.user?.role === 'superadmin') {
+        toast.error('Please use the admin panel at admin.cloudritz.com');
+        logout();
+        setLoading(false);
+        return;
+      }
+      
       toast.success('Login successful!');
-      setTimeout(() => {
-        // Redirect super admin to super admin dashboard
-        const redirectPath = result.user?.role === 'superadmin' ? '/superadmin' : '/';
-        navigate(redirectPath, { replace: true });
-      }, 100);
+      navigate('/', { replace: true });
     } else {
       toast.error(result.message);
       setLoading(false);
@@ -143,7 +147,20 @@ const Login = () => {
               </Button>
             </form>
 
-
+            {/* Admin Panel Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Are you an administrator?{' '}
+                <a 
+                  href="https://admin.cloudritz.com" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Go to Admin Panel →
+                </a>
+              </p>
+            </div>
           </div>
 
           {/* Footer */}
