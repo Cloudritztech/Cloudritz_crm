@@ -390,24 +390,38 @@ const SalesReports = () => {
       {/* Sales Visualization - Pie Chart */}
       {!loading && (() => {
         const pieData = [
-          { label: 'Total Sales', value: salesData.totalAmount, color: '#10b981', orders: salesData.totalOrders },
-          { label: 'Total Expenses', value: expenseData.total, color: '#ef4444', count: expenseData.count }
-        ];
+          { label: 'Total Sales', value: salesData.totalAmount || 0, color: '#10b981', orders: salesData.totalOrders },
+          { label: 'Total Expenses', value: expenseData.total || 0, color: '#ef4444', count: expenseData.count }
+        ].filter(item => item.value > 0);
         
         const total = pieData.reduce((sum, item) => sum + item.value, 0);
+        
+        if (total === 0) {
+          return (
+            <div className="card">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Overview</h3>
+              <div className="flex flex-col items-center justify-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No data available for the selected period</p>
+              </div>
+            </div>
+          );
+        }
+        
         let currentAngle = 0;
         
         return (
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Overview</h3>
             <div className="flex flex-col items-center">
-              <svg width="300" height="300" viewBox="0 0 300 300">
+              <svg width="300" height="300" viewBox="0 0 300 300" className="mx-auto">
                 {pieData.map((item, index) => {
-                  const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                  const percentage = (item.value / total) * 100;
                   const angle = (percentage / 100) * 360;
                   const startAngle = currentAngle;
                   const endAngle = currentAngle + angle;
                   currentAngle = endAngle;
+                  
+                  if (angle === 0) return null;
                   
                   const startRad = (startAngle - 90) * (Math.PI / 180);
                   const endRad = (endAngle - 90) * (Math.PI / 180);
@@ -421,40 +435,41 @@ const SalesReports = () => {
                   const path = `M 150 150 L ${x1} ${y1} A 120 120 0 ${largeArc} 1 ${x2} ${y2} Z`;
                   
                   return (
-                    <path
-                      key={index}
-                      d={path}
-                      fill={item.color}
-                      stroke="white"
-                      strokeWidth="3"
-                      className="cursor-pointer transition-all duration-300 hover:opacity-80"
-                      onMouseEnter={() => setHoveredSegment(item)}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    />
+                    <g key={index}>
+                      <path
+                        d={path}
+                        fill={item.color}
+                        stroke="white"
+                        strokeWidth="2"
+                        className="cursor-pointer transition-all duration-200"
+                        style={{ opacity: hoveredSegment?.label === item.label ? 0.8 : 1 }}
+                        onMouseEnter={() => setHoveredSegment(item)}
+                        onMouseLeave={() => setHoveredSegment(null)}
+                      />
+                    </g>
                   );
                 })}
+                <circle cx="150" cy="150" r="60" fill="white" className="dark:fill-gray-900" />
+                <text x="150" y="145" textAnchor="middle" className="text-sm font-semibold fill-gray-600 dark:fill-gray-400">Total</text>
+                <text x="150" y="165" textAnchor="middle" className="text-lg font-bold fill-gray-900 dark:fill-gray-100">{formatCurrency(total)}</text>
               </svg>
               
-              <div className="mt-6 w-full max-w-md">
-                {hoveredSegment ? (
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center border-2" style={{ borderColor: hoveredSegment.color }}>
+              {hoveredSegment && (
+                <div className="mt-6 w-full max-w-md">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl text-center border-2 transition-all" style={{ borderColor: hoveredSegment.color }}>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{hoveredSegment.label}</p>
                     <p className="text-3xl font-bold mb-2" style={{ color: hoveredSegment.color }}>
                       {formatCurrency(hoveredSegment.value)}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {hoveredSegment.orders ? `${hoveredSegment.orders} orders` : `${hoveredSegment.count} transactions`}
+                      {hoveredSegment.orders !== undefined ? `${hoveredSegment.orders} orders` : `${hoveredSegment.count} transactions`}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                      {total > 0 ? ((hoveredSegment.value / total) * 100).toFixed(1) : 0}% of total
+                      {((hoveredSegment.value / total) * 100).toFixed(1)}% of total
                     </p>
                   </div>
-                ) : (
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Hover over chart to see details</p>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
               
               <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-md">
                 {pieData.map((item, index) => (

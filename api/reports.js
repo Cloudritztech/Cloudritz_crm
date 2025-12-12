@@ -172,6 +172,7 @@ export default async function handler(req, res) {
       weeklySales: weeklySales[0] || { total: 0, count: 0 },
       monthlySales: monthlySales[0] || { total: 0, count: 0 },
       totalRevenue: totalRevenue[0]?.total || 0,
+      monthlyRevenue: monthlySales[0]?.total || 0,
       totalCustomers: totalCustomers || 0,
       totalInvoices: totalInvoices || 0,
       lowStockProducts: lowStockProducts || 0,
