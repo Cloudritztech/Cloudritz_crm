@@ -188,6 +188,12 @@ async function generatePDF(req, res, id) {
 // Create invoice
 async function createInvoice(req, res) {
   try {
+    // Validate organizationId is present
+    if (!req.organizationId) {
+      console.error('❌ Missing organizationId in request');
+      return res.status(400).json({ success: false, message: 'Organization ID is required' });
+    }
+
     const {
       customer, items, discount = 0, discountType = 'amount', applyGST = true,
       paymentMethod = 'cash', notes = '', dueDate, terms, buyerDetails,

@@ -233,6 +233,7 @@ const AddInvoice = () => {
     } catch (err) {
       console.error('❌ Invoice creation error:', err);
       console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
       const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
       const errorDetails = err.response?.data?.error || '';
       alert(`Failed to create invoice: ${errorMessage}${errorDetails ? '\n\nDetails: ' + errorDetails : ''}`);

@@ -33,6 +33,17 @@ export const AuthProvider = ({ children }) => {
       }
     }
     setLoading(false);
+
+    // Listen for storage changes (when another tab logs in/out)
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' || e.key === 'user') {
+        // Reload the page when auth changes in another tab
+        window.location.reload();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (credentials) => {
