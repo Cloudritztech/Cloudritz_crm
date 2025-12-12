@@ -57,16 +57,16 @@ export default async function handler(req, res) {
           }
           const org = await Organization.findById(req.organizationId);
           
-          // Transform organization data to match frontend expectations
+          // Transform organization data to match frontend expectations with proper defaults
           const profile = {
-            businessName: org.name,
-            ownerName: org.ownerName,
-            businessAddress: org.address,
-            gstin: org.gstin || org.bankDetails?.gstin,
-            phone: org.phone,
-            email: org.email,
-            logoUrl: org.logo,
-            signatureUrl: org.signatureUrl,
+            businessName: org.name || '',
+            ownerName: org.ownerName || '',
+            businessAddress: org.address || '',
+            gstin: org.bankDetails?.gstin || org.gstin || '',
+            phone: org.phone || '',
+            email: org.email || '',
+            logoUrl: org.logo || null,
+            signatureUrl: org.signatureUrl || null,
             bankDetails: {
               bankName: org.bankDetails?.bankName || '',
               accountNo: org.bankDetails?.accountNumber || '',
@@ -74,11 +74,11 @@ export default async function handler(req, res) {
               branch: org.bankDetails?.branch || ''
             },
             upiId: org.bankDetails?.upiId || '',
-            branding: org.branding || {
-              primaryColor: '#2563eb',
-              secondaryColor: '#3b82f6',
-              customDomain: '',
-              hideCloudiritzBranding: false
+            branding: {
+              primaryColor: org.branding?.primaryColor || '#2563eb',
+              secondaryColor: org.branding?.secondaryColor || '#3b82f6',
+              customDomain: org.branding?.customDomain || '',
+              hideCloudiritzBranding: org.branding?.hideCloudiritzBranding || false
             }
           };
           
@@ -100,18 +100,19 @@ export default async function handler(req, res) {
           
           // Update organization fields
           if (updates.businessName) org.name = updates.businessName;
-          if (updates.ownerName) org.ownerName = updates.ownerName;
+          if (updates.ownerName !== undefined) org.ownerName = updates.ownerName;
           if (updates.businessAddress) org.address = updates.businessAddress;
-          if (updates.gstin) org.gstin = updates.gstin;
           if (updates.phone) org.phone = updates.phone;
           if (updates.email) org.email = updates.email;
           if (updates.logoUrl !== undefined) org.logo = updates.logoUrl;
           if (updates.signatureUrl !== undefined) org.signatureUrl = updates.signatureUrl;
-          if (updates.upiId !== undefined) org.bankDetails = org.bankDetails || {}; org.bankDetails.upiId = updates.upiId;
           
-          // Update bank details
+          // Update bank details and gstin
+          org.bankDetails = org.bankDetails || {};
+          if (updates.gstin !== undefined) org.bankDetails.gstin = updates.gstin;
+          if (updates.upiId !== undefined) org.bankDetails.upiId = updates.upiId;
+          
           if (updates.bankDetails) {
-            org.bankDetails = org.bankDetails || {};
             if (updates.bankDetails.bankName !== undefined) org.bankDetails.bankName = updates.bankDetails.bankName;
             if (updates.bankDetails.accountNo !== undefined) org.bankDetails.accountNumber = updates.bankDetails.accountNo;
             if (updates.bankDetails.ifscCode !== undefined) org.bankDetails.ifscCode = updates.bankDetails.ifscCode;
