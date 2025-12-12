@@ -189,9 +189,13 @@ async function generatePDF(req, res, id) {
 async function createInvoice(req, res) {
   try {
     // Validate organizationId is present
+    console.log('🔍 Debug - req.organizationId:', req.organizationId);
+    console.log('🔍 Debug - req.userId:', req.userId);
+    console.log('🔍 Debug - req.user:', req.user);
+    
     if (!req.organizationId) {
       console.error('❌ Missing organizationId in request');
-      return res.status(400).json({ success: false, message: 'Organization ID is required' });
+      return res.status(400).json({ success: false, message: 'Organization ID is required. Please ensure you are logged in properly.' });
     }
 
     const {
@@ -254,6 +258,7 @@ async function createInvoice(req, res) {
 
       processedItems.push({
         product: product._id,
+        productRef: product, // Store product reference for later stock update
         quantity: qty,
         price: price,
         discount: itemDiscount,
@@ -265,23 +270,6 @@ async function createInvoice(req, res) {
         sgstAmount: parseFloat(sgstAmount.toFixed(2)),
         total: parseFloat(itemTotal.toFixed(2))
       });
-
-      product.stock -= qty;
-      await product.save();
-
-      try {
-        await InventoryHistory.create({
-          organizationId: req.organizationId,
-          product: product._id,
-          type: 'sale',
-          quantity: -qty,
-          previousStock: product.stock + qty,
-          newStock: product.stock,
-          updatedBy: req.userId
-        });
-      } catch (invErr) {
-        console.warn('⚠️ Failed to log inventory:', invErr.message);
-      }
     }
 
     let additionalDiscount = parseFloat(discount) || 0;
@@ -308,7 +296,28 @@ async function createInvoice(req, res) {
     const grandTotal = Math.round(subtotal);
     const amountInWords = numberToWords(grandTotal);
 
+    // Create invoice items without productRef
+    const invoiceItems = processedItems.map(({ productRef, ...item }) => item);
+
+    // Generate invoice number manually as fallback
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const yearMonth = `${year}${month}`;
+    
+    const startOfMonth = new Date(year, date.getMonth(), 1);
+    const endOfMonth = new Date(year, date.getMonth() + 1, 0, 23, 59, 59);
+    
+    const monthCount = await Invoice.countDocuments({
+      organizationId: req.organizationId,
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+    
+    const invoiceNumber = `${yearMonth}-${String(monthCount + 1).padStart(3, '0')}`;
+    console.log('📝 Generated invoice number:', invoiceNumber);
+
     const invoice = await Invoice.create({
+      invoiceNumber,
       organizationId: req.organizationId,
       customer,
       buyerDetails: {
@@ -336,7 +345,7 @@ async function createInvoice(req, res) {
       deliveryNote: deliveryNote || '',
       referenceNo: referenceNo || '',
       buyerOrderNo: buyerOrderNo || '',
-      items: processedItems,
+      items: invoiceItems,
       subtotal: parseFloat(grossAmount.toFixed(2)),
       totalTaxableAmount: parseFloat(taxableAmount.toFixed(2)),
       totalCgst: parseFloat(totalCgst.toFixed(2)),
@@ -363,6 +372,30 @@ async function createInvoice(req, res) {
       });
     } catch (custErr) {
       console.warn('⚠️ Failed to update customer:', custErr.message);
+    }
+
+    // Invoice created successfully - now update stock
+    for (const item of processedItems) {
+      if (item.productRef) {
+        const previousStock = item.productRef.stock;
+        item.productRef.stock -= item.quantity;
+        await item.productRef.save();
+
+        // Log inventory history
+        try {
+          await InventoryHistory.create({
+            organizationId: req.organizationId,
+            product: item.product,
+            type: 'sale',
+            quantity: -item.quantity,
+            previousStock: previousStock,
+            newStock: item.productRef.stock,
+            updatedBy: req.userId
+          });
+        } catch (invErr) {
+          console.warn('⚠️ Failed to log inventory:', invErr.message);
+        }
+      }
     }
 
     const populatedInvoice = await Invoice.findById(invoice._id)
