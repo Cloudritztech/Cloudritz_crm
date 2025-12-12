@@ -24,14 +24,14 @@ const ModernLayout = ({ children }) => {
         
         if (response.ok) {
           const data = await response.json();
-          if (data.profile?.name) {
-            setBusinessName(data.profile.name);
-          } else if (data.profile?.businessName) {
-            setBusinessName(data.profile.businessName);
+          const name = data.profile?.businessName || data.profile?.name;
+          if (name) {
+            setBusinessName(name);
+            document.title = `${name} - CRM`;
           }
         }
       } catch (error) {
-        console.error('Failed to fetch logo:', error);
+        console.error('Failed to fetch business name:', error);
       }
     };
     fetchBusinessName();
