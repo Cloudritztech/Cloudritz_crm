@@ -56,7 +56,33 @@ export default async function handler(req, res) {
             return res.json({ success: true, profile: { businessName: 'Cloudritz CRM' } });
           }
           const org = await Organization.findById(req.organizationId);
-          return res.json({ success: true, profile: org || {} });
+          
+          // Transform organization data to match frontend expectations
+          const profile = {
+            businessName: org.name,
+            ownerName: org.ownerName,
+            businessAddress: org.address,
+            gstin: org.gstin || org.bankDetails?.gstin,
+            phone: org.phone,
+            email: org.email,
+            logoUrl: org.logo,
+            signatureUrl: org.signatureUrl,
+            bankDetails: {
+              bankName: org.bankDetails?.bankName || '',
+              accountNo: org.bankDetails?.accountNumber || '',
+              ifscCode: org.bankDetails?.ifscCode || '',
+              branch: org.bankDetails?.branch || ''
+            },
+            upiId: org.bankDetails?.upiId || '',
+            branding: org.branding || {
+              primaryColor: '#2563eb',
+              secondaryColor: '#3b82f6',
+              customDomain: '',
+              hideCloudiritzBranding: false
+            }
+          };
+          
+          return res.json({ success: true, profile });
         }
         
         if (req.method === 'PUT') {
