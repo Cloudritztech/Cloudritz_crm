@@ -132,12 +132,14 @@ const BusinessProfile = () => {
   };
 
   const handleSave = async () => {
+    console.log('💾 Saving profile...', profile);
     setSaving(true);
     setError(null);
 
     try {
       // Send JSON data only (no files)
       const response = await profileAPI.updateProfile(profile);
+      console.log('✅ Save response:', response);
       
       if (response.data?.success) {
         window.dispatchEvent(new CustomEvent('show-toast', {
@@ -148,10 +150,13 @@ const BusinessProfile = () => {
         }));
         
         await fetchProfile();
+      } else {
+        throw new Error(response.data?.message || 'Save failed');
       }
     } catch (error) {
-      console.error('Error saving profile:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to save profile';
+      console.error('❌ Error saving profile:', error);
+      console.error('Error response:', error.response);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save profile';
       setError(errorMessage);
       
       window.dispatchEvent(new CustomEvent('show-toast', {
