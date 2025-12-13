@@ -218,6 +218,29 @@ export default async function handler(req, res) {
         const InventoryHistory = (await import('../lib/models/InventoryHistory.js')).default;
         const NotificationSettings = (await import('../lib/models/NotificationSettings.js')).default;
         const SupportTicket = (await import('../lib/models/SupportTicket.js')).default;
+        const { deleteImage } = await import('../lib/cloudinary.js');
+        
+        // Get all images before deleting records
+        const [products, users, org] = await Promise.all([
+          Product.find({ organizationId: id }).select('image'),
+          User.find({ organizationId: id }).select('profileImage'),
+          Organization.findById(id).select('branding.logo')
+        ]);
+        
+        // Collect all image URLs
+        const imageUrls = [
+          ...products.map(p => p.image).filter(Boolean),
+          ...users.map(u => u.profileImage).filter(Boolean),
+          org?.branding?.logo
+        ].filter(Boolean);
+        
+        // Delete images from Cloudinary
+        if (imageUrls.length > 0) {
+          console.log(`Deleting ${imageUrls.length} images from Cloudinary...`);
+          await Promise.allSettled(
+            imageUrls.map(url => deleteImage(url))
+          );
+        }
         
         // CASCADE DELETE - Delete all related data
         await Promise.all([
@@ -234,7 +257,11 @@ export default async function handler(req, res) {
           SupportTicket.deleteMany({ organizationId: id })
         ]);
         
-        return res.json({ success: true, message: 'Organization and all related data deleted successfully' });
+        return res.json({ 
+          success: true, 
+          message: 'Organization and all related data deleted successfully',
+          imagesDeleted: imageUrls.length
+        });
       }
       
       // Get organizations list (for users page)
