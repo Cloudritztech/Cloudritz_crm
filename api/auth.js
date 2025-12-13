@@ -103,7 +103,8 @@ export default async function handler(req, res) {
           name: user.name,
           email: user.email,
           role: user.role || 'staff',
-          profileImage: user.profileImage || ''
+          profileImage: user.profileImage || '',
+          businessProfile: user.businessProfile || {}
         },
         organization: organization ? {
           id: organization._id,
