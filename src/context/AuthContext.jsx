@@ -71,21 +71,15 @@ export const AuthProvider = ({ children }) => {
       }
       
       console.log('💾 Saving auth data...');
+      
+      // Save to localStorage first
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      // Verify save
-      const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (!savedToken || !savedUser) {
-        throw new Error('Failed to save auth data to localStorage');
-      }
-      
-      console.log('✅ Auth data saved successfully');
-      console.log('👤 User:', user);
-      
+      // Then update state synchronously
       setUser(user);
+      
+      console.log('✅ Auth complete - User:', user.email, 'Role:', user.role);
       
       return { success: true, user };
     } catch (error) {

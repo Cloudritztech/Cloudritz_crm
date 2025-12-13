@@ -25,14 +25,16 @@ const Login = () => {
       if (result.success) {
         console.log('Login successful, user:', result.user);
         toast.success('Login successful!');
-        navigate('/', { replace: true });
+        // Small delay to ensure state is fully updated
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 100);
       } else {
         toast.error(result.message);
         setLoading(false);
       }
     } catch (error) {
       console.error('Login error:', error);
-      sessionStorage.setItem('loginError', JSON.stringify({ message: error.message, stack: error.stack }));
       toast.error('Login failed: ' + error.message);
       setLoading(false);
     }

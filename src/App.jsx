@@ -47,15 +47,41 @@ const SkeletonLoader = () => (
 );
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, loading, user } = useAuth();
+  
+  console.log('🛡️ ProtectedRoute check:', { loading, isAuthenticated, hasUser: !!user });
+  
+  if (loading) {
+    console.log('⏳ Still loading auth...');
+    return <PageLoader />;
+  }
+  
+  if (!isAuthenticated) {
+    console.log('❌ Not authenticated, redirecting to login');
+    return <Navigate to="/login" replace />;
+  }
+  
+  console.log('✅ Authenticated, rendering protected content');
+  return children;
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  return isAuthenticated ? <Navigate to="/" replace /> : children;
+  const { isAuthenticated, loading, user } = useAuth();
+  
+  console.log('🔓 PublicRoute check:', { loading, isAuthenticated, hasUser: !!user });
+  
+  if (loading) {
+    console.log('⏳ Still loading auth...');
+    return <PageLoader />;
+  }
+  
+  if (isAuthenticated) {
+    console.log('✅ Already authenticated, redirecting to dashboard');
+    return <Navigate to="/" replace />;
+  }
+  
+  console.log('🔓 Not authenticated, showing public page');
+  return children;
 };
 
 function AppContent() {
