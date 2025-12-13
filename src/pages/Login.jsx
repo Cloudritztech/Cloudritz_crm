@@ -18,6 +18,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    sessionStorage.setItem('loginInProgress', 'true');
 
     try {
       const result = await login(formData);
@@ -26,10 +27,12 @@ const Login = () => {
         toast.success('Login successful!');
         navigate('/', { replace: true });
       } else {
+        sessionStorage.removeItem('loginInProgress');
         toast.error(result.message);
         setLoading(false);
       }
     } catch (error) {
+      sessionStorage.removeItem('loginInProgress');
       toast.error('Login failed: ' + error.message);
       setLoading(false);
     }
