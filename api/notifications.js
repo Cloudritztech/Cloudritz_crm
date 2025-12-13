@@ -7,11 +7,9 @@ import { tenantIsolation } from '../lib/middleware/tenant.js';
 export default async function handler(req, res) {
   await connectDB();
 
-  const authResult = await authenticate(req, res);
-  if (!authResult.success) return;
-
-  const tenantResult = await tenantIsolation(req, res);
-  if (!tenantResult.success) return;
+  // Use middleware properly
+  return authenticate(req, res, async () => {
+    return tenantIsolation(req, res, async () => {
 
   const { method } = req;
   const { id, action } = req.query;
@@ -121,4 +119,6 @@ export default async function handler(req, res) {
     console.error('Notifications API error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
+    });
+  });
 }
