@@ -19,10 +19,6 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-console.log('🌐 API Base URL:', API_BASE_URL);
-console.log('🌍 Environment:', import.meta.env.MODE);
-console.log('📝 Production mode:', import.meta.env.PROD);
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -48,11 +44,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message
-    });
     
     // Handle blocked account
     if (error.response?.status === 403 && error.response?.data?.blocked) {

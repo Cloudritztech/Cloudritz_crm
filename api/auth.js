@@ -81,13 +81,6 @@ export default async function handler(req, res) {
       let organization = null;
       if (user.role && user.role !== 'superadmin' && user.organizationId) {
         organization = await Organization.findById(user.organizationId);
-        console.log('🔍 Login org check:', { 
-          userId: user._id, 
-          orgId: user.organizationId, 
-          found: !!organization,
-          isActive: organization?.isActive,
-          subscriptionStatus: organization?.subscription?.status
-        });
         
         if (!organization) {
           return res.status(403).json({ message: 'Organization not found' });
@@ -127,7 +120,7 @@ export default async function handler(req, res) {
         } : null
       });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.message);
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   } else if (action === 'register' && req.method === 'POST') {

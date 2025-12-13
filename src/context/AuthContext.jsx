@@ -24,16 +24,10 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
       
-      console.log('🔐 Auth init - token:', !!token, 'userData:', !!userData);
-      
       if (token && userData) {
         try {
           const parsedUser = JSON.parse(userData);
-          console.log('✅ Restoring user session:', parsedUser);
-          
-          // Validate user object has required fields
           if (!parsedUser.id || !parsedUser.email) {
-            console.error('❌ Invalid user data structure:', parsedUser);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             setUser(null);
@@ -41,13 +35,11 @@ export const AuthProvider = ({ children }) => {
             setUser(parsedUser);
           }
         } catch (error) {
-          console.error('❌ Error parsing user data:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setUser(null);
         }
       } else {
-        console.log('ℹ️ No stored auth found');
         setUser(null);
       }
       
@@ -59,34 +51,19 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log('🔑 Attempting login...');
       const response = await authAPI.login(credentials);
-      console.log('✅ Login response received:', response.data);
-      
       const { token, user } = response.data;
       
-      if (!token || !user) {
-        throw new Error('Invalid response from server - missing token or user');
+      if (!token || !user || !user.id || !user.email) {
+        throw new Error('Invalid response from server');
       }
       
-      if (!user.id || !user.email) {
-        throw new Error('Invalid user data - missing required fields');
-      }
-      
-      console.log('💾 Saving auth data...');
-      
-      // Save to localStorage first
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      
-      // Then update state synchronously
       setUser(user);
-      
-      console.log('✅ Auth complete - User:', user.email, 'Role:', user.role);
       
       return { success: true, user };
     } catch (error) {
-      console.error('❌ Login error:', error);
       return { 
         success: false, 
         message: error.response?.data?.message || error.message || 'Login failed' 
@@ -113,7 +90,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    console.log('Logout called');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

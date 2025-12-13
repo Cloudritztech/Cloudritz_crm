@@ -20,25 +20,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      console.log('🔐 Login form submitted');
       const result = await login(formData);
       
       if (result.success) {
-        console.log('✅ Login successful, user:', result.user);
-        console.log('📦 Checking localStorage after login:', {
-          hasToken: !!localStorage.getItem('token'),
-          hasUser: !!localStorage.getItem('user')
-        });
         toast.success('Login successful!');
-        // Navigate immediately - state is already set
         navigate('/', { replace: true });
       } else {
-        console.log('❌ Login failed:', result.message);
         toast.error(result.message);
         setLoading(false);
       }
     } catch (error) {
-      console.error('❌ Login error:', error);
       toast.error('Login failed: ' + error.message);
       setLoading(false);
     }
