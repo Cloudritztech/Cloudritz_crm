@@ -21,12 +21,24 @@ import Button from '../components/ui/Button';
 import SalesSummaryCard from '../components/SalesSummaryCard';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(() => {
+    // Load from cache immediately
+    const cached = localStorage.getItem('dashboard_cache');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
+    // Fetch fresh data in background
     fetchAllData();
     
     // Prefetch common pages
@@ -34,9 +46,18 @@ const Dashboard = () => {
       productsAPI.getAll().catch(() => {});
       customersAPI.getAll().catch(() => {});
       invoicesAPI.getAll().catch(() => {});
-    }, 2000);
+    }, 1000);
     
-    return () => clearTimeout(prefetchTimer);
+    // Listen for data changes
+    const handleDataChange = () => {
+      fetchAllData();
+    };
+    window.addEventListener('data-changed', handleDataChange);
+    
+    return () => {
+      clearTimeout(prefetchTimer);
+      window.removeEventListener('data-changed', handleDataChange);
+    };
   }, []);
 
   const fetchAllData = async () => {
@@ -44,7 +65,10 @@ const Dashboard = () => {
       setError(null);
       const dashboardRes = await reportsAPI.getDashboard();
       if (dashboardRes.data?.success && dashboardRes.data?.stats) {
-        setStats(dashboardRes.data.stats);
+        const newStats = dashboardRes.data.stats;
+        setStats(newStats);
+        // Cache the data
+        localStorage.setItem('dashboard_cache', JSON.stringify(newStats));
       }
       setLastUpdated(new Date());
     } catch (error) {

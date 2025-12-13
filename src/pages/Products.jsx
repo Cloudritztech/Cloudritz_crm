@@ -91,6 +91,7 @@ const Products = () => {
       setShowModal(false);
       setEditingProduct(null);
       fetchProducts();
+      window.dispatchEvent(new Event('data-changed'));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed');
     }
