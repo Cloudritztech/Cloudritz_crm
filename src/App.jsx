@@ -4,8 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Toast from './components/ui/Toast';
 import BlockedAccountModal from './components/BlockedAccountModal';
-
-const ModernLayout = lazy(() => import('./components/ModernLayout'));
+import ModernLayout from './components/ModernLayout';
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Support = lazy(() => import('./pages/Support'));
