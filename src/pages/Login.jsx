@@ -12,7 +12,7 @@ const Login = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,7 +22,6 @@ const Login = () => {
     const result = await login(formData);
     
     if (result.success) {
-      // Block superadmin from CRM app
       if (result.user?.role === 'superadmin') {
         toast.error('Please use the admin panel at admin.cloudritz.com');
         logout();
