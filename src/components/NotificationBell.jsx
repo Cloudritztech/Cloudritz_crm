@@ -27,13 +27,18 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
       const response = await api.get('/notifications');
       if (response.data.success) {
-        setNotifications(response.data.notifications);
-        setUnreadCount(response.data.unreadCount);
+        setNotifications(response.data.notifications || []);
+        setUnreadCount(response.data.unreadCount || 0);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 

@@ -29,12 +29,16 @@ const UserMenu = () => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
         const response = await profileAPI.getProfile();
         if (response.data?.profile?.logoUrl) {
           setLogoUrl(response.data.profile.logoUrl);
         }
       } catch (error) {
         console.error('Failed to fetch logo:', error);
+        setLogoUrl('');
       }
     };
     fetchLogo();
