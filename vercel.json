@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/**/*.js": {
+    "api/index.js": {
+      "maxDuration": 30
+    },
+    "api/cron/daily-notifications.js": {
       "maxDuration": 30
     }
   },
@@ -13,6 +16,10 @@
   ],
 
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
     {
       "source": "/((?!api|assets).*)",
       "destination": "/index.html"
