@@ -68,10 +68,14 @@ api.interceptors.response.use(
       const isLoginPage = window.location.pathname === '/login';
       
       if (!isAuthEndpoint && !isLoginPage) {
-        console.log('Unauthorized - clearing auth and redirecting');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        console.log('Unauthorized - token may be invalid');
+        // Don't auto-redirect, let the app handle it
+        // Only clear auth if it's a token validation error
+        if (error.response?.data?.message?.includes('token') || error.response?.data?.message?.includes('Invalid')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
