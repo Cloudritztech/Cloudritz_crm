@@ -11,9 +11,10 @@ const ModernLayout = ({ children }) => {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [businessName, setBusinessName] = useState('Cloudritz CRM');
+  const [logoUrl, setLogoUrl] = useState('');
 
   useEffect(() => {
-    const fetchBusinessName = async () => {
+    const fetchBusinessProfile = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -25,16 +26,21 @@ const ModernLayout = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           const name = data.profile?.businessName || data.profile?.name;
+          const logo = data.profile?.logoUrl;
+          
           if (name) {
             setBusinessName(name);
             document.title = `${name} - CRM`;
           }
+          if (logo) {
+            setLogoUrl(logo);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch business name:', error);
+        console.error('Failed to fetch business profile:', error);
       }
     };
-    fetchBusinessName();
+    fetchBusinessProfile();
   }, []);
 
   const navigation = [
@@ -58,9 +64,13 @@ const ModernLayout = ({ children }) => {
         <div className="flex flex-col flex-grow bg-white dark:bg-[#141619] border-r border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+                <span className="text-white font-bold text-sm">C</span>
+              </div>
+            )}
             <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
           </div>
 
@@ -95,9 +105,13 @@ const ModernLayout = ({ children }) => {
           <div className="h-full px-4 sm:px-6 flex items-center justify-between">
             {/* Left: Logo (Mobile Only) */}
             <div className="flex items-center space-x-3 lg:hidden">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
-                <span className="text-white font-bold text-sm">C</span>
-              </div>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
+              ) : (
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+                  <span className="text-white font-bold text-sm">C</span>
+                </div>
+              )}
               <span className="text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
             </div>
 
