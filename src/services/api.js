@@ -53,22 +53,16 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
     
-    // Handle 401 - but NEVER redirect during login
+    // Handle 401 - Don't auto-logout, let app handle it
     if (error.response?.status === 401) {
-      const isAuthEndpoint = error.config?.url?.includes('/auth');
-      const isLoginPage = window.location.pathname === '/login';
-      
-      // Don't do anything if we're on login page or calling auth endpoint
-      if (isAuthEndpoint || isLoginPage) {
-        console.log('⚠️ Auth error on login - letting component handle it');
-        return Promise.reject(error);
+      // Only redirect if explicitly unauthorized (not just token issues)
+      if (error.response?.data?.message?.includes('Access denied')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
-      
-      // Only clear and redirect for other protected routes
-      console.log('🚫 Unauthorized access - clearing auth');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
     }
     
     return Promise.reject(error);

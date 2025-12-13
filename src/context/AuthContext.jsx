@@ -21,28 +21,23 @@ export const AuthProvider = ({ children }) => {
     initRef.current = true;
     
     const initAuth = () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-      
-      if (token && userData) {
-        try {
+      try {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        
+        if (token && userData) {
           const parsedUser = JSON.parse(userData);
-          if (!parsedUser.id || !parsedUser.email) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setUser(null);
-          } else {
+          if (parsedUser.id && parsedUser.email) {
             setUser(parsedUser);
+            setLoading(false);
+            return;
           }
-        } catch (error) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
         }
-      } else {
-        setUser(null);
+      } catch (error) {
+        console.error('Auth init error:', error);
       }
       
+      setUser(null);
       setLoading(false);
     };
     
