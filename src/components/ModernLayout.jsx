@@ -9,39 +9,14 @@ import NotificationBell from './NotificationBell';
 const ModernLayout = ({ children }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [businessName, setBusinessName] = useState('Cloudritz CRM');
-  const [logoUrl, setLogoUrl] = useState('');
+  const businessName = user?.businessProfile?.businessName || 'Cloudritz CRM';
+  const logoUrl = user?.businessProfile?.logo || '';
 
   useEffect(() => {
-    const fetchBusinessProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        const response = await fetch('/api/account?type=profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const name = data.profile?.businessName || data.profile?.name;
-          const logo = data.profile?.logoUrl;
-          
-          if (name) {
-            setBusinessName(name);
-            document.title = `${name} - CRM`;
-          }
-          if (logo) {
-            setLogoUrl(logo);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch business profile:', error);
-      }
-    };
-    fetchBusinessProfile();
-  }, []);
+    if (businessName) {
+      document.title = `${businessName} - CRM`;
+    }
+  }, [businessName]);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
