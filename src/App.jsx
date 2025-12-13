@@ -5,7 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Toast from './components/ui/Toast';
 import BlockedAccountModal from './components/BlockedAccountModal';
 
-const ModernLayout = lazy(() => import('./components/ModernLayout'));
+const Layout = lazy(() => import('./components/Layout'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Support = lazy(() => import('./pages/Support'));
@@ -96,7 +96,7 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
-                      <ModernLayout>
+                      <Layout>
                         <Suspense fallback={<SkeletonLoader />}>
                           <Routes>
                             <Route path="/" element={<Dashboard />} />
@@ -117,7 +117,7 @@ function AppContent() {
 
                           </Routes>
                         </Suspense>
-                      </ModernLayout>
+                      </Layout>
                     </Suspense>
                   </ProtectedRoute>
                 } 
