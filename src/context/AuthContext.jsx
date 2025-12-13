@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
@@ -14,8 +14,12 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initRef = useRef(false);
 
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    
     const initAuth = () => {
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
@@ -51,7 +55,6 @@ export const AuthProvider = ({ children }) => {
     };
     
     initAuth();
-
   }, []);
 
   const login = async (credentials) => {
