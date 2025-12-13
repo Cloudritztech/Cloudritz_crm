@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SettingsCard from '../../components/settings/SettingsCard';
 import SettingsToggle from '../../components/settings/SettingsToggle';
 import Button from '../../components/ui/Button';
 import { Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const NotificationSettings = () => {
   const [settings, setSettings] = useState({
@@ -13,9 +14,53 @@ const NotificationSettings = () => {
     dailyReports: false,
     weeklyReports: false
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    toast.success('Notification settings saved!');
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.get('/api/notifications?action=settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success && data.settings) {
+        setSettings({
+          emailNotifications: data.settings.emailNotifications,
+          lowStockAlerts: data.settings.lowStockAlerts,
+          paymentReminders: data.settings.paymentReminders,
+          dailyReports: data.settings.dailyReports,
+          weeklyReports: data.settings.weeklyReports
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.put('/api/notifications?action=settings', settings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success) {
+        toast.success('Notification settings saved successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -56,7 +101,7 @@ const NotificationSettings = () => {
       </SettingsCard>
 
       <div className="flex items-center justify-end sticky bottom-4 bg-white dark:bg-[#141619] p-4 rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.04)] shadow-lg">
-        <Button onClick={handleSave} icon={Save}>
+        <Button onClick={handleSave} icon={Save} loading={saving} disabled={loading}>
           Save Changes
         </Button>
       </div>

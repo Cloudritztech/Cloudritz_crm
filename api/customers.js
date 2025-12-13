@@ -1,6 +1,7 @@
 import connectDB from '../lib/mongodb.js';
 import Customer from '../lib/models/Customer.js';
 import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
+import { createNewCustomerNotification } from '../lib/notificationTriggers.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -105,6 +106,14 @@ export default async function handler(req, res) {
         try {
           const customer = await Customer.create({ ...req.body, organizationId: req.organizationId });
           console.log('✅ Customer created:', customer.name);
+          
+          // Create new customer notification
+          try {
+            await createNewCustomerNotification(req.organizationId, customer);
+          } catch (notifErr) {
+            console.warn('⚠️ Failed to create customer notification:', notifErr.message);
+          }
+          
           return res.status(201).json({ success: true, customer });
         } catch (error) {
           console.error('❌ Error creating customer:', error);

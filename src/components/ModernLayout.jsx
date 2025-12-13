@@ -4,7 +4,7 @@ import { Home, Package, Users, FileText, DollarSign, UserCheck } from 'lucide-re
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
-import NotificationCenter from './NotificationCenter';
+import NotificationBell from './NotificationBell';
 
 const ModernLayout = ({ children }) => {
   const location = useLocation();
@@ -120,7 +120,7 @@ const ModernLayout = ({ children }) => {
 
             {/* Right: Notifications & User Menu */}
             <div className="flex items-center space-x-3">
-              <NotificationCenter />
+              <NotificationBell />
               <UserMenu />
             </div>
           </div>

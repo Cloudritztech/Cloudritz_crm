@@ -5,6 +5,13 @@
     }
   },
 
+  "crons": [
+    {
+      "path": "/api/cron/daily-notifications",
+      "schedule": "0 9 * * *"
+    }
+  ],
+
   "rewrites": [
     {
       "source": "/((?!api).*)",

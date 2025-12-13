@@ -2,6 +2,8 @@ import connectDB from '../lib/mongodb.js';
 import { authenticate } from '../lib/middleware/tenant.js';
 import Organization from '../lib/models/Organization.js';
 import User from '../lib/models/User.js';
+import Notification from '../lib/models/Notification.js';
+import { generateNotificationMessage } from '../lib/gemini.js';
 
 
 
@@ -175,6 +177,20 @@ export default async function handler(req, res) {
         
         const org = await Organization.findByIdAndUpdate(id, updateData, { new: true });
         
+        // Create notification
+        if (isBlocked !== undefined) {
+          const notifType = isBlocked ? 'account_blocked' : 'account_unblocked';
+          const message = await generateNotificationMessage(notifType, { reason: blockReason });
+          
+          await Notification.create({
+            organizationId: id,
+            type: notifType,
+            title: isBlocked ? 'Account Blocked' : 'Account Activated',
+            message,
+            metadata: { blockReason, updatedBy: 'Super Admin' }
+          });
+        }
+        
         return res.json({ success: true, message: isBlocked ? 'Organization blocked' : 'Organization activated', data: org });
       }
       
@@ -229,6 +245,47 @@ export default async function handler(req, res) {
         const user = await User.findByIdAndUpdate(id, updates, { new: true }).select('-password');
         
         return res.json({ success: true, message: 'User updated', user });
+      }
+      
+      // Send message to organization
+      if (type === 'superadmin' && action === 'send-message' && method === 'POST') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const { organizationId, message, title } = req.body;
+        
+        const notifTitle = title || await generateNotificationMessage('admin_message', { message });
+        
+        await Notification.create({
+          organizationId,
+          type: 'admin_message',
+          title: notifTitle,
+          message,
+          metadata: { sentBy: 'Super Admin', sentAt: new Date() }
+        });
+        
+        return res.json({ success: true, message: 'Message sent successfully' });
+      }
+      
+      // Broadcast message to all organizations
+      if (type === 'superadmin' && action === 'broadcast-message' && method === 'POST') {
+        if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
+        
+        const { message, title } = req.body;
+        const orgs = await Organization.find({ isActive: true }).select('_id');
+        
+        const notifTitle = title || await generateNotificationMessage('system_update', { updateInfo: message });
+        
+        const notifications = orgs.map(org => ({
+          organizationId: org._id,
+          type: 'system_update',
+          title: notifTitle,
+          message,
+          metadata: { broadcast: true, sentBy: 'Super Admin' }
+        }));
+        
+        await Notification.insertMany(notifications);
+        
+        return res.json({ success: true, message: `Broadcast sent to ${orgs.length} organizations` });
       }
       
 

@@ -6,6 +6,8 @@ import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 import { generateInvoicePDF } from '../lib/pdfGenerator.js';
 import { numberToWords } from '../lib/numberToWords.js';
+import { createLargeSaleNotification, createPaymentReminderNotification } from '../lib/notificationTriggers.js';
+import NotificationSettings from '../lib/models/NotificationSettings.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -402,6 +404,23 @@ async function createInvoice(req, res) {
       .populate('customer', 'name phone address')
       .populate('items.product', 'name category')
       .populate('createdBy', 'name');
+
+    // Create notifications based on settings
+    try {
+      const settings = await NotificationSettings.findOne({ organizationId: req.organizationId });
+      
+      // Large sale notification (if total > 10000)
+      if (grandTotal > 10000) {
+        await createLargeSaleNotification(req.organizationId, populatedInvoice);
+      }
+      
+      // Payment reminder for pending payments
+      if ((!settings || settings.paymentReminders) && paymentMethod === 'credit') {
+        await createPaymentReminderNotification(req.organizationId, populatedInvoice);
+      }
+    } catch (notifErr) {
+      console.warn('⚠️ Failed to create notifications:', notifErr.message);
+    }
 
     return res.status(201).json({
       success: true,

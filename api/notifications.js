@@ -1,177 +1,124 @@
 import connectDB from '../lib/mongodb.js';
 import Notification from '../lib/models/Notification.js';
-import Invoice from '../lib/models/Invoice.js';
-import Product from '../lib/models/Product.js';
-import Customer from '../lib/models/Customer.js';
-import Expense from '../lib/models/Expense.js';
-import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
-import { generateDailyInsights } from '../lib/notificationGenerator.js';
-
-async function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
-  });
-}
+import NotificationSettings from '../lib/models/NotificationSettings.js';
+import { authenticate } from '../lib/middleware/auth.js';
+import { tenantIsolation } from '../lib/middleware/tenant.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  await connectDB();
+
+  const authResult = await authenticate(req, res);
+  if (!authResult.success) return;
+
+  const tenantResult = await tenantIsolation(req, res);
+  if (!tenantResult.success) return;
+
+  const { method } = req;
+  const { id, action } = req.query;
 
   try {
-    await connectDB();
-    await authenticate(req, res, async () => {
-      await tenantIsolation(req, res, async () => {
-
-    const { method, query } = req;
-
-    switch (method) {
-      case 'GET':
-        if (query.action === 'generate-daily') {
-          return await generateDaily(req, res);
-        }
-        
-        if (query.action === 'unread-count') {
-          const count = await Notification.countDocuments({ 
-            organizationId: req.organizationId,
-            userId: req.user._id, 
-            isRead: false 
-          });
-          return res.status(200).json({ success: true, count });
-        }
-
-        const { limit = 20, unreadOnly } = query;
-        const filter = { organizationId: req.organizationId, userId: req.user._id };
-        if (unreadOnly === 'true') filter.isRead = false;
-
-        const notifications = await Notification.find(filter)
-          .sort({ createdAt: -1 })
-          .limit(parseInt(limit));
-        
-        return res.status(200).json({ success: true, notifications });
-
-      case 'POST':
-        const notification = await Notification.create({
-          ...req.body,
-          organizationId: req.organizationId,
-          userId: req.user._id
-        });
-        return res.status(201).json({ success: true, notification });
-
-      case 'PUT':
-        if (query.action === 'mark-read') {
-          const { id } = query;
-          if (id === 'all') {
-            await Notification.updateMany(
-              { userId: req.user._id, isRead: false },
-              { isRead: true, readAt: new Date() }
-            );
-            return res.status(200).json({ success: true, message: 'All marked as read' });
-          }
-          
-          const updated = await Notification.findOneAndUpdate(
-            { _id: id, userId: req.user._id },
-            { isRead: true, readAt: new Date() },
-            { new: true }
-          );
-          return res.status(200).json({ success: true, notification: updated });
-        }
-        break;
-
-      case 'DELETE':
-        if (query.id === 'all') {
-          await Notification.deleteMany({ userId: req.user._id });
-          return res.status(200).json({ success: true, message: 'All deleted' });
-        }
-        
-        await Notification.findOneAndDelete({ _id: query.id, userId: req.user._id });
-        return res.status(200).json({ success: true, message: 'Deleted' });
-
-      default:
-        return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+    // GET - Fetch notification settings
+    if (method === 'GET' && action === 'settings') {
+      let settings = await NotificationSettings.findOne({ 
+        organizationId: req.organizationId 
       });
-    });
-  } catch (error) {
-    console.error('Notification API error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}
 
-async function generateDaily(req, res) {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const [todaySales, weeklySales, monthlySales, customers, lowStock, pending, expenses] = await Promise.all([
-      Invoice.aggregate([
-        { $match: { organizationId: req.organizationId, createdAt: { $gte: today } } },
-        { $group: { _id: null, total: { $sum: '$total' } } }
-      ]),
-      Invoice.aggregate([
-        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000) } } },
-        { $group: { _id: null, total: { $sum: '$total' } } }
-      ]),
-      Invoice.aggregate([
-        { $match: { organizationId: req.organizationId, createdAt: { $gte: new Date(today.getFullYear(), today.getMonth(), 1) } } },
-        { $group: { _id: null, total: { $sum: '$total' } } }
-      ]),
-      Customer.countDocuments({ organizationId: req.organizationId }),
-      Product.countDocuments({ organizationId: req.organizationId, $expr: { $lte: ['$stock', '$minStock'] } }),
-      Invoice.aggregate([
-        { $match: { organizationId: req.organizationId, status: 'pending' } },
-        { $group: { _id: null, total: { $sum: '$total' } } }
-      ]),
-      Expense.aggregate([
-        { $match: { organizationId: req.organizationId } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ])
-    ]);
+      if (!settings) {
+        settings = await NotificationSettings.create({
+          organizationId: req.organizationId,
+          emailNotifications: true,
+          lowStockAlerts: true,
+          paymentReminders: true,
+          dailyReports: false,
+          weeklyReports: false
+        });
+      }
 
-    const businessData = {
-      todaySales: todaySales[0]?.total || 0,
-      weeklySales: weeklySales[0]?.total || 0,
-      monthlySales: monthlySales[0]?.total || 0,
-      totalCustomers: customers,
-      lowStockCount: lowStock,
-      pendingPayments: pending[0]?.total || 0,
-      totalExpenses: expenses[0]?.total || 0,
-      profitMargin: ((monthlySales[0]?.total || 0) - (expenses[0]?.total || 0)) / (monthlySales[0]?.total || 1) * 100
-    };
+      return res.status(200).json({ success: true, settings });
+    }
 
-    const aiNotifications = await generateDailyInsights(businessData);
-    
-    // Delete old AI insights
-    await Notification.deleteMany({
-      organizationId: req.organizationId,
-      userId: req.user._id,
-      category: 'ai-insight',
-      createdAt: { $lt: today }
-    });
+    // PUT - Update notification settings
+    if (method === 'PUT' && action === 'settings') {
+      const { emailNotifications, lowStockAlerts, paymentReminders, dailyReports, weeklyReports } = req.body;
 
-    // Create new notifications
-    const created = await Notification.insertMany(
-      aiNotifications.map(n => ({
-        ...n,
+      let settings = await NotificationSettings.findOne({ 
+        organizationId: req.organizationId 
+      });
+
+      if (!settings) {
+        settings = await NotificationSettings.create({
+          organizationId: req.organizationId,
+          emailNotifications,
+          lowStockAlerts,
+          paymentReminders,
+          dailyReports,
+          weeklyReports
+        });
+      } else {
+        settings.emailNotifications = emailNotifications;
+        settings.lowStockAlerts = lowStockAlerts;
+        settings.paymentReminders = paymentReminders;
+        settings.dailyReports = dailyReports;
+        settings.weeklyReports = weeklyReports;
+        await settings.save();
+      }
+
+      return res.status(200).json({ success: true, settings });
+    }
+
+    // GET - Fetch notifications
+    if (method === 'GET' && !action) {
+      const notifications = await Notification.find({ 
+        organizationId: req.organizationId 
+      })
+        .sort({ createdAt: -1 })
+        .limit(50);
+
+      const unreadCount = await Notification.countDocuments({
         organizationId: req.organizationId,
-        userId: req.user._id,
-        category: 'ai-insight',
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-      }))
-    );
+        isRead: false
+      });
 
-    return res.status(200).json({ 
-      success: true, 
-      notifications: created,
-      message: `Generated ${created.length} AI insights`
-    });
+      return res.status(200).json({ 
+        success: true, 
+        notifications,
+        unreadCount
+      });
+    }
+
+    // PUT - Mark as read
+    if (method === 'PUT' && action === 'mark-read') {
+      if (id) {
+        // Mark single notification as read
+        await Notification.findOneAndUpdate(
+          { _id: id, organizationId: req.organizationId },
+          { isRead: true }
+        );
+      } else {
+        // Mark all as read
+        await Notification.updateMany(
+          { organizationId: req.organizationId, isRead: false },
+          { isRead: true }
+        );
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    // DELETE - Delete notification
+    if (method === 'DELETE' && id) {
+      await Notification.findOneAndDelete({ 
+        _id: id, 
+        organizationId: req.organizationId 
+      });
+
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid request' });
+
   } catch (error) {
-    console.error('Daily generation error:', error);
+    console.error('Notifications API error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 }
