@@ -81,7 +81,18 @@ export default async function handler(req, res) {
       let organization = null;
       if (user.role && user.role !== 'superadmin' && user.organizationId) {
         organization = await Organization.findById(user.organizationId);
-        if (!organization || !organization.isActive) {
+        console.log('🔍 Login org check:', { 
+          userId: user._id, 
+          orgId: user.organizationId, 
+          found: !!organization,
+          isActive: organization?.isActive,
+          subscriptionStatus: organization?.subscription?.status
+        });
+        
+        if (!organization) {
+          return res.status(403).json({ message: 'Organization not found' });
+        }
+        if (!organization.isActive) {
           return res.status(403).json({ message: 'Organization inactive' });
         }
         if (organization.subscription.status !== 'active') {
@@ -103,6 +114,7 @@ export default async function handler(req, res) {
           name: user.name,
           email: user.email,
           role: user.role || 'staff',
+          organizationId: user.organizationId || null,
           profileImage: user.profileImage || '',
           businessProfile: user.businessProfile || {}
         },
