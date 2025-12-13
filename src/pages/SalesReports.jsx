@@ -9,7 +9,6 @@ import Input from '../components/ui/Input';
 import { StatCard } from '../components/ui/Card';
 import Loading from '../components/ui/Loading';
 import SalesChart from '../components/SalesChart';
-import { analyzeBusinessData } from '../../lib/gemini';
 
 const SalesReports = () => {
   const navigate = useNavigate();
@@ -196,21 +195,8 @@ const SalesReports = () => {
   };
 
   const generateAIInsights = async (data) => {
-    setLoadingAI(true);
-    try {
-      const insights = await analyzeBusinessData({
-        totalSales: data.totalAmount,
-        totalCustomers: data.totalOrders,
-        totalProducts: 0,
-        topProduct: 'N/A',
-        growth: data.growthRate
-      });
-      setAiInsights(insights);
-    } catch (error) {
-      console.error('AI analysis failed:', error);
-    } finally {
-      setLoadingAI(false);
-    }
+    // AI insights disabled - function not available in gemini.js
+    setAiInsights(null);
   };
 
   return (
