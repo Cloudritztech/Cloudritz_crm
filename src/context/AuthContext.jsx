@@ -16,71 +16,80 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    console.log('Auth init - token:', !!token, 'userData:', !!userData);
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        console.log('Setting user:', parsedUser);
-        
-        // Validate user object has required fields
-        if (!parsedUser.id || !parsedUser.email) {
-          console.error('Invalid user data structure:', parsedUser);
-          sessionStorage.setItem('authError', 'Invalid user data structure');
+    const initAuth = () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      console.log('🔐 Auth init - token:', !!token, 'userData:', !!userData);
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('✅ Restoring user session:', parsedUser);
+          
+          // Validate user object has required fields
+          if (!parsedUser.id || !parsedUser.email) {
+            console.error('❌ Invalid user data structure:', parsedUser);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          } else {
+            setUser(parsedUser);
+          }
+        } catch (error) {
+          console.error('❌ Error parsing user data:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-        } else {
-          setUser(parsedUser);
+          setUser(null);
         }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        sessionStorage.setItem('authError', error.message);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      } else {
+        console.log('ℹ️ No stored auth found');
+        setUser(null);
       }
-    }
-    setLoading(false);
-
-    // Listen for storage changes (when another tab logs in/out)
-    const handleStorageChange = (e) => {
-      if (e.key === 'token' || e.key === 'user') {
-        // Reload the page when auth changes in another tab
-        window.location.reload();
-      }
+      
+      setLoading(false);
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    initAuth();
+
   }, []);
 
   const login = async (credentials) => {
     try {
+      console.log('🔑 Attempting login...');
       const response = await authAPI.login(credentials);
-      console.log('Login response:', response.data);
+      console.log('✅ Login response received:', response.data);
+      
       const { token, user } = response.data;
       
       if (!token || !user) {
-        throw new Error('Invalid response from server');
+        throw new Error('Invalid response from server - missing token or user');
       }
       
-      console.log('Saving to localStorage - token:', !!token, 'user:', user);
+      if (!user.id || !user.email) {
+        throw new Error('Invalid user data - missing required fields');
+      }
+      
+      console.log('💾 Saving auth data...');
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      console.log('Verifying localStorage save...');
+      // Verify save
       const savedToken = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
-      console.log('Saved token:', !!savedToken, 'Saved user:', !!savedUser);
+      
+      if (!savedToken || !savedUser) {
+        throw new Error('Failed to save auth data to localStorage');
+      }
+      
+      console.log('✅ Auth data saved successfully');
+      console.log('👤 User:', user);
       
       setUser(user);
       
       return { success: true, user };
     } catch (error) {
-      console.error('Login error:', error);
-      sessionStorage.setItem('loginError', error.message);
+      console.error('❌ Login error:', error);
       return { 
         success: false, 
         message: error.response?.data?.message || error.message || 'Login failed' 

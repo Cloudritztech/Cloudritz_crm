@@ -23,13 +23,6 @@ const Login = () => {
       const result = await login(formData);
       
       if (result.success) {
-        if (result.user?.role === 'superadmin') {
-          toast.error('Please use the admin panel at admin.cloudritz.com');
-          logout();
-          setLoading(false);
-          return;
-        }
-        
         console.log('Login successful, user:', result.user);
         toast.success('Login successful!');
         navigate('/', { replace: true });
