@@ -19,20 +19,28 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const result = await login(formData);
-    
-    if (result.success) {
-      if (result.user?.role === 'superadmin') {
-        toast.error('Please use the admin panel at admin.cloudritz.com');
-        logout();
-        setLoading(false);
-        return;
-      }
+    try {
+      const result = await login(formData);
       
-      toast.success('Login successful!');
-      navigate('/', { replace: true });
-    } else {
-      toast.error(result.message);
+      if (result.success) {
+        if (result.user?.role === 'superadmin') {
+          toast.error('Please use the admin panel at admin.cloudritz.com');
+          logout();
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Login successful, user:', result.user);
+        toast.success('Login successful!');
+        navigate('/', { replace: true });
+      } else {
+        toast.error(result.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      sessionStorage.setItem('loginError', JSON.stringify({ message: error.message, stack: error.stack }));
+      toast.error('Login failed: ' + error.message);
       setLoading(false);
     }
   };
