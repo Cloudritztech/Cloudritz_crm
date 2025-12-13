@@ -205,14 +205,36 @@ export default async function handler(req, res) {
         return res.json({ success: true, message: 'Status updated', data: org });
       }
       
-      // Delete organization
+      // Delete organization with CASCADE
       if (type === 'superadmin' && id && method === 'DELETE') {
         if (!isSuperAdmin) return res.status(403).json({ success: false, message: 'Super admin access required' });
         
-        await Organization.findByIdAndDelete(id);
-        await User.deleteMany({ organizationId: id });
+        // Import all models
+        const Product = (await import('../lib/models/Product.js')).default;
+        const Customer = (await import('../lib/models/Customer.js')).default;
+        const Invoice = (await import('../lib/models/Invoice.js')).default;
+        const Expense = (await import('../lib/models/Expense.js')).default;
+        const Employee = (await import('../lib/models/Employee.js')).default;
+        const InventoryHistory = (await import('../lib/models/InventoryHistory.js')).default;
+        const NotificationSettings = (await import('../lib/models/NotificationSettings.js')).default;
+        const SupportTicket = (await import('../lib/models/SupportTicket.js')).default;
         
-        return res.json({ success: true, message: 'Organization deleted' });
+        // CASCADE DELETE - Delete all related data
+        await Promise.all([
+          Organization.findByIdAndDelete(id),
+          User.deleteMany({ organizationId: id }),
+          Product.deleteMany({ organizationId: id }),
+          Customer.deleteMany({ organizationId: id }),
+          Invoice.deleteMany({ organizationId: id }),
+          Expense.deleteMany({ organizationId: id }),
+          Employee.deleteMany({ organizationId: id }),
+          Notification.deleteMany({ organizationId: id }),
+          InventoryHistory.deleteMany({ organizationId: id }),
+          NotificationSettings.deleteMany({ organizationId: id }),
+          SupportTicket.deleteMany({ organizationId: id })
+        ]);
+        
+        return res.json({ success: true, message: 'Organization and all related data deleted successfully' });
       }
       
       // Get organizations list (for users page)
