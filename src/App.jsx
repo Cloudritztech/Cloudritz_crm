@@ -54,22 +54,7 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
-  
-  React.useEffect(() => {
-    // Check if we're in the middle of a login process
-    const loginInProgress = sessionStorage.getItem('loginInProgress');
-    if (loginInProgress) {
-      setIsLoggingIn(true);
-      // Clear after a short delay
-      setTimeout(() => {
-        sessionStorage.removeItem('loginInProgress');
-        setIsLoggingIn(false);
-      }, 500);
-    }
-  }, []);
-  
-  if (loading || isLoggingIn) return <PageLoader />;
+  if (loading) return <PageLoader />;
   return isAuthenticated ? <Navigate to="/" replace /> : children;
 };
 

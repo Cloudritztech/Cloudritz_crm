@@ -18,21 +18,19 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    sessionStorage.setItem('loginInProgress', 'true');
 
     try {
       const result = await login(formData);
       
       if (result.success) {
         toast.success('Login successful!');
-        navigate('/', { replace: true });
+        // Force full page reload to ensure clean state
+        window.location.href = '/';
       } else {
-        sessionStorage.removeItem('loginInProgress');
         toast.error(result.message);
         setLoading(false);
       }
     } catch (error) {
-      sessionStorage.removeItem('loginInProgress');
       toast.error('Login failed: ' + error.message);
       setLoading(false);
     }
