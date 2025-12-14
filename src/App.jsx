@@ -22,7 +22,6 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Notifications = lazy(() => import('./pages/Notifications'));
 
 
 
@@ -115,7 +114,6 @@ function AppContent() {
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/settings" element={<Settings />} />
-                            <Route path="/notifications" element={<Notifications />} />
 
                           </Routes>
                         </Suspense>

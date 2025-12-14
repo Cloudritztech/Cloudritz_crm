@@ -48,8 +48,8 @@ const UserMenu = () => {
     { icon: User, label: 'Profile', action: () => navigate('/profile') },
     { icon: Building2, label: 'Business Profile', action: () => navigate('/business-profile') },
     { icon: Settings, label: 'Settings', action: () => navigate('/settings') },
-    { icon: Bell, label: 'Notifications', action: () => navigate('/notifications') },
-    { icon: HelpCircle, label: 'Help & Support', action: () => navigate('/help') },
+    { icon: Bell, label: 'Notifications', action: () => alert('Notifications feature coming soon') },
+    { icon: HelpCircle, label: 'Help & Support', action: () => navigate('/support') },
   ];
 
   const themeOptions = [
