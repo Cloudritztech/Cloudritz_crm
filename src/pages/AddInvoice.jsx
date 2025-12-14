@@ -882,30 +882,37 @@ const AddInvoice = () => {
 
       {/* Quick Add Customer Modal */}
       {showQuickCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Add Customer</h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Customer Name *"
-                value={quickCustomer.name}
-                onChange={(e) => setQuickCustomer({ ...quickCustomer, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <input
-                type="tel"
-                placeholder="Phone Number *"
-                value={quickCustomer.phone}
-                onChange={(e) => setQuickCustomer({ ...quickCustomer, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  placeholder="Enter customer name"
+                  value={quickCustomer.name}
+                  onChange={(e) => setQuickCustomer({ ...quickCustomer, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
+                <input
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={quickCustomer.phone}
+                  onChange={(e) => setQuickCustomer({ ...quickCustomer, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 mt-6">
               <button
                 onClick={handleQuickAddCustomer}
                 disabled={!quickCustomer.name || !quickCustomer.phone}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                className="w-full sm:flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
                 Add Customer
               </button>
@@ -914,7 +921,7 @@ const AddInvoice = () => {
                   setShowQuickCustomer(false);
                   setQuickCustomer({ name: "", phone: "" });
                 }}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
+                className="w-full sm:flex-1 px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors"
               >
                 Cancel
               </button>
