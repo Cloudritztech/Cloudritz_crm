@@ -64,8 +64,7 @@ const SalesReports = () => {
         expensesAPI.getAll(period === 'custom' ? { startDate, endDate } : {})
       ]);
       
-      console.log('📊 Sales Response:', salesResponse.data);
-      console.log('📊 Expenses Response:', expensesResponse.data);
+
       
       if (salesResponse.data?.success && salesResponse.data?.data) {
         setSalesData(salesResponse.data.data);
@@ -74,9 +73,6 @@ const SalesReports = () => {
       
       if (expensesResponse.data?.success) {
         const expenses = expensesResponse.data.expenses || [];
-        console.log('📊 Total expenses from API:', expenses.length);
-        console.log('📊 Period:', period, 'Start:', startDate, 'End:', endDate);
-        
         const filtered = period === 'custom' && startDate && endDate
           ? expenses.filter(e => {
               const date = new Date(e.expenseDate);
@@ -84,9 +80,7 @@ const SalesReports = () => {
             })
           : expenses;
         
-        console.log('📊 Filtered expenses:', filtered.length);
         const total = filtered.reduce((sum, e) => sum + e.amount, 0);
-        console.log('📊 Total expense amount:', total);
         setExpenseData({ total, count: filtered.length });
       }
     } catch (error) {

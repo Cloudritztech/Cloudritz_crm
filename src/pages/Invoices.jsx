@@ -21,13 +21,9 @@ const InvoiceManagement = () => {
 
   const fetchInvoices = async () => {
     try {
-      console.log('Fetching invoices...');
       const res = await invoicesAPI.getAll();
-      console.log('Full API response:', res);
-      console.log('Response data:', res.data);
       
       if (res.data?.success && res.data?.invoices) {
-        console.log('Invoices found:', res.data.invoices.length);
         const sorted = res.data.invoices.sort((a, b) => {
           const aDate = new Date(a.createdAt || parseInt(a._id.substring(0, 8), 16) * 1000);
           const bDate = new Date(b.createdAt || parseInt(b._id.substring(0, 8), 16) * 1000);
@@ -36,13 +32,13 @@ const InvoiceManagement = () => {
         setInvoices(sorted);
         setError(null);
       } else {
-        console.log('No invoices in response or success=false');
         setInvoices([]);
         setError(res.data?.message || "No invoices found");
       }
     } catch (err) {
-      console.error("Error fetching invoices:", err);
-      console.error("Error response:", err.response);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching invoices:", err);
+      }
       setError(err.response?.data?.message || err.message || "Failed to load invoices");
       setInvoices([]);
     } finally {
@@ -60,7 +56,9 @@ const InvoiceManagement = () => {
         // Note: Delete endpoint not implemented in API yet
         alert("Delete functionality not implemented yet");
       } catch (err) {
-        console.error('Delete error:', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Delete error:', err);
+        }
         alert(`Failed to delete invoice: ${err.response?.data?.message || err.message}`);
       }
     }
@@ -200,7 +198,9 @@ const InvoiceManagement = () => {
               icon: Download,
               onClick: () => {
                 // Add PDF download logic
-                console.log('Download PDF for:', invoice._id);
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Download PDF for:', invoice._id);
+                }
               }
             },
             {

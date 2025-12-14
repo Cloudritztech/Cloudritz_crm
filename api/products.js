@@ -4,8 +4,6 @@ import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 import { deleteImage } from '../lib/cloudinary.js';
-import { createLowStockNotification } from '../lib/notificationTriggers.js';
-import NotificationSettings from '../lib/models/NotificationSettings.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -180,9 +178,6 @@ export default async function handler(req, res) {
           });
 
           // Check for low stock and create notification
-          const settings = await NotificationSettings.findOne({ organizationId: req.organizationId });
-          if ((!settings || settings.lowStockAlerts) && updatedProduct.stock <= (updatedProduct.lowStockLimit || 10)) {
-            await createLowStockNotification(req.organizationId, updatedProduct);
           }
         }
 

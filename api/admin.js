@@ -25,12 +25,16 @@ export default async function handler(req, res) {
       if (existing) return res.json({ success: true, message: 'Already seeded' });
       
       await User.create({ 
-        name: 'Cloudritz Admin', 
-        email: 'admin@cloudritz.com', 
-        password: 'Cloudritz@2024', 
+        name: process.env.SUPERADMIN_NAME || 'Super Admin', 
+        email: process.env.SUPERADMIN_EMAIL || 'admin@example.com', 
+        password: process.env.SUPERADMIN_PASSWORD, 
         role: 'superadmin', 
         isActive: true 
       });
+      
+      if (!process.env.SUPERADMIN_PASSWORD) {
+        throw new Error('SUPERADMIN_PASSWORD environment variable is required');
+      }
       
       return res.json({ success: true, message: 'Database seeded successfully' });
     } catch (error) {
