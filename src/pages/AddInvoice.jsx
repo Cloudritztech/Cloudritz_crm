@@ -348,12 +348,12 @@ const AddInvoice = () => {
   const totals = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Create Invoice</h2>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-6 pb-20">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Create Invoice</h2>
         <button
           onClick={() => navigate("/invoices")}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium w-full sm:w-auto"
+          className="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium whitespace-nowrap flex-shrink-0"
         >
           Back
         </button>
@@ -364,13 +364,13 @@ const AddInvoice = () => {
         <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
           <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Customer Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Customer</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={formData.customer}
                   onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   required
                 >
                   <option value="">Select Customer</option>
@@ -383,7 +383,7 @@ const AddInvoice = () => {
                 <button
                   type="button"
                   onClick={() => setShowQuickCustomer(true)}
-                  className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium whitespace-nowrap flex-shrink-0"
                 >
                   + Quick Add
                 </button>
@@ -618,9 +618,9 @@ const AddInvoice = () => {
           </div>
           
           {/* Billing Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Left: Summary Card */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-2">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-5 space-y-2 order-2 lg:order-1">
               <div className="flex justify-between text-sm border-b border-gray-300 dark:border-gray-600 pb-2">
                 <span className="font-medium text-gray-900 dark:text-white">Item Total:</span>
                 <span className="font-medium text-gray-900 dark:text-white">₹{totals.grossAmount}</span>
@@ -676,7 +676,7 @@ const AddInvoice = () => {
             </div>
             
             {/* Right: Additional Discount Input */}
-            <div className="space-y-4">
+            <div className="space-y-4 order-1 lg:order-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Discount</label>
                 <div className="flex gap-2">
@@ -684,7 +684,7 @@ const AddInvoice = () => {
                     type="number"
                     value={formData.discount || ''}
                     onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     step="0.01"
                     min="0"
                     placeholder="0.00"
@@ -692,10 +692,10 @@ const AddInvoice = () => {
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-20 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm flex-shrink-0"
                   >
-                    <option value="amount">Amount (₹)</option>
-                    <option value="percentage">Percent (%)</option>
+                    <option value="amount">₹</option>
+                    <option value="percentage">%</option>
                   </select>
                 </div>
                 {formData.discountType === 'percentage' && formData.discount > 0 && (
