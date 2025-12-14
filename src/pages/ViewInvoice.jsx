@@ -187,7 +187,7 @@ const ViewInvoice = () => {
 
       {/* Invoice Content */}
       <div className="w-full h-auto pb-4">
-      {template === 'professional' ? (
+      {template === 'detailed' ? (
         <div id="invoice-content" className="invoice-a4" style={{paddingBottom: '40px'}}>
         <div style={{textAlign: 'center', padding: '12px', border: '2px solid #000', borderBottom: '1px solid #000', fontWeight: 'bold', fontSize: '18px'}}>
           TAX INVOICE
