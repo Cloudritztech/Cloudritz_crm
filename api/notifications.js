@@ -1,69 +1,21 @@
 import connectDB from '../lib/mongodb.js';
 import Notification from '../lib/models/Notification.js';
-import NotificationSettings from '../lib/models/NotificationSettings.js';
 import { authenticate } from '../lib/middleware/auth.js';
 import { tenantIsolation } from '../lib/middleware/tenant.js';
 
 export default async function handler(req, res) {
   await connectDB();
 
-  // Use middleware properly
-  return authenticate(req, res, async () => {
-    return tenantIsolation(req, res, async () => {
+  const authResult = await authenticate(req, res);
+  if (!authResult.success) return;
+
+  const tenantResult = await tenantIsolation(req, res);
+  if (!tenantResult.success) return;
 
   const { method } = req;
   const { id, action } = req.query;
 
   try {
-    // GET - Fetch notification settings
-    if (method === 'GET' && action === 'settings') {
-      let settings = await NotificationSettings.findOne({ 
-        organizationId: req.organizationId 
-      });
-
-      if (!settings) {
-        settings = await NotificationSettings.create({
-          organizationId: req.organizationId,
-          emailNotifications: true,
-          lowStockAlerts: true,
-          paymentReminders: true,
-          dailyReports: false,
-          weeklyReports: false
-        });
-      }
-
-      return res.status(200).json({ success: true, settings });
-    }
-
-    // PUT - Update notification settings
-    if (method === 'PUT' && action === 'settings') {
-      const { emailNotifications, lowStockAlerts, paymentReminders, dailyReports, weeklyReports } = req.body;
-
-      let settings = await NotificationSettings.findOne({ 
-        organizationId: req.organizationId 
-      });
-
-      if (!settings) {
-        settings = await NotificationSettings.create({
-          organizationId: req.organizationId,
-          emailNotifications,
-          lowStockAlerts,
-          paymentReminders,
-          dailyReports,
-          weeklyReports
-        });
-      } else {
-        settings.emailNotifications = emailNotifications;
-        settings.lowStockAlerts = lowStockAlerts;
-        settings.paymentReminders = paymentReminders;
-        settings.dailyReports = dailyReports;
-        settings.weeklyReports = weeklyReports;
-        await settings.save();
-      }
-
-      return res.status(200).json({ success: true, settings });
-    }
-
     // GET - Fetch notifications
     if (method === 'GET' && !action) {
       const notifications = await Notification.find({ 
@@ -119,6 +71,4 @@ export default async function handler(req, res) {
     console.error('Notifications API error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
-    });
-  });
 }

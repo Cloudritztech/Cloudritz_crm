@@ -1,7 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Expense from '../lib/models/Expense.js';
 import Employee from '../lib/models/Employee.js';
-import SalaryHistory from '../lib/models/SalaryHistory.js';
 import User from '../lib/models/User.js';
 import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
@@ -117,35 +116,6 @@ export default async function handler(req, res) {
         if (type === 'salary' && employeeId && employeeId !== '') {
           const employee = await Employee.findById(employeeId);
           if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
-
-          const date = new Date(expenseDate);
-          const month = date.getMonth() + 1;
-          const year = date.getFullYear();
-
-          // Check duplicate
-          const existing = await SalaryHistory.findOne({ employee: employeeId, month, year });
-          if (existing) {
-            return res.status(400).json({ success: false, message: 'Salary already paid for this month' });
-          }
-
-          const expense = await Expense.create({
-            ...cleanData,
-            organizationId: req.organizationId,
-            createdBy: req.user._id
-          });
-
-          await SalaryHistory.create({
-            employee: employeeId,
-            amount,
-            month,
-            year,
-            paymentDate: expenseDate,
-            paymentMethod,
-            expense: expense._id,
-            paidBy: req.user._id
-          });
-
-          return res.status(201).json({ success: true, expense });
         }
 
         const expense = await Expense.create({ ...cleanData, organizationId: req.organizationId, createdBy: req.user._id });
@@ -162,10 +132,7 @@ export default async function handler(req, res) {
         const deleted = await Expense.findByIdAndDelete(query.id);
         if (!deleted) return res.status(404).json({ success: false, message: 'Expense not found' });
         
-        // Delete salary history if it's a salary expense
-        if (deleted.type === 'salary') {
-          await SalaryHistory.deleteOne({ expense: query.id });
-        }
+
         
         return res.status(200).json({ success: true, message: 'Expense deleted' });
 
