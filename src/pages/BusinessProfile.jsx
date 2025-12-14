@@ -4,7 +4,6 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { profileAPI } from '../services/api';
 import { uploadToCloudinary } from '../utils/cloudinary';
-import { testCloudinaryConfig } from '../utils/testCloudinary';
 
 const BusinessProfile = () => {
   const [profile, setProfile] = useState({
@@ -38,8 +37,6 @@ const BusinessProfile = () => {
   const [signaturePreview, setSignaturePreview] = useState(null);
 
   useEffect(() => {
-    // Test Cloudinary configuration on mount
-    testCloudinaryConfig();
     fetchProfile();
   }, []);
 

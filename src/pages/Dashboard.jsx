@@ -34,6 +34,7 @@ const Dashboard = () => {
     return null;
   });
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -60,19 +61,23 @@ const Dashboard = () => {
     };
   }, []);
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (isManualRefresh = false) => {
     try {
+      if (isManualRefresh) setRefreshing(true);
       setError(null);
       const dashboardRes = await reportsAPI.getDashboard();
       if (dashboardRes.data?.success && dashboardRes.data?.stats) {
         const newStats = dashboardRes.data.stats;
         setStats(newStats);
-        // Cache the data
         localStorage.setItem('dashboard_cache', JSON.stringify(newStats));
       }
       setLastUpdated(new Date());
     } catch (error) {
       setError(error.response?.data?.message || error.message);
+    } finally {
+      if (isManualRefresh) {
+        setTimeout(() => setRefreshing(false), 500);
+      }
     }
   };
 
@@ -168,15 +173,14 @@ const Dashboard = () => {
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
-          <Button 
-            onClick={fetchAllData}
-            variant="primary"
-            size="sm"
-            icon={RefreshCw}
-            className="w-full sm:w-auto"
+          <button
+            onClick={() => fetchAllData(true)}
+            disabled={refreshing}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
           >
-            Refresh
-          </Button>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
       </div>
 

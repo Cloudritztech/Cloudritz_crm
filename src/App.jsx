@@ -21,7 +21,6 @@ const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
 const Expenses = lazy(() => import('./pages/Expenses'));
 const Employees = lazy(() => import('./pages/Employees'));
 const Profile = lazy(() => import('./pages/Profile'));
-const Settings = lazy(() => import('./pages/Settings'));
 
 
 
@@ -113,7 +112,6 @@ function AppContent() {
                             <Route path="/employees" element={<Employees />} />
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
-                            <Route path="/settings/*" element={<Settings />} />
 
                           </Routes>
                         </Suspense>
