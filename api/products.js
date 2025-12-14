@@ -178,7 +178,6 @@ export default async function handler(req, res) {
           });
 
           // Check for low stock and create notification
-          }
         }
 
         return res.json({ success: true, product: updatedProduct });
@@ -213,7 +212,9 @@ export default async function handler(req, res) {
           ];
         }
 
-        queryObj.organizationId = req.organizationId;
+        if (req.organizationId) {
+          queryObj.organizationId = req.organizationId;
+        }
         const products = await Product.find(queryObj).sort({ createdAt: -1 });
         return res.json({ success: true, products });
       } catch (error) {
@@ -221,8 +222,8 @@ export default async function handler(req, res) {
       }
 
     case 'POST':
-      await checkSubscriptionLimit('products')(req, res, async () => {
-        try {
+      try {
+        await checkSubscriptionLimit('products')(req, res, async () => {
           const product = await Product.create({ ...req.body, organizationId: req.organizationId });
         
         await InventoryHistory.create({
@@ -253,10 +254,11 @@ export default async function handler(req, res) {
         }
 
           return res.status(201).json({ success: true, product });
-        } catch (error) {
-          return res.status(500).json({ message: error.message });
-        }
-      });
+        });
+      } catch (error) {
+        return res.status(500).json({ message: error.message });
+      }
+      break;
 
     default:
       return res.status(405).json({ message: 'Method not allowed' });
