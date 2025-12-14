@@ -1,7 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import Customer from '../lib/models/Customer.js';
 import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
-import { createNewCustomerNotification } from '../lib/notificationTriggers.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -24,7 +23,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('👥 Customer API called:', req.method);
     await connectDB();
     
     await authenticate(req, res, async () => {
@@ -47,7 +45,6 @@ export default async function handler(req, res) {
         }
         return res.json({ success: true, customer });
       } catch (error) {
-        console.error('❌ Error fetching customer:', error);
         return res.status(500).json({ 
           success: false,
           message: error.message 
@@ -66,7 +63,6 @@ export default async function handler(req, res) {
         }
         return res.json({ success: true, customer });
       } catch (error) {
-        console.error('❌ Error updating customer:', error);
         return res.status(500).json({ 
           success: false,
           message: error.message 
@@ -89,13 +85,13 @@ export default async function handler(req, res) {
             ];
           }
 
-          queryObj.organizationId = req.organizationId;
+          if (req.organizationId) {
+            queryObj.organizationId = req.organizationId;
+          }
           const customers = await Customer.find(queryObj).sort({ createdAt: -1 });
-          console.log(`✅ Found ${customers.length} customers`);
           
           return res.json({ success: true, customers });
         } catch (error) {
-          console.error('❌ Error fetching customers:', error);
           return res.status(500).json({ 
             success: false,
             message: error.message 
@@ -105,18 +101,9 @@ export default async function handler(req, res) {
       case 'POST':
         try {
           const customer = await Customer.create({ ...req.body, organizationId: req.organizationId });
-          console.log('✅ Customer created:', customer.name);
-          
-          // Create new customer notification
-          try {
-            await createNewCustomerNotification(req.organizationId, customer);
-          } catch (notifErr) {
-            console.warn('⚠️ Failed to create customer notification:', notifErr.message);
-          }
           
           return res.status(201).json({ success: true, customer });
         } catch (error) {
-          console.error('❌ Error creating customer:', error);
           if (error.code === 11000) {
             return res.status(400).json({ 
               success: false,
@@ -136,7 +123,6 @@ export default async function handler(req, res) {
       });
     });
   } catch (error) {
-    console.error('❌ Customer handler error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

@@ -56,7 +56,16 @@ export default async function handler(req, res) {
           if (req.user.role === 'superadmin') {
             return res.json({ success: true, profile: { businessName: 'Cloudritz CRM' } });
           }
+          
+          if (!req.organizationId) {
+            return res.json({ success: true, profile: { businessName: 'My Business' } });
+          }
+          
           const org = await Organization.findById(req.organizationId);
+          
+          if (!org) {
+            return res.json({ success: true, profile: { businessName: 'My Business' } });
+          }
           
           // Transform organization data to match frontend expectations with proper defaults
           const profile = {
@@ -155,10 +164,38 @@ export default async function handler(req, res) {
 
         return await tenantIsolation(req, res, async () => {
           if (req.method === 'GET') {
+            if (!req.organizationId) {
+              // Return default settings if no organization
+              const defaultSettings = {
+                prefix: 'INV',
+                startingNumber: 1001,
+                template: 'compact',
+                termsAndConditions: 'Payment due within 30 days.\nGoods once sold will not be taken back.',
+                footerNote: 'Thank you for your business!',
+                showLogo: true,
+                showBankDetails: true,
+                showSignature: true,
+                autoIncrement: true
+              };
+              return res.json({ success: true, settings: defaultSettings });
+            }
+            
             const org = await Organization.findById(req.organizationId);
             
             if (!org) {
-              return res.status(404).json({ success: false, message: 'Organization not found' });
+              // Return default settings if org not found
+              const defaultSettings = {
+                prefix: 'INV',
+                startingNumber: 1001,
+                template: 'compact',
+                termsAndConditions: 'Payment due within 30 days.\nGoods once sold will not be taken back.',
+                footerNote: 'Thank you for your business!',
+                showLogo: true,
+                showBankDetails: true,
+                showSignature: true,
+                autoIncrement: true
+              };
+              return res.json({ success: true, settings: defaultSettings });
             }
 
             if (section === 'invoice') {
@@ -301,12 +338,17 @@ export default async function handler(req, res) {
               return res.json({ success: true, employee });
             }
             
-            const employees = await Employee.find({ organizationId: req.organizationId }).sort({ createdAt: -1 });
+            const query = req.organizationId ? { organizationId: req.organizationId } : {};
+            const employees = await Employee.find(query).sort({ createdAt: -1 });
             return res.json({ success: true, employees });
           }
 
           if (req.method === 'POST') {
-            const employee = await Employee.create({ ...req.body, organizationId: req.organizationId, createdBy: req.userId });
+            const employeeData = { ...req.body, createdBy: req.userId };
+            if (req.organizationId) {
+              employeeData.organizationId = req.organizationId;
+            }
+            const employee = await Employee.create(employeeData);
             return res.status(201).json({ success: true, employee });
           }
 

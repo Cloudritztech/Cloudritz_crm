@@ -15,14 +15,13 @@ export default async function handler(req, res) {
   try {
     // GET - Fetch notifications
     if (method === 'GET' && !action) {
-      const notifications = await Notification.find({ 
-        organizationId: req.organizationId 
-      })
+      const query = req.organizationId ? { organizationId: req.organizationId } : {};
+      const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .limit(50);
 
       const unreadCount = await Notification.countDocuments({
-        organizationId: req.organizationId,
+        ...query,
         isRead: false
       });
 
@@ -35,16 +34,17 @@ export default async function handler(req, res) {
 
     // PUT - Mark as read
     if (method === 'PUT' && action === 'mark-read') {
+      const query = req.organizationId ? { organizationId: req.organizationId } : {};
       if (id) {
         // Mark single notification as read
         await Notification.findOneAndUpdate(
-          { _id: id, organizationId: req.organizationId },
+          { _id: id, ...query },
           { isRead: true }
         );
       } else {
         // Mark all as read
         await Notification.updateMany(
-          { organizationId: req.organizationId, isRead: false },
+          { ...query, isRead: false },
           { isRead: true }
         );
       }
@@ -54,9 +54,10 @@ export default async function handler(req, res) {
 
     // DELETE - Delete notification
     if (method === 'DELETE' && id) {
+      const query = req.organizationId ? { organizationId: req.organizationId } : {};
       await Notification.findOneAndDelete({ 
         _id: id, 
-        organizationId: req.organizationId 
+        ...query
       });
 
       return res.status(200).json({ success: true });
@@ -65,7 +66,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid request' });
 
   } catch (error) {
-    console.error('Notifications API error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
     });

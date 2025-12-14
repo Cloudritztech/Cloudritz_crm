@@ -58,7 +58,8 @@ export default async function handler(req, res) {
         
         return res.status(200).json({ success: true, tickets });
       } else {
-        const tickets = await SupportTicket.find({ organizationId })
+        const query = organizationId ? { organizationId } : {};
+        const tickets = await SupportTicket.find(query)
           .sort({ lastMessageAt: -1 })
           .limit(50);
         
@@ -108,14 +109,14 @@ export default async function handler(req, res) {
         }
 
         const user = await User.findById(userId);
-        const org = await Organization.findById(organizationId);
+        const org = organizationId ? await Organization.findById(organizationId) : null;
 
         const ticket = await SupportTicket.create({
-          organizationId,
+          organizationId: organizationId || null,
           userId,
           userName: user?.name || email,
           userEmail: email,
-          organizationName: org?.name || 'Unknown',
+          organizationName: org?.name || 'Individual User',
           subject,
           category: category || 'general',
           priority: priority || 'medium',
@@ -162,7 +163,6 @@ export default async function handler(req, res) {
       return res.status(405).json({ success: false, message: 'Method not allowed' });
     });
   } catch (error) {
-    console.error('Support API Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 }
