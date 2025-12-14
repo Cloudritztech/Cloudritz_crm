@@ -429,9 +429,9 @@ const SalesReports = () => {
                     </g>
                   );
                 })}
-                <circle cx="150" cy="150" r="60" fill="white" className="dark:fill-gray-900" />
-                <text x="150" y="145" textAnchor="middle" className="text-sm font-semibold fill-gray-600 dark:fill-gray-400">Total</text>
-                <text x="150" y="165" textAnchor="middle" className="text-lg font-bold fill-gray-900 dark:fill-gray-100">{formatCurrency(total)}</text>
+                <circle cx="150" cy="150" r="60" fill="#1f2937" />
+                <text x="150" y="145" textAnchor="middle" fontSize="12" fontWeight="600" fill="#9ca3af">Total</text>
+                <text x="150" y="165" textAnchor="middle" fontSize="16" fontWeight="700" fill="#ffffff">{formatCurrency(total)}</text>
               </svg>
               
               {hoveredSegment && (
