@@ -98,19 +98,17 @@ export const productsAPI = {
   },
   create: async (product) => {
     const response = await api.post('/products', product);
-    apiCache.clear('products_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   update: async (id, product) => {
     const response = await api.put(`/products?id=${id}`, product);
-    apiCache.clear(`product_${id}`);
-    apiCache.clear('products_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   delete: async (id) => {
     const response = await api.delete(`/products?id=${id}`);
-    apiCache.clear(`product_${id}`);
-    apiCache.clear('products_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   updateStock: async (id, data) => {
@@ -157,13 +155,12 @@ export const customersAPI = {
   },
   create: async (customer) => {
     const response = await api.post('/customers', customer);
-    apiCache.clear('customers_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   update: async (id, customer) => {
     const response = await api.put(`/customers?id=${id}`, customer);
-    apiCache.clear(`customer_${id}`);
-    apiCache.clear('customers_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   getPurchaseHistory: async (id) => {
@@ -199,8 +196,7 @@ export const invoicesAPI = {
   },
   create: async (invoice) => {
     const response = await api.post('/invoices', invoice);
-    apiCache.clear('invoices_');
-    apiCache.clear('dashboard');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   generatePDF: (id) => api.get(`/invoices?id=${id}&action=pdf`, { responseType: 'blob' }),
@@ -352,14 +348,12 @@ export const expensesAPI = {
   },
   create: async (data) => {
     const response = await api.post('/expenses', data);
-    apiCache.clear('expenses_');
-    apiCache.clear('expenseSummary_');
+    apiCache.clear(); // Clear all cache
     return response;
   },
   update: async (id, data) => {
     const response = await api.put(`/expenses?id=${id}`, data);
-    apiCache.clear('expenses_');
-    apiCache.clear(`expense_${id}`);
+    apiCache.clear(); // Clear all cache
     return response;
   },
   delete: async (id) => {

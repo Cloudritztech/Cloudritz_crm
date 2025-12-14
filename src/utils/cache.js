@@ -21,11 +21,22 @@ class Cache {
     return item.value;
   }
 
-  clear(key) {
-    if (key) {
-      this.cache.delete(key);
-    } else {
+  clear(keyOrPrefix) {
+    if (!keyOrPrefix) {
       this.cache.clear();
+      return;
+    }
+    
+    // If exact key exists, delete it
+    if (this.cache.has(keyOrPrefix)) {
+      this.cache.delete(keyOrPrefix);
+    }
+    
+    // Also clear all keys that start with this prefix
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(keyOrPrefix)) {
+        this.cache.delete(key);
+      }
     }
   }
 

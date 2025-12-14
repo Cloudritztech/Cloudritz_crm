@@ -370,8 +370,9 @@ const SalesReports = () => {
       {/* Sales Visualization - Pie Chart */}
       {!loading && (() => {
         const pieData = [
-          { label: 'Total Sales', value: salesData.totalAmount || 0, color: '#10b981', orders: salesData.totalOrders },
-          { label: 'Total Expenses', value: expenseData.total || 0, color: '#ef4444', count: expenseData.count }
+          { label: 'Total Sales', value: salesData.totalAmount || 0, color: '#22c55e', orders: salesData.totalOrders },
+          { label: 'Total Expenses', value: expenseData.total || 0, color: '#f97316', count: expenseData.count },
+          { label: 'Net Profit', value: Math.max(0, (salesData.totalAmount || 0) - (expenseData.total || 0)), color: '#3b82f6', isProfit: true }
         ].filter(item => item.value > 0);
         
         const total = pieData.reduce((sum, item) => sum + item.value, 0);
@@ -429,9 +430,10 @@ const SalesReports = () => {
                     </g>
                   );
                 })}
-                <circle cx="150" cy="150" r="60" fill="#1f2937" />
-                <text x="150" y="145" textAnchor="middle" fontSize="12" fontWeight="600" fill="#9ca3af">Total</text>
-                <text x="150" y="165" textAnchor="middle" fontSize="16" fontWeight="700" fill="#ffffff">{formatCurrency(total)}</text>
+                <circle cx="150" cy="150" r="60" fill="white" stroke="#e5e7eb" strokeWidth="2" />
+                <text x="150" y="140" textAnchor="middle" fontSize="14" fontWeight="600" fill="#6b7280">Total</text>
+                <text x="150" y="160" textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827">{formatCurrency(total)}</text>
+                <text x="150" y="175" textAnchor="middle" fontSize="11" fill="#9ca3af">{salesData.totalOrders} orders</text>
               </svg>
               
               {hoveredSegment && (
