@@ -42,7 +42,7 @@ const ModernLayout = ({ children }) => {
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
             ) : (
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
                 <span className="text-white font-bold text-sm">C</span>
               </div>
             )}
@@ -60,9 +60,10 @@ const ModernLayout = ({ children }) => {
                   to={item.href}
                   className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all ${
                     active
-                      ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                      ? ''
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
+                  style={active ? { backgroundColor: 'var(--color-primary)', color: 'white' } : {}}
                 >
                   <Icon className="h-5 w-5 mr-3" />
                   {item.name}
@@ -83,7 +84,7 @@ const ModernLayout = ({ children }) => {
               {logoUrl ? (
                 <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
               ) : (
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
                   <span className="text-white font-bold text-sm">C</span>
                 </div>
               )}

@@ -12,6 +12,11 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'system';
   });
+  
+  const [brandColors, setBrandColors] = useState(() => {
+    const saved = localStorage.getItem('brandColors');
+    return saved ? JSON.parse(saved) : { primaryColor: '#2563eb', secondaryColor: '#3b82f6' };
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -22,10 +27,27 @@ export const ThemeProvider = ({ children }) => {
     root.classList.add(activeTheme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+  
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.style.setProperty('--color-primary', brandColors.primaryColor);
+    root.style.setProperty('--color-secondary', brandColors.secondaryColor);
+    localStorage.setItem('brandColors', JSON.stringify(brandColors));
+  }, [brandColors]);
+  
+  useEffect(() => {
+    const handleBrandColorUpdate = (event) => {
+      setBrandColors(event.detail);
+    };
+    window.addEventListener('update-brand-colors', handleBrandColorUpdate);
+    return () => window.removeEventListener('update-brand-colors', handleBrandColorUpdate);
+  }, []);
 
   const value = {
     theme,
     setTheme,
+    brandColors,
+    setBrandColors,
     isDark: theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   };
 

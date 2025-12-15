@@ -139,6 +139,16 @@ const BusinessProfile = () => {
       console.log('✅ Save response:', response);
       
       if (response.data?.success) {
+        // Update theme colors
+        if (profile.branding?.primaryColor || profile.branding?.secondaryColor) {
+          window.dispatchEvent(new CustomEvent('update-brand-colors', {
+            detail: {
+              primaryColor: profile.branding.primaryColor,
+              secondaryColor: profile.branding.secondaryColor
+            }
+          }));
+        }
+        
         window.dispatchEvent(new CustomEvent('show-toast', {
           detail: {
             type: 'success',

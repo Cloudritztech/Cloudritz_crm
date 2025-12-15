@@ -14,6 +14,8 @@
     --text-primary: #111827;
     --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
+    --color-primary: #2563eb;
+    --color-secondary: #3b82f6;
     --accent-blue: #3B82F6;
     --success: #22C55E;
     --danger: #EF4444;
@@ -148,7 +150,7 @@
   }
   
   .btn-primary {
-    background: linear-gradient(135deg, #2563EB, #3B82F6);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
     @apply btn text-white;
   }
   
@@ -188,7 +190,7 @@
   .nav-link-active {
     background: linear-gradient(90deg, rgba(59,130,246,0.12), transparent);
     color: var(--text-primary);
-    border-left: 3px solid var(--accent-blue);
+    border-left: 3px solid var(--color-primary);
     @apply nav-link;
   }
   
@@ -248,7 +250,8 @@
   }
   
   .loading-spinner {
-    @apply animate-spin rounded-full border-2 border-gray-200 border-t-blue-600;
+    @apply animate-spin rounded-full border-2 border-gray-200;
+    border-top-color: var(--color-primary);
   }
   
   /* Responsive Grid */
@@ -343,7 +346,7 @@
   }
   
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
   }
   
   .bg-gradient-secondary {
