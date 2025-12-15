@@ -121,7 +121,8 @@ export default function NotificationBell() {
               <h3 className="font-semibold text-gray-900">Notifications</h3>
               <Link
                 to="/notifications"
-                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                className="text-xs flex items-center gap-1 hover:opacity-80"
+                style={{ color: 'var(--color-primary)' }}
                 onClick={() => setIsOpen(false)}
               >
                 View all <ExternalLink className="w-3 h-3" />
@@ -153,9 +154,8 @@ export default function NotificationBell() {
                       setIsOpen(false);
                       if (!notif.isRead) markAsRead(notif._id);
                     }}
-                    className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      !notif.isRead ? 'bg-blue-50' : ''
-                    }`}
+                    className="block p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    style={!notif.isRead ? { backgroundColor: 'rgba(var(--color-primary-rgb, 37, 99, 235), 0.05)' } : {}}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-2xl flex-shrink-0">
@@ -183,7 +183,8 @@ export default function NotificationBell() {
                           {!notif.isRead && (
                             <button
                               onClick={() => markAsRead(notif._id)}
-                              className="text-xs text-blue-600 hover:text-blue-700"
+                              className="text-xs hover:opacity-80"
+                              style={{ color: 'var(--color-primary)' }}
                             >
                               Mark as read
                             </button>

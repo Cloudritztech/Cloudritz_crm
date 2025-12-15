@@ -32,6 +32,15 @@ export const ThemeProvider = ({ children }) => {
     const root = window.document.documentElement;
     root.style.setProperty('--color-primary', brandColors.primaryColor);
     root.style.setProperty('--color-secondary', brandColors.secondaryColor);
+    
+    // Convert hex to RGB for rgba usage
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '37, 99, 235';
+    };
+    
+    root.style.setProperty('--color-primary-rgb', hexToRgb(brandColors.primaryColor));
+    root.style.setProperty('--color-secondary-rgb', hexToRgb(brandColors.secondaryColor));
     localStorage.setItem('brandColors', JSON.stringify(brandColors));
   }, [brandColors]);
   

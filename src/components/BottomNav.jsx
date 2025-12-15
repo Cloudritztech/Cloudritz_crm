@@ -81,7 +81,8 @@ const BottomNav = () => {
       {/* Floating Add Button */}
       <button
         onClick={() => setShowQuickAdd(!showQuickAdd)}
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl flex items-center justify-center z-30 hover:scale-110 transition-transform"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-30 hover:scale-110 transition-transform"
+        style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
       >
         <Plus className="h-6 w-6 text-white" />
       </button>
@@ -98,9 +99,10 @@ const BottomNav = () => {
                 to={item.href}
                 className={`flex flex-col items-center justify-center space-y-1 transition-colors ${
                   active
-                    ? 'text-blue-600 dark:text-blue-400'
+                    ? ''
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
+                style={active ? { color: 'var(--color-primary)' } : {}}
               >
                 <Icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.name}</span>

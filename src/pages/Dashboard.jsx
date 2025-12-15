@@ -176,7 +176,7 @@ const Dashboard = () => {
           <button
             onClick={() => fetchAllData(true)}
             disabled={refreshing}
-            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+            className="w-full sm:w-auto btn-primary-theme disabled:opacity-50 text-sm flex items-center justify-center gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -225,7 +225,7 @@ const Dashboard = () => {
           <h3 className="text-xl font-semibold text-gray-900">Recent Invoices</h3>
           <Link 
             to="/invoices" 
-            className="flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="flex items-center text-sm text-primary-theme hover:opacity-80 font-medium transition-colors"
           >
             View All 
             <ArrowUpRight className="h-4 w-4 ml-1" />
@@ -291,8 +291,8 @@ const Dashboard = () => {
             {stats?.topProducts?.length > 0 ? (
               stats.topProducts.slice(0, 5).map((product, index) => (
                 <div key={index} className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+                  <div className="w-8 h-8 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-primary-theme">{index + 1}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
@@ -327,10 +327,10 @@ const Dashboard = () => {
           <div className="space-y-3">
             <Link 
               to="/invoices/add" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
-              <div className="p-2 bg-blue-100 rounded-xl mr-4 group-hover:bg-blue-200 transition-colors">
-                <Plus className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-primary-light rounded-xl mr-4 transition-colors">
+                <Plus className="h-5 w-5 text-primary-theme" />
               </div>
               <div>
                 <p className="font-medium text-gray-900">Create Invoice</p>
@@ -340,7 +340,7 @@ const Dashboard = () => {
             
             <Link 
               to="/products" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
               <div className="p-2 bg-cyan-100 rounded-xl mr-4 group-hover:bg-cyan-200 transition-colors">
                 <Package className="h-5 w-5 text-cyan-600" />
@@ -353,7 +353,7 @@ const Dashboard = () => {
             
             <Link 
               to="/customers" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
               <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
                 <Users className="h-5 w-5 text-green-600" />
@@ -366,7 +366,7 @@ const Dashboard = () => {
 
             <Link 
               to="/sales-reports" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
               <div className="p-2 bg-purple-100 rounded-xl mr-4 group-hover:bg-purple-200 transition-colors">
                 <ShoppingCart className="h-5 w-5 text-purple-600" />
@@ -379,7 +379,7 @@ const Dashboard = () => {
 
             <Link 
               to="/expenses" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
               <div className="p-2 bg-red-100 rounded-xl mr-4 group-hover:bg-red-200 transition-colors">
                 <DollarSign className="h-5 w-5 text-red-600" />
@@ -392,7 +392,7 @@ const Dashboard = () => {
 
             <Link 
               to="/employees" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
             >
               <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
                 <UserCheck className="h-5 w-5 text-green-600" />
