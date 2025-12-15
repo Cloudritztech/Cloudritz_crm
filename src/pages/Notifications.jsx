@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Settings, Trash2, Check, CheckCheck, Filter } from 'lucide-react';
+import { Bell, Trash2, Check, CheckCheck } from 'lucide-react';
 import { notificationsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
@@ -7,19 +7,11 @@ import Loading from '../components/ui/Loading';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
-  const [settings, setSettings] = useState({
-    lowStockAlerts: true,
-    paymentReminders: true,
-    systemUpdates: true,
-    adminMessages: true
-  });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
-    fetchSettings();
   }, []);
 
   const fetchNotifications = async () => {
@@ -32,17 +24,6 @@ const Notifications = () => {
       console.error('Failed to fetch notifications');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      const response = await notificationsAPI.getSettings();
-      if (response.data.success) {
-        setSettings(response.data.settings);
-      }
-    } catch (error) {
-      console.error('Failed to fetch settings');
     }
   };
 
@@ -76,26 +57,7 @@ const Notifications = () => {
     }
   };
 
-  const deleteAll = async () => {
-    if (!confirm('Delete all notifications?')) return;
-    try {
-      await notificationsAPI.deleteAll();
-      fetchNotifications();
-      toast.success('All notifications deleted');
-    } catch (error) {
-      toast.error('Failed to delete all');
-    }
-  };
 
-  const updateSettings = async (newSettings) => {
-    try {
-      await notificationsAPI.updateSettings(newSettings);
-      setSettings(newSettings);
-      toast.success('Settings updated');
-    } catch (error) {
-      toast.error('Failed to update settings');
-    }
-  };
 
   const getIcon = (type) => {
     const icons = {
@@ -149,80 +111,10 @@ const Notifications = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600 mt-1">{unreadCount} unread notifications</p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          icon={Settings}
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          Settings
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+        <p className="text-gray-600 mt-1">{unreadCount} unread notifications</p>
       </div>
-
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Notification Settings</h3>
-          <div className="space-y-3">
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-              <div>
-                <p className="font-medium text-gray-900">Low Stock Alerts</p>
-                <p className="text-sm text-gray-600">Get notified when products are low in stock</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={settings.lowStockAlerts}
-                onChange={(e) => updateSettings({ ...settings, lowStockAlerts: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-              <div>
-                <p className="font-medium text-gray-900">Payment Reminders</p>
-                <p className="text-sm text-gray-600">Reminders for pending payments</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={settings.paymentReminders}
-                onChange={(e) => updateSettings({ ...settings, paymentReminders: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-              <div>
-                <p className="font-medium text-gray-900">System Updates</p>
-                <p className="text-sm text-gray-600">Updates about system changes</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={settings.systemUpdates}
-                onChange={(e) => updateSettings({ ...settings, systemUpdates: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-              <div>
-                <p className="font-medium text-gray-900">Admin Messages</p>
-                <p className="text-sm text-gray-600">Messages from administrators</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={settings.adminMessages}
-                onChange={(e) => updateSettings({ ...settings, adminMessages: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded"
-              />
-            </label>
-          </div>
-        </div>
-      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between">
@@ -250,18 +142,11 @@ const Notifications = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2">
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm" icon={CheckCheck} onClick={markAllAsRead}>
-              Mark all read
-            </Button>
-          )}
-          {notifications.length > 0 && (
-            <Button variant="outline" size="sm" icon={Trash2} onClick={deleteAll}>
-              Delete all
-            </Button>
-          )}
-        </div>
+        {unreadCount > 0 && (
+          <Button variant="outline" size="sm" icon={CheckCheck} onClick={markAllAsRead}>
+            Mark all read
+          </Button>
+        )}
       </div>
 
       {/* Notifications List */}
