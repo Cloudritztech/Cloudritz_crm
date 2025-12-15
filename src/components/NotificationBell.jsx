@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 export default function NotificationBell() {
@@ -115,12 +116,21 @@ export default function NotificationBell() {
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[500px] overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900">Notifications</h3>
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900">Notifications</h3>
+              <Link
+                to="/notifications"
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                onClick={() => setIsOpen(false)}
+              >
+                View all <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAsRead()}
-                className="text-xs text-blue-600 hover:text-blue-700"
+                className="text-xs text-gray-600 hover:text-gray-900"
               >
                 Mark all as read
               </button>
@@ -136,9 +146,14 @@ export default function NotificationBell() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {notifications.map((notif) => (
-                  <div
+                  <Link
                     key={notif._id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
+                    to="/notifications"
+                    onClick={() => {
+                      setIsOpen(false);
+                      if (!notif.isRead) markAsRead(notif._id);
+                    }}
+                    className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                       !notif.isRead ? 'bg-blue-50' : ''
                     }`}
                   >
@@ -176,7 +191,7 @@ export default function NotificationBell() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
