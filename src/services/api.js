@@ -83,8 +83,36 @@ export const productsAPI = {
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
+    // Try IndexedDB for installed app
+    if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
+      try {
+        const { localDB } = await import('../utils/localDB.js');
+        const localData = await localDB.getAll('products');
+        if (localData && localData.length > 0) {
+          // Return local data, sync in background
+          setTimeout(() => {
+            api.get('/products', { params }).then(res => {
+              if (res.data?.success) {
+                localDB.bulkSet('products', res.data.products || []).catch(console.error);
+              }
+            }).catch(console.error);
+          }, 100);
+          return { data: { success: true, products: localData } };
+        }
+      } catch (e) {}
+    }
+    
     const response = await api.get('/products', { params });
     apiCache.set(cacheKey, response.data, 300000); // 5 min
+    
+    // Store in IndexedDB for offline
+    if (response.data?.success && response.data.products) {
+      try {
+        const { localDB } = await import('../utils/localDB.js');
+        localDB.bulkSet('products', response.data.products).catch(console.error);
+      } catch (e) {}
+    }
+    
     return response;
   },
   getById: async (id) => {
@@ -140,8 +168,35 @@ export const customersAPI = {
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
+    // Try IndexedDB for installed app
+    if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
+      try {
+        const { localDB } = await import('../utils/localDB.js');
+        const localData = await localDB.getAll('customers');
+        if (localData && localData.length > 0) {
+          setTimeout(() => {
+            api.get('/customers', { params }).then(res => {
+              if (res.data?.success) {
+                localDB.bulkSet('customers', res.data.customers || []).catch(console.error);
+              }
+            }).catch(console.error);
+          }, 100);
+          return { data: { success: true, customers: localData } };
+        }
+      } catch (e) {}
+    }
+    
     const response = await api.get('/customers', { params });
     apiCache.set(cacheKey, response.data, 300000); // 5 min
+    
+    // Store in IndexedDB
+    if (response.data?.success && response.data.customers) {
+      try {
+        const { localDB } = await import('../utils/localDB.js');
+        localDB.bulkSet('customers', response.data.customers).catch(console.error);
+      } catch (e) {}
+    }
+    
     return response;
   },
   getById: async (id) => {

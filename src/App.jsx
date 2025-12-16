@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Toast from './components/ui/Toast';
 import BlockedAccountModal from './components/BlockedAccountModal';
 import ModernLayout from './components/ModernLayout';
+import InstallPrompt from './components/InstallPrompt';
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Support = lazy(() => import('./pages/Support'));
@@ -126,6 +127,7 @@ function AppContent() {
               />
               </Routes>
               <Toast />
+              <InstallPrompt />
             </div>
           </Router>
   );

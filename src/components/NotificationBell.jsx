@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { requestNotificationPermission, checkAndShowNotifications } from '../utils/pushNotifications';
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -11,6 +12,9 @@ export default function NotificationBell() {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    // Request notification permission on mount
+    requestNotificationPermission();
+    
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
@@ -33,7 +37,14 @@ export default function NotificationBell() {
       
       const response = await api.get('/notifications');
       if (response.data.success) {
-        setNotifications(response.data.notifications || []);
+        const newNotifs = response.data.notifications || [];
+        
+        // Check for new notifications and show push notifications
+        if (notifications.length > 0) {
+          checkAndShowNotifications(newNotifs, notifications);
+        }
+        
+        setNotifications(newNotifs);
         setUnreadCount(response.data.unreadCount || 0);
       }
     } catch (error) {

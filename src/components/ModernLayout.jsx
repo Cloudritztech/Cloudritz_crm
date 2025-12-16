@@ -38,7 +38,7 @@ const ModernLayout = ({ children }) => {
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col z-40">
         <div className="flex flex-col flex-grow bg-white dark:bg-[#141619] border-r border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
           {/* Logo */}
-          <div className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
+          <Link to="/" className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
             ) : (
@@ -47,7 +47,7 @@ const ModernLayout = ({ children }) => {
               </div>
             )}
             <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1">
@@ -80,7 +80,7 @@ const ModernLayout = ({ children }) => {
         <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-[rgba(20,22,25,0.8)] backdrop-blur-md border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
           <div className="h-full px-4 sm:px-6 flex items-center justify-between">
             {/* Left: Logo (Mobile Only) */}
-            <div className="flex items-center space-x-3 lg:hidden">
+            <Link to="/" className="flex items-center space-x-3 lg:hidden">
               {logoUrl ? (
                 <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
               ) : (
@@ -89,7 +89,7 @@ const ModernLayout = ({ children }) => {
                 </div>
               )}
               <span className="text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
-            </div>
+            </Link>
 
             {/* Desktop: Empty space to push right items */}
             <div className="hidden lg:block"></div>
