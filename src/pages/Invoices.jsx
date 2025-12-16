@@ -221,10 +221,10 @@ const InvoiceManagement = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 break-words whitespace-normal">Invoice Management</h1>
-          <p className="text-gray-600 mt-1 break-words whitespace-normal">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">Invoice Management</h1>
+          <p className="text-xs sm:text-base text-gray-600 mt-1 hidden sm:block">
             Manage and track all your invoices
           </p>
         </div>
@@ -232,9 +232,10 @@ const InvoiceManagement = () => {
           onClick={() => navigate("/invoices/add")}
           variant="primary"
           icon={Plus}
-          className="w-full sm:w-auto"
+          className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
         >
-          New Invoice
+          <span className="hidden sm:inline">New Invoice</span>
+          <span className="sm:hidden">New</span>
         </Button>
       </div>
 

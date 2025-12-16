@@ -69,17 +69,17 @@ const Customers = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Customers</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">Manage your customer database</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Customers</h1>
+          <p className="mt-1 text-xs sm:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Manage your customer database</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium w-full sm:w-auto"
+          className="btn-primary flex items-center justify-center px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap flex-shrink-0"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Customer
+          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Add Customer</span>
         </button>
       </div>
 

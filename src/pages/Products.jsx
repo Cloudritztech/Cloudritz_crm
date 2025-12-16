@@ -187,9 +187,9 @@ const Products = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Products</h1>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">Products</h1>
+          <div className="flex gap-1.5 sm:gap-2">
           <input
             type="file"
             id="excelUpload"
@@ -201,18 +201,18 @@ const Products = () => {
             type="button"
             onClick={() => document.getElementById('excelUpload').click()}
             disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm font-medium transition-colors"
+            className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md sm:rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
           >
             {syncing ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="animate-spin rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 border-b-2 border-white sm:mr-2"></div>
             ) : (
-              <Upload className="h-4 w-4 mr-2" />
+              <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
             )}
-            {syncing ? 'Syncing...' : 'Import Excel'}
+            <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Import Excel'}</span>
           </button>
-          <Button onClick={() => setShowModal(true)} className="flex items-center justify-center">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
+          <Button onClick={() => setShowModal(true)} className="flex items-center justify-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add Product</span>
           </Button>
           </div>
         </div>

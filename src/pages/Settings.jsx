@@ -99,13 +99,14 @@ const Settings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Configure your CRM preferences</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">Settings</h1>
+          <p className="text-xs sm:text-base text-gray-600 hidden sm:block">Configure your CRM preferences</p>
         </div>
-        <Button onClick={saveSettings} loading={saving} icon={Save}>
-          Save Changes
+        <Button onClick={saveSettings} loading={saving} icon={Save} className="text-xs sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 whitespace-nowrap flex-shrink-0">
+          <span className="hidden sm:inline">Save Changes</span>
+          <span className="sm:hidden">Save</span>
         </Button>
       </div>
 

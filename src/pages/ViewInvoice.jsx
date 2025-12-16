@@ -164,22 +164,23 @@ const ViewInvoice = () => {
   return (
     <div className="w-full min-h-screen h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto p-0 sm:p-4">
       {/* Action Buttons */}
-      <div className="flex justify-between items-center mb-4 no-print">
-        <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-          <ArrowLeft className="h-5 w-5" />
-          Back to Invoices
+      <div className="flex justify-between items-center gap-2 mb-4 no-print px-2 sm:px-0">
+        <button onClick={() => navigate('/invoices')} className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-xs sm:text-sm">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Back to Invoices</span>
         </button>
         
-        <div className="flex gap-2">
-          <button onClick={handleShare} disabled={sharing} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
-            {sharing ? <><Loader className="h-4 w-4 animate-spin" />Generating...</> : <><Share2 className="h-4 w-4" />Share Invoice</>}
+        <div className="flex gap-1.5 sm:gap-2">
+          <button onClick={handleShare} disabled={sharing} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-600 text-white rounded-md sm:rounded-lg hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
+            {sharing ? <><Loader className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" /><span className="hidden sm:inline">Generating...</span></> : <><Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Share</span></>}
           </button>
-          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Printer className="h-4 w-4" />Print
+          <button onClick={handlePrint} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 whitespace-nowrap">
+            <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Print</span>
           </button>
           {invoice.paymentStatus !== 'paid' && profile?.upiId && (
-            <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-              Show Payment QR
+            <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 whitespace-nowrap">
+              <span className="hidden sm:inline">Payment QR</span>
+              <span className="sm:hidden">QR</span>
             </button>
           )}
         </div>
