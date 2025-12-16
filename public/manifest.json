@@ -2,10 +2,11 @@
   "name": "Cloudritz CRM",
   "short_name": "Cloudritz",
   "description": "Complete CRM solution for managing customers, products, and invoices",
-  "start_url": "/",
+  "start_url": "/?v=2",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
+  "version": "2.0",
   "orientation": "portrait-primary",
   "icons": [
     {

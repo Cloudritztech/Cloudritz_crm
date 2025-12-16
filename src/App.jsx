@@ -1,5 +1,29 @@
 // v1.0.1 - Fixed ModernLayout loading
 import React, { lazy, Suspense, useState, useEffect } from 'react';
+
+// Retry lazy loading with exponential backoff
+const lazyWithRetry = (componentImport) => {
+  return lazy(() => {
+    return new Promise((resolve, reject) => {
+      const hasRefreshed = JSON.parse(
+        window.sessionStorage.getItem('retry-lazy-refreshed') || 'false'
+      );
+
+      componentImport()
+        .then((component) => {
+          window.sessionStorage.setItem('retry-lazy-refreshed', 'false');
+          resolve(component);
+        })
+        .catch((error) => {
+          if (!hasRefreshed) {
+            window.sessionStorage.setItem('retry-lazy-refreshed', 'true');
+            return window.location.reload();
+          }
+          reject(error);
+        });
+    });
+  });
+};
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -7,23 +31,23 @@ import Toast from './components/ui/Toast';
 import BlockedAccountModal from './components/BlockedAccountModal';
 import ModernLayout from './components/ModernLayout';
 import InstallPrompt from './components/InstallPrompt';
-const Login = lazy(() => import('./pages/Login'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Support = lazy(() => import('./pages/Support'));
-const Products = lazy(() => import('./pages/Products'));
-const Customers = lazy(() => import('./pages/Customers'));
-const Invoices = lazy(() => import('./pages/Invoices'));
-const AddInvoice = lazy(() => import('./pages/AddInvoice'));
-const ViewInvoice = lazy(() => import('./pages/ViewInvoice'));
-const SalesReports = lazy(() => import('./pages/SalesReports'));
-const BusinessProfile = lazy(() => import('./pages/BusinessProfile'));
-const ProductDetail = lazy(() => import('./pages/ProductDetail'));
-const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
-const Expenses = lazy(() => import('./pages/Expenses'));
-const Employees = lazy(() => import('./pages/Employees'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Notifications = lazy(() => import('./pages/Notifications'));
+const Login = lazyWithRetry(() => import('./pages/Login'));
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const Support = lazyWithRetry(() => import('./pages/Support'));
+const Products = lazyWithRetry(() => import('./pages/Products'));
+const Customers = lazyWithRetry(() => import('./pages/Customers'));
+const Invoices = lazyWithRetry(() => import('./pages/Invoices'));
+const AddInvoice = lazyWithRetry(() => import('./pages/AddInvoice'));
+const ViewInvoice = lazyWithRetry(() => import('./pages/ViewInvoice'));
+const SalesReports = lazyWithRetry(() => import('./pages/SalesReports'));
+const BusinessProfile = lazyWithRetry(() => import('./pages/BusinessProfile'));
+const ProductDetail = lazyWithRetry(() => import('./pages/ProductDetail'));
+const CustomerDetail = lazyWithRetry(() => import('./pages/CustomerDetail'));
+const Expenses = lazyWithRetry(() => import('./pages/Expenses'));
+const Employees = lazyWithRetry(() => import('./pages/Employees'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
+const Notifications = lazyWithRetry(() => import('./pages/Notifications'));
 
 
 
@@ -54,6 +78,40 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error loading component:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <PageLoader />;
@@ -72,6 +130,7 @@ function AppContent() {
   }, []);
 
   return (
+          <ErrorBoundary>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="App">
               {blockedInfo && (
@@ -130,6 +189,7 @@ function AppContent() {
               <InstallPrompt />
             </div>
           </Router>
+          </ErrorBoundary>
   );
 }
 
