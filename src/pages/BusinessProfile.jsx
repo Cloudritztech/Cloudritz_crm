@@ -139,8 +139,24 @@ const BusinessProfile = () => {
       console.log('✅ Save response:', response);
       
       if (response.data?.success) {
-        // Update theme colors
+        // Update theme colors immediately
         if (profile.branding?.primaryColor || profile.branding?.secondaryColor) {
+          const root = document.documentElement;
+          const hexToRgb = (hex) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '37, 99, 235';
+          };
+          
+          root.style.setProperty('--color-primary', profile.branding.primaryColor);
+          root.style.setProperty('--color-secondary', profile.branding.secondaryColor);
+          root.style.setProperty('--color-primary-rgb', hexToRgb(profile.branding.primaryColor));
+          root.style.setProperty('--color-secondary-rgb', hexToRgb(profile.branding.secondaryColor));
+          
+          localStorage.setItem('brandColors', JSON.stringify({
+            primaryColor: profile.branding.primaryColor,
+            secondaryColor: profile.branding.secondaryColor
+          }));
+          
           window.dispatchEvent(new CustomEvent('update-brand-colors', {
             detail: {
               primaryColor: profile.branding.primaryColor,
