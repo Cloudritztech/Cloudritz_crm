@@ -46,6 +46,8 @@ const Settings = () => {
       if (data.success) {
         if (activeTab === 'invoice') {
           setInvoiceSettings(data.settings);
+        } else if (activeTab === 'categories') {
+          setCategorySettings(data.settings || { categories: ['Tiles', 'Sanitary', 'WPC Doors', 'Accessories'] });
         } else if (activeTab === 'integrations') {
           setIntegrationSettings(data.settings);
         } else if (activeTab === 'backup') {
@@ -64,6 +66,7 @@ const Settings = () => {
     try {
       let payload = {};
       if (activeTab === 'invoice') payload = invoiceSettings;
+      else if (activeTab === 'categories') payload = categorySettings;
       else if (activeTab === 'integrations') payload = integrationSettings;
       else if (activeTab === 'backup') payload = backupSettings;
 
@@ -79,8 +82,14 @@ const Settings = () => {
     }
   };
 
+  const [categorySettings, setCategorySettings] = useState({
+    categories: ['Tiles', 'Sanitary', 'WPC Doors', 'Accessories']
+  });
+  const [newCategory, setNewCategory] = useState('');
+
   const tabs = [
     { id: 'invoice', label: 'Invoice Settings', icon: FileText },
+    { id: 'categories', label: 'Product Categories', icon: SettingsIcon },
     { id: 'integrations', label: 'Integrations', icon: Zap },
     { id: 'backup', label: 'Backup', icon: Database }
   ];
@@ -322,6 +331,64 @@ const Settings = () => {
                       Connect Google Drive
                     </Button>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Category Settings */}
+            {activeTab === 'categories' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Product Categories</h3>
+                  <p className="text-sm text-gray-600 mb-4">Customize categories for your business type</p>
+                  
+                  <div className="space-y-3 mb-4">
+                    {categorySettings.categories.map((cat, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium">{cat}</span>
+                        <button
+                          onClick={() => {
+                            const newCats = categorySettings.categories.filter((_, i) => i !== index);
+                            setCategorySettings({ categories: newCats });
+                          }}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder="Enter new category"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newCategory.trim()) {
+                          setCategorySettings({
+                            categories: [...categorySettings.categories, newCategory.trim()]
+                          });
+                          setNewCategory('');
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newCategory.trim()) {
+                          setCategorySettings({
+                            categories: [...categorySettings.categories, newCategory.trim()]
+                          });
+                          setNewCategory('');
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Add Category
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

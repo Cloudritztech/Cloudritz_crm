@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { Upload, X, Image as ImageIcon, Camera } from 'lucide-react';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 
 const ProductForm = ({ product, onSubmit, onCancel }) => {
   const fileInputRef = useRef(null);
@@ -22,6 +23,22 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
   const [imagePreview, setImagePreview] = useState(product?.image || '');
   const [uploading, setUploading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [categories, setCategories] = useState(['Tiles', 'Sanitary', 'WPC Doors', 'Accessories']);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data } = await api.get('/account?type=settings&section=categories');
+      if (data.success && data.settings?.categories) {
+        setCategories(data.settings.categories);
+      }
+    } catch (error) {
+      console.log('Using default categories');
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -177,10 +194,11 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-white dark:bg-[#0F1113] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           >
-            <option value="tiles">Tiles</option>
-            <option value="sanitary">Sanitary</option>
-            <option value="wpc_doors">WPC Doors</option>
-            <option value="accessories">Accessories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat.toLowerCase().replace(/\s+/g, '_')}>
+                {cat}
+              </option>
+            ))}
           </select>
         </div>
       </div>
