@@ -74,6 +74,9 @@ const Settings = () => {
       
       if (data.success) {
         toast.success('Settings saved successfully');
+        if (activeTab === 'categories') {
+          window.dispatchEvent(new Event('categoriesUpdated'));
+        }
       }
     } catch (error) {
       toast.error('Failed to save settings');

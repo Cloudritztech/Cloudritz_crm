@@ -27,6 +27,13 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
 
   useEffect(() => {
     fetchCategories();
+    
+    const handleCategoriesUpdate = () => {
+      fetchCategories();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
   }, []);
 
   const fetchCategories = async () => {
