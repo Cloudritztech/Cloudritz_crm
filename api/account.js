@@ -234,6 +234,13 @@ export default async function handler(req, res) {
               };
               return res.json({ success: true, settings });
             }
+
+            if (section === 'categories') {
+              const settings = {
+                categories: org.settings?.categories || ['Tiles', 'Sanitary', 'WPC Doors', 'Accessories']
+              };
+              return res.json({ success: true, settings });
+            }
             
             return res.json({ success: true, settings: org.settings || {} });
           }
@@ -274,6 +281,13 @@ export default async function handler(req, res) {
               if (autoBackup !== undefined) org.settings.autoBackup = autoBackup;
               if (backupFrequency) org.settings.backupFrequency = backupFrequency;
               if (cloudBackup !== undefined) org.settings.cloudBackup = cloudBackup;
+            }
+
+            if (section === 'categories') {
+              const { categories } = req.body;
+              if (categories && Array.isArray(categories)) {
+                org.settings.categories = categories;
+              }
             }
 
             await org.save();

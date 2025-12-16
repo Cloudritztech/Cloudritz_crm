@@ -89,9 +89,9 @@ const Settings = () => {
 
   const tabs = [
     { id: 'invoice', label: 'Invoice Settings', icon: FileText },
-    { id: 'categories', label: 'Product Categories', icon: SettingsIcon },
+    { id: 'categories', label: 'Product Categories', icon: Database },
     { id: 'integrations', label: 'Integrations', icon: Zap },
-    { id: 'backup', label: 'Backup', icon: Database }
+    { id: 'backup', label: 'Backup', icon: SettingsIcon }
   ];
 
   return (
