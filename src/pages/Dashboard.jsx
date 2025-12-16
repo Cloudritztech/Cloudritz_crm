@@ -238,7 +238,7 @@ const Dashboard = () => {
               stats.recentInvoices.slice(0, 10).map((invoice) => (
                 <div 
                   key={invoice._id} 
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all cursor-pointer break-words"
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-lg transition-all cursor-pointer break-words"
                   onClick={() => window.open(`/invoices/view/${invoice._id}`, '_blank')}
                 >
                   <div className="flex-1 min-w-0 pr-4">
@@ -327,7 +327,7 @@ const Dashboard = () => {
           <div className="space-y-3">
             <Link 
               to="/invoices/add" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-primary-light rounded-xl mr-4 transition-colors">
                 <Plus className="h-5 w-5 text-primary-theme" />
@@ -340,7 +340,7 @@ const Dashboard = () => {
             
             <Link 
               to="/products" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-cyan-100 rounded-xl mr-4 group-hover:bg-cyan-200 transition-colors">
                 <Package className="h-5 w-5 text-cyan-600" />
@@ -353,7 +353,7 @@ const Dashboard = () => {
             
             <Link 
               to="/customers" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
                 <Users className="h-5 w-5 text-green-600" />
@@ -366,7 +366,7 @@ const Dashboard = () => {
 
             <Link 
               to="/sales-reports" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-purple-100 rounded-xl mr-4 group-hover:bg-purple-200 transition-colors">
                 <ShoppingCart className="h-5 w-5 text-purple-600" />
@@ -379,7 +379,7 @@ const Dashboard = () => {
 
             <Link 
               to="/expenses" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-red-100 rounded-xl mr-4 group-hover:bg-red-200 transition-colors">
                 <DollarSign className="h-5 w-5 text-red-600" />
@@ -392,7 +392,7 @@ const Dashboard = () => {
 
             <Link 
               to="/employees" 
-              className="flex items-center p-4 rounded-xl border border-gray-200 hover-primary transition-all group"
+              className="flex items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
               <div className="p-2 bg-green-100 rounded-xl mr-4 group-hover:bg-green-200 transition-colors">
                 <UserCheck className="h-5 w-5 text-green-600" />

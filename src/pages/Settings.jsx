@@ -163,40 +163,61 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Invoice Template</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Invoice Template</label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
                       onClick={() => setInvoiceSettings({ ...invoiceSettings, template: 'compact' })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      className={`p-4 border-2 rounded-lg text-left transition-all overflow-hidden ${
                         invoiceSettings.template === 'compact'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold">Compact Template</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-semibold text-gray-900 dark:text-white">Compact Template</span>
                         {invoiceSettings.template === 'compact' && (
                           <Check className="h-5 w-5 text-blue-600" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">Simple, single-page invoice format</p>
+                      <div className="mb-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-2 h-32 overflow-hidden">
+                        <div className="text-[6px] leading-tight space-y-1">
+                          <div className="font-bold text-center border-b pb-1">BUSINESS NAME</div>
+                          <div className="flex justify-between"><span>Invoice: #001</span><span>Date: 14/12/2025</span></div>
+                          <div className="border-t border-b py-1"><div className="font-semibold">Customer Name</div><div>Phone: 9999999999</div></div>
+                          <div className="grid grid-cols-4 gap-1 text-[5px] border-b pb-1"><div>Item</div><div>Qty</div><div>Rate</div><div>Amt</div></div>
+                          <div className="grid grid-cols-4 gap-1 text-[5px]"><div>Product 1</div><div>2</div><div>₹100</div><div>₹200</div></div>
+                          <div className="border-t pt-1 text-right font-bold">Total: ₹200</div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Simple, single-page invoice format</p>
                     </button>
 
                     <button
                       onClick={() => setInvoiceSettings({ ...invoiceSettings, template: 'detailed' })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      className={`p-4 border-2 rounded-lg text-left transition-all overflow-hidden ${
                         invoiceSettings.template === 'detailed'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold">Detailed Template</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-semibold text-gray-900 dark:text-white">Detailed Template</span>
                         {invoiceSettings.template === 'detailed' && (
                           <Check className="h-5 w-5 text-blue-600" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">Comprehensive A4 format with all details</p>
+                      <div className="mb-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-2 h-32 overflow-hidden">
+                        <div className="text-[6px] leading-tight space-y-1">
+                          <div className="font-bold text-center border-b pb-1">TAX INVOICE</div>
+                          <div className="flex justify-between border-b pb-1"><div><div className="font-bold">BUSINESS NAME</div><div>Address Line 1</div><div>GSTIN: 123456789</div></div><div className="text-right text-[5px]">Logo</div></div>
+                          <div className="grid grid-cols-2 gap-1 text-[5px] border-b pb-1"><div>Invoice: #001</div><div>Date: 14/12/2025</div></div>
+                          <div className="border-b pb-1"><div className="font-semibold">Customer Details:</div><div className="font-bold">Customer Name</div><div>Mobile: 9999999999</div></div>
+                          <div className="grid grid-cols-8 gap-[2px] text-[4px] border-b pb-1"><div>Sl</div><div className="col-span-2">Description</div><div>HSN</div><div>Qty</div><div>Rate</div><div>Tax</div><div>Amt</div></div>
+                          <div className="grid grid-cols-8 gap-[2px] text-[4px]"><div>1</div><div className="col-span-2">Product</div><div>6907</div><div>2</div><div>₹100</div><div>₹36</div><div>₹236</div></div>
+                          <div className="border-t pt-1 text-right font-bold">Grand Total: ₹236</div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Comprehensive A4 format with all details</p>
                     </button>
                   </div>
                 </div>
