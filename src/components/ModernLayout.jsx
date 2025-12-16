@@ -10,7 +10,8 @@ const ModernLayout = ({ children }) => {
   const location = useLocation();
   const { user } = useAuth();
   const businessName = user?.businessProfile?.businessName || 'Cloudritz CRM';
-  const logoUrl = user?.businessProfile?.logo || '';
+  const businessLogo = user?.businessProfile?.logo || ''; // Shop's logo for profile
+  const appLogo = '/cloudritz-logo.png'; // Cloudritz CRM logo
 
   useEffect(() => {
     if (businessName) {
@@ -39,14 +40,8 @@ const ModernLayout = ({ children }) => {
         <div className="flex flex-col flex-grow bg-white dark:bg-[#141619] border-r border-gray-200 dark:border-[rgba(255,255,255,0.04)]">
           {/* Logo */}
           <Link to="/" className="flex items-center h-16 px-6 border-b border-gray-200 dark:border-[rgba(255,255,255,0.04)] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-            ) : (
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
-                <span className="text-white font-bold text-sm">C</span>
-              </div>
-            )}
-            <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
+            <img src={appLogo} alt="Cloudritz CRM" className="w-8 h-8 object-contain" />
+            <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Cloudritz CRM</span>
           </Link>
 
           {/* Navigation */}
@@ -81,14 +76,8 @@ const ModernLayout = ({ children }) => {
           <div className="h-full px-4 sm:px-6 flex items-center justify-between">
             {/* Left: Logo (Mobile Only) */}
             <Link to="/" className="flex items-center space-x-3 lg:hidden">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-              ) : (
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
-                  <span className="text-white font-bold text-sm">C</span>
-                </div>
-              )}
-              <span className="text-xl font-semibold text-gray-900 dark:text-white">{businessName}</span>
+              <img src={appLogo} alt="Cloudritz CRM" className="w-8 h-8 object-contain" />
+              <span className="text-xl font-semibold text-gray-900 dark:text-white">Cloudritz CRM</span>
             </Link>
 
             {/* Desktop: Empty space to push right items */}
