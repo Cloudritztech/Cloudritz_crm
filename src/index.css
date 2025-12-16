@@ -380,6 +380,16 @@
   .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.1);
   }
+  
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer utilities {
