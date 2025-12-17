@@ -208,15 +208,17 @@ const ViewInvoice = () => {
           </div>
         </div>
 
-        <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px'}}>
-            <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
-            <div>{invoice.customer?.name && <><strong>{invoice.customer.name}</strong></>}</div>
-            <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
+        <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px', display: 'flex', gap: '12px'}}>
+          <div style={{flex: 1}}>
+            <div style={{fontWeight: '700', marginBottom: '4px'}}>{invoice.customer?.name}</div>
             <div>Mobile: {invoice.customer?.phone}</div>
+            {invoice.buyerDetails?.gstin && <div>GSTIN: {invoice.buyerDetails.gstin}</div>}
+            {invoice.destination && <div style={{marginTop: '6px'}}>Destination: {invoice.destination}</div>}
+          </div>
+          <div style={{flex: 1, textAlign: 'right'}}>
+            <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
+            <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
             <div>Payment: <strong>{invoice.paymentMethod?.toUpperCase() || 'CASH'}</strong></div>
-            {invoice.destination && <div>Destination: {invoice.destination}</div>}
-            {invoice.buyerDetails?.gstin && <><div></div><div>GSTIN: {invoice.buyerDetails.gstin}</div></>}
           </div>
         </div>
 
@@ -265,16 +267,17 @@ const ViewInvoice = () => {
           <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '11px'}}>
             <table style={{width: '100%', borderCollapse: 'collapse'}}>
               <tbody>
-                <tr>
-                  <td style={{padding: '3px 0'}}>Item Total:</td>
-                  <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</td>
-                </tr>
-                
                 {invoice.discount > 0 && (
-                  <tr>
-                    <td style={{padding: '3px 0'}}>Additional Discount:</td>
-                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.discount.toFixed(2)}</td>
-                  </tr>
+                  <>
+                    <tr>
+                      <td style={{padding: '3px 0'}}>Item Total:</td>
+                      <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td style={{padding: '3px 0'}}>Discount:</td>
+                      <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.discount.toFixed(2)}</td>
+                    </tr>
+                  </>
                 )}
                 
                 <tr>
