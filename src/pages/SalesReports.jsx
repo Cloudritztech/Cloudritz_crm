@@ -93,9 +93,9 @@ const SalesReports = () => {
 
   const exportToExcel = async () => {
     try {
-      toast.loading('Generating Excel report...');
+      toast.loading('Generating detailed Excel report...');
       
-      const params = {};
+      const params = { period: selectedPeriod };
       if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
         params.startDate = customStartDate;
         params.endDate = customEndDate;
@@ -106,67 +106,160 @@ const SalesReports = () => {
         expensesAPI.getAll(params)
       ]);
       
-      const invoices = invoicesRes.data?.invoices || [];
-      const expenses = expensesRes.data?.expenses || [];
+      let invoices = invoicesRes.data?.invoices || [];
+      let expenses = expensesRes.data?.expenses || [];
       
-      // Invoice data
-      const invoiceData = invoices.map(inv => ({
+      // Filter by date range
+      if (selectedPeriod !== 'custom') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let filterStart, filterEnd;
+        
+        switch (selectedPeriod) {
+          case 'today':
+            filterStart = today;
+            filterEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            break;
+          case 'yesterday':
+            filterStart = new Date(today);
+            filterStart.setDate(filterStart.getDate() - 1);
+            filterEnd = today;
+            break;
+          case 'last7days':
+            filterStart = new Date(today);
+            filterStart.setDate(filterStart.getDate() - 7);
+            filterEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            break;
+          case 'thisMonth':
+            filterStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            filterEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            break;
+          case 'lastMonth':
+            filterStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            filterEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+            break;
+          case 'thisYear':
+            filterStart = new Date(today.getFullYear(), 0, 1);
+            filterEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            break;
+        }
+        
+        if (filterStart && filterEnd) {
+          invoices = invoices.filter(inv => {
+            const date = new Date(inv.createdAt);
+            return date >= filterStart && date < filterEnd;
+          });
+          expenses = expenses.filter(exp => {
+            const date = new Date(exp.expenseDate);
+            return date >= filterStart && date < filterEnd;
+          });
+        }
+      } else if (customStartDate && customEndDate) {
+        const start = new Date(customStartDate);
+        const end = new Date(customEndDate);
+        end.setHours(23, 59, 59, 999);
+        
+        invoices = invoices.filter(inv => {
+          const date = new Date(inv.createdAt);
+          return date >= start && date <= end;
+        });
+        expenses = expenses.filter(exp => {
+          const date = new Date(exp.expenseDate);
+          return date >= start && date <= end;
+        });
+      }
+      
+      // Report Header
+      const periodLabel = quickFilters.find(f => f.key === selectedPeriod)?.label || 'Custom Range';
+      const dateRange = selectedPeriod === 'custom' && customStartDate && customEndDate
+        ? `${new Date(customStartDate).toLocaleDateString('en-IN')} to ${new Date(customEndDate).toLocaleDateString('en-IN')}`
+        : new Date().toLocaleDateString('en-IN');
+      
+      const header = [{
+        'SALES REPORT': `Period: ${periodLabel}`,
+        '': `Date Range: ${dateRange}`,
+        ' ': `Generated: ${new Date().toLocaleString('en-IN')}`
+      }];
+      
+      // Detailed Invoice data
+      const invoiceData = invoices.map((inv, idx) => ({
+        'Sr.': idx + 1,
         'Invoice No': inv.invoiceNumber,
         'Date': new Date(inv.createdAt).toLocaleDateString('en-IN'),
+        'Time': new Date(inv.createdAt).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'}),
         'Customer Name': inv.customer?.name || 'N/A',
-        'Amount': inv.total || inv.grandTotal,
-        'Status': inv.status,
-        'Payment Method': inv.paymentMethod
+        'Customer Phone': inv.customer?.phone || 'N/A',
+        'Subtotal': inv.subtotal || 0,
+        'Discount': inv.discount || 0,
+        'Tax (GST)': ((inv.totalCgst || 0) + (inv.totalSgst || 0)),
+        'Total Amount': inv.grandTotal || inv.total || 0,
+        'Payment Method': inv.paymentMethod?.toUpperCase() || 'CASH',
+        'Payment Status': inv.paymentStatus?.toUpperCase() || inv.status?.toUpperCase() || 'PAID'
       }));
       
-      // Expense data
-      const expenseData = expenses.map(exp => ({
+      // Detailed Expense data
+      const expenseData = expenses.map((exp, idx) => ({
+        'Sr.': idx + 1,
         'Date': new Date(exp.expenseDate).toLocaleDateString('en-IN'),
+        'Time': new Date(exp.createdAt || exp.expenseDate).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'}),
         'Title': exp.title,
-        'Type': exp.type,
+        'Description': exp.description || '-',
+        'Type': exp.type?.toUpperCase() || 'GENERAL',
         'Amount': exp.amount,
-        'Payment Method': exp.paymentMethod,
-        'Employee': exp.employee?.name || 'N/A'
+        'Payment Method': exp.paymentMethod?.toUpperCase() || 'CASH',
+        'Employee': exp.employee?.name || 'N/A',
+        'Notes': exp.notes || '-'
       }));
       
-      // Summary
-      const totalSales = invoices.reduce((sum, inv) => sum + (inv.total || inv.grandTotal), 0);
+      // Summary calculations
+      const totalSales = invoices.reduce((sum, inv) => sum + (inv.grandTotal || inv.total || 0), 0);
+      const totalSubtotal = invoices.reduce((sum, inv) => sum + (inv.subtotal || 0), 0);
+      const totalDiscount = invoices.reduce((sum, inv) => sum + (inv.discount || 0), 0);
+      const totalTax = invoices.reduce((sum, inv) => sum + ((inv.totalCgst || 0) + (inv.totalSgst || 0)), 0);
       const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
       const netProfit = totalSales - totalExpenses;
       
-      const summary = [{
-        'Metric': 'Total Sales',
-        'Value': totalSales
-      }, {
-        'Metric': 'Total Expenses',
-        'Value': totalExpenses
-      }, {
-        'Metric': 'Net Profit',
-        'Value': netProfit
-      }, {
-        'Metric': 'Total Invoices',
-        'Value': invoices.length
-      }, {
-        'Metric': 'Total Expense Entries',
-        'Value': expenses.length
-      }];
+      const summary = [
+        { 'Metric': 'SALES SUMMARY', 'Value': '', 'Details': '' },
+        { 'Metric': 'Total Invoices', 'Value': invoices.length, 'Details': 'Number of invoices' },
+        { 'Metric': 'Gross Sales', 'Value': totalSubtotal, 'Details': 'Before discount & tax' },
+        { 'Metric': 'Total Discount', 'Value': totalDiscount, 'Details': 'Discounts given' },
+        { 'Metric': 'Total Tax (GST)', 'Value': totalTax, 'Details': 'CGST + SGST' },
+        { 'Metric': 'Net Sales', 'Value': totalSales, 'Details': 'Final sales amount' },
+        { 'Metric': '', 'Value': '', 'Details': '' },
+        { 'Metric': 'EXPENSE SUMMARY', 'Value': '', 'Details': '' },
+        { 'Metric': 'Total Expenses', 'Value': totalExpenses, 'Details': `${expenses.length} transactions` },
+        { 'Metric': '', 'Value': '', 'Details': '' },
+        { 'Metric': 'NET PROFIT', 'Value': netProfit, 'Details': 'Sales - Expenses' },
+        { 'Metric': 'Profit Margin', 'Value': totalSales > 0 ? `${((netProfit / totalSales) * 100).toFixed(2)}%` : '0%', 'Details': 'Profit / Sales' }
+      ];
       
       // Create workbook
       const wb = XLSX.utils.book_new();
+      
+      // Add sheets
+      const wsHeader = XLSX.utils.json_to_sheet(header, { skipHeader: true });
       const wsSummary = XLSX.utils.json_to_sheet(summary);
       const wsInvoices = XLSX.utils.json_to_sheet(invoiceData);
       const wsExpenses = XLSX.utils.json_to_sheet(expenseData);
       
-      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
-      XLSX.utils.book_append_sheet(wb, wsInvoices, 'Invoices');
-      XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
+      // Set column widths
+      wsInvoices['!cols'] = [{wch:5},{wch:15},{wch:12},{wch:8},{wch:20},{wch:15},{wch:12},{wch:10},{wch:12},{wch:15},{wch:15},{wch:15}];
+      wsExpenses['!cols'] = [{wch:5},{wch:12},{wch:8},{wch:25},{wch:30},{wch:12},{wch:12},{wch:15},{wch:20},{wch:30}];
+      wsSummary['!cols'] = [{wch:25},{wch:20},{wch:30}];
       
-      const fileName = `Sales_Report_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.utils.book_append_sheet(wb, wsHeader, 'Report Info');
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      XLSX.utils.book_append_sheet(wb, wsInvoices, 'Sales Details');
+      XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expense Details');
+      
+      const fileName = `Sales_Report_${periodLabel.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
       
       toast.dismiss();
-      toast.success('Excel report downloaded!');
+      toast.success(`Detailed report exported! (${invoices.length} invoices, ${expenses.length} expenses)`);
     } catch (error) {
+      console.error('Export error:', error);
       toast.dismiss();
       toast.error('Failed to generate report');
     }
