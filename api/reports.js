@@ -155,14 +155,14 @@ export default async function handler(req, res) {
         { $sort: { totalQuantity: -1 } },
         { $limit: 10 }
       ]),
-      // Total expenses
+      // Total expenses (all time)
       Expense.aggregate([
         { $match: { organizationId: req.organizationId } },
         { $group: { _id: null, total: { $sum: "$amount" } } }
       ]),
-      // Monthly expenses
+      // Monthly expenses (filtered by date)
       Expense.aggregate([
-        { $match: { organizationId: req.organizationId, expenseDate: { $gte: startOfMonth } } },
+        { $match: { organizationId: req.organizationId, expenseDate: { $gte: startOfMonth, $lte: endOfDay } } },
         { $group: { _id: null, total: { $sum: "$amount" } } }
       ])
     ]);
@@ -269,7 +269,9 @@ async function handleSalesReports(req, res) {
     
     console.log('📅 Date filter:', { period, filterStartDate, filterEndDate });
     
-    const [salesData, previousPeriodData] = await Promise.all([
+    const Expense = (await import('../lib/models/Expense.js')).default;
+    
+    const [salesData, previousPeriodData, expensesData] = await Promise.all([
       // Current period sales
       Invoice.aggregate([
         { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
@@ -290,11 +292,17 @@ async function handleSalesReports(req, res) {
           }
         }},
         { $group: { _id: null, totalAmount: { $sum: "$total" } }}
+      ]),
+      // Expenses for the selected period
+      Expense.aggregate([
+        { $match: { organizationId: req.organizationId, expenseDate: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
       ])
     ]);
     
     const currentData = salesData[0] || { totalAmount: 0, totalOrders: 0, averageOrder: 0 };
     const previousData = previousPeriodData[0] || { totalAmount: 0 };
+    const expensesCurrentData = expensesData[0] || { total: 0, count: 0 };
     
     const growthRate = previousData.totalAmount > 0 
       ? ((currentData.totalAmount - previousData.totalAmount) / previousData.totalAmount * 100)
@@ -305,6 +313,10 @@ async function handleSalesReports(req, res) {
       totalOrders: currentData.totalOrders,
       averageOrder: currentData.averageOrder || 0,
       growthRate: growthRate.toFixed(1),
+      expenses: {
+        total: expensesCurrentData.total,
+        count: expensesCurrentData.count
+      },
       period: period || 'today',
       dateRange: {
         start: filterStartDate,

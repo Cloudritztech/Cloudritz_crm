@@ -59,29 +59,13 @@ const SalesReports = () => {
         params.endDate = endDate;
       }
       
-      const [salesResponse, expensesResponse] = await Promise.all([
-        reportsAPI.getSalesReports(params),
-        expensesAPI.getAll(period === 'custom' ? { startDate, endDate } : {})
-      ]);
-      
-
+      const salesResponse = await reportsAPI.getSalesReports(params);
       
       if (salesResponse.data?.success && salesResponse.data?.data) {
-        setSalesData(salesResponse.data.data);
-        generateAIInsights(salesResponse.data.data);
-      }
-      
-      if (expensesResponse.data?.success) {
-        const expenses = expensesResponse.data.expenses || [];
-        const filtered = period === 'custom' && startDate && endDate
-          ? expenses.filter(e => {
-              const date = new Date(e.expenseDate);
-              return date >= new Date(startDate) && date <= new Date(endDate);
-            })
-          : expenses;
-        
-        const total = filtered.reduce((sum, e) => sum + e.amount, 0);
-        setExpenseData({ total, count: filtered.length });
+        const data = salesResponse.data.data;
+        setSalesData(data);
+        setExpenseData(data.expenses || { total: 0, count: 0 });
+        generateAIInsights(data);
       }
     } catch (error) {
       setError(error.response?.data?.message || error.message || 'Failed to fetch data');
