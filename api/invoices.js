@@ -342,7 +342,12 @@ async function createInvoice(req, res) {
         stateCode: '09'
       },
       modeOfPayment: paymentMethod,
-      destination: destination || customerExists.address?.city || 'Gorakhpur',
+      destination: destination || [
+        buyerDetails?.street || customerExists.address?.street,
+        buyerDetails?.city || customerExists.address?.city,
+        buyerDetails?.state || customerExists.address?.state,
+        buyerDetails?.pincode || customerExists.address?.pincode
+      ].filter(Boolean).join(', ') || 'Address not provided',
       deliveryNote: deliveryNote || '',
       referenceNo: referenceNo || '',
       buyerOrderNo: buyerOrderNo || '',

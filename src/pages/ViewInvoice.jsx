@@ -208,18 +208,19 @@ const ViewInvoice = () => {
           </div>
         </div>
 
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', border: '2px solid #000', borderTop: 'none', fontSize: '11px', padding: '10px', gap: '8px'}}>
-          <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
-          <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
-          <div>Payment: {invoice.paymentMethod?.toUpperCase() || 'CASH'}</div>
-          <div>Destination: {getPlaceOfSupply()}</div>
-        </div>
-
         <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
-          <div style={{fontWeight: '700', marginBottom: '5px'}}>Customer Details:</div>
-          <div style={{fontWeight: '700'}}>{invoice.customer?.name}</div>
-          <div>Mobile: {invoice.customer?.phone}</div>
-          <div>State: {invoice.buyerDetails?.state || invoice.customer?.address?.state || 'Uttar Pradesh'}</div>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px'}}>
+            <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
+            <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
+            <div style={{gridColumn: '1 / -1'}}>Payment: <strong>{invoice.paymentMethod?.toUpperCase() || 'CASH'}</strong></div>
+          </div>
+          <div style={{borderTop: '1px solid #ddd', paddingTop: '8px'}}>
+            <div style={{fontWeight: '700', marginBottom: '5px'}}>Customer Details:</div>
+            <div style={{fontWeight: '700'}}>{invoice.customer?.name}</div>
+            <div>Mobile: {invoice.customer?.phone}</div>
+            {invoice.destination && <div>Destination: {invoice.destination}</div>}
+            {invoice.buyerDetails?.gstin && <div>GSTIN: {invoice.buyerDetails.gstin}</div>}
+          </div>
         </div>
 
         <table style={{width: '100%', borderCollapse: 'collapse', border: '2px solid #000', borderTop: 'none', fontSize: '11px'}}>
@@ -376,6 +377,7 @@ const ViewInvoice = () => {
               <div className="flex justify-between"><span>Date:</span><span>{new Date(invoice.createdAt).toLocaleDateString('en-IN')} {new Date(invoice.createdAt).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'})}</span></div>
               <div className="flex justify-between"><span>Customer:</span><span>{invoice.customer?.name}</span></div>
               <div className="flex justify-between"><span>Phone:</span><span>{invoice.customer?.phone}</span></div>
+              {invoice.destination && <div className="border-t border-dashed border-gray-300 pt-1 mt-1"><span className="font-semibold">Destination:</span> {invoice.destination}</div>}
             </div>
 
             <table className="w-full text-xs mb-2">
