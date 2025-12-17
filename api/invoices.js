@@ -342,12 +342,18 @@ async function createInvoice(req, res) {
         stateCode: '09'
       },
       modeOfPayment: paymentMethod,
-      destination: destination || [
-        buyerDetails?.street || customerExists.address?.street,
-        buyerDetails?.city || customerExists.address?.city,
-        buyerDetails?.state || customerExists.address?.state,
-        buyerDetails?.pincode || customerExists.address?.pincode
-      ].filter(Boolean).join(', ') || 'Address not provided',
+      destination: (() => {
+        const destValue = destination || [
+          buyerDetails?.street || customerExists.address?.street,
+          buyerDetails?.city || customerExists.address?.city,
+          buyerDetails?.state || customerExists.address?.state,
+          buyerDetails?.pincode || customerExists.address?.pincode
+        ].filter(Boolean).join(', ') || '';
+        console.log('📍 Destination value:', destValue);
+        console.log('📍 Customer address:', customerExists.address);
+        console.log('📍 Buyer details:', buyerDetails);
+        return destValue;
+      })(),
       deliveryNote: deliveryNote || '',
       referenceNo: referenceNo || '',
       buyerOrderNo: buyerOrderNo || '',

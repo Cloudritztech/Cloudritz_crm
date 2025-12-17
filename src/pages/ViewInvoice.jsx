@@ -209,17 +209,14 @@ const ViewInvoice = () => {
         </div>
 
         <div style={{border: '2px solid #000', borderTop: 'none', padding: '12px', fontSize: '11px'}}>
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px'}}>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px'}}>
             <div>Invoice No.: <strong>{invoice.invoiceNumber}</strong></div>
+            <div>{invoice.customer?.name && <><strong>{invoice.customer.name}</strong></>}</div>
             <div>Dated: <strong>{new Date(invoice.createdAt).toLocaleDateString('en-IN')}</strong></div>
-            <div style={{gridColumn: '1 / -1'}}>Payment: <strong>{invoice.paymentMethod?.toUpperCase() || 'CASH'}</strong></div>
-          </div>
-          <div style={{borderTop: '1px solid #ddd', paddingTop: '8px'}}>
-            <div style={{fontWeight: '700', marginBottom: '5px'}}>Customer Details:</div>
-            <div style={{fontWeight: '700'}}>{invoice.customer?.name}</div>
             <div>Mobile: {invoice.customer?.phone}</div>
+            <div>Payment: <strong>{invoice.paymentMethod?.toUpperCase() || 'CASH'}</strong></div>
             {invoice.destination && <div>Destination: {invoice.destination}</div>}
-            {invoice.buyerDetails?.gstin && <div>GSTIN: {invoice.buyerDetails.gstin}</div>}
+            {invoice.buyerDetails?.gstin && <><div></div><div>GSTIN: {invoice.buyerDetails.gstin}</div></>}
           </div>
         </div>
 
