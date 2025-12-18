@@ -75,13 +75,15 @@ const ViewInvoice = () => {
     
     const element = document.getElementById('invoice-content');
     const canvas = await html2canvas(element, {
-      scale: 1.5,
+      scale: 2.5,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
     });
     
-    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    const imgData = canvas.toDataURL('image/png', 1.0);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -90,7 +92,18 @@ const ViewInvoice = () => {
     const ratio = pdfWidth / imgWidth;
     const scaledHeight = imgHeight * ratio;
     
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
+    let heightLeft = scaledHeight;
+    let position = 0;
+    
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight);
+    heightLeft -= pdfHeight;
+    
+    while (heightLeft > 0) {
+      position = heightLeft - scaledHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight);
+      heightLeft -= pdfHeight;
+    }
     
     return pdf;
   };

@@ -13,8 +13,8 @@ const CustomerCard = ({ customer, onEdit }) => {
           <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
             <User className="h-6 w-6 text-white" />
           </div>
-          <div className="min-w-0">
-            <h3 className="text-sm sm:text-base truncate" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{customer.name}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm sm:text-base truncate overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{customer.name}</h3>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Customer</p>
           </div>
         </div>
