@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'Invalid data format' });
       }
       const results = { added: 0, updated: 0, unchanged: 0, errors: [] };
-      const existingProducts = await Product.find({});
+      const existingProducts = await Product.find({ organizationId: req.organizationId });
       const existingMap = new Map();
       existingProducts.forEach(p => existingMap.set(p.name.toLowerCase().trim(), p));
       const bulkOps = [];
@@ -103,10 +103,10 @@ export default async function handler(req, res) {
         const stockSaleValue = stock * sellingPrice;
         const stockPurchaseValue = stock * purchasePrice;
         const existing = existingMap.get(name.toLowerCase());
-        if (existing) {
+        if (existing && existing.organizationId.toString() === req.organizationId.toString()) {
           const hasChanges = Math.abs(existing.stock - stock) > 0.01 || Math.abs(existing.sellingPrice - sellingPrice) > 0.01 || Math.abs(existing.purchasePrice - purchasePrice) > 0.01;
           if (hasChanges) {
-            bulkOps.push({ updateOne: { filter: { _id: existing._id }, update: { $set: { stock, sellingPrice, purchasePrice, stockSaleValue, stockPurchaseValue, importedFromExcel: true } } } });
+            bulkOps.push({ updateOne: { filter: { _id: existing._id, organizationId: req.organizationId }, update: { $set: { stock, sellingPrice, purchasePrice, stockSaleValue, stockPurchaseValue, importedFromExcel: true } } } });
             results.updated++;
           } else {
             results.unchanged++;
