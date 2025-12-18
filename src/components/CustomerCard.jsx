@@ -9,12 +9,12 @@ const CustomerCard = ({ customer, onEdit }) => {
     <div className="card-premium cursor-pointer hover:shadow-xl transition-shadow" onClick={() => navigate(`/customers/${customer._id}`)}>
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 min-w-0 flex-1">
           <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #2563EB, #3B82F6)' }}>
             <User className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base truncate overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{customer.name}</h3>
+            <h3 className="text-sm sm:text-base truncate" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{customer.name}</h3>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Customer</p>
           </div>
         </div>

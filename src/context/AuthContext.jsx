@@ -46,6 +46,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      // Clear cache before login
+      try {
+        const { apiCache } = await import('../utils/cache');
+        apiCache.clear();
+      } catch (e) {}
+      
       const response = await authAPI.login(credentials);
       const { token, user } = response.data;
       
@@ -56,6 +62,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
+      
+      // Clear IndexedDB after successful login
+      try {
+        const { localDB } = await import('../utils/localDB');
+        await localDB.clearAll();
+      } catch (e) {}
       
       return { success: true, user };
     } catch (error) {
@@ -84,10 +96,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    
+    // Clear all API cache
+    try {
+      const { apiCache } = await import('../utils/cache');
+      apiCache.clear();
+    } catch (e) {}
+    
+    // Clear IndexedDB
+    try {
+      const { localDB } = await import('../utils/localDB');
+      await localDB.clearAll();
+    } catch (e) {}
   };
 
   const updateUser = (userData) => {
