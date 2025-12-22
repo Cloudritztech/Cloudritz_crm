@@ -15,15 +15,28 @@ export default async function handler(req, res) {
   try {
     // GET - Fetch notifications
     if (method === 'GET' && !action) {
-      const query = req.organizationId ? { organizationId: req.organizationId } : {};
+      const query = { organizationId: req.organizationId };
+      
+      // Filter by userId if present (user-specific notifications)
+      // OR fetch org-wide notifications (userId: null)
+      query.$or = [
+        { userId: req.userId },
+        { userId: null }
+      ];
+      
+      console.log('📥 Fetching notifications for:', { organizationId: req.organizationId, userId: req.userId });
+      
       const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
-        .limit(50);
+        .limit(50)
+        .lean();
 
       const unreadCount = await Notification.countDocuments({
         ...query,
         isRead: false
       });
+      
+      console.log(`✅ Found ${notifications.length} notifications (${unreadCount} unread)`);
 
       return res.status(200).json({ 
         success: true, 
@@ -34,15 +47,20 @@ export default async function handler(req, res) {
 
     // PUT - Mark as read
     if (method === 'PUT' && action === 'mark-read') {
-      const query = req.organizationId ? { organizationId: req.organizationId } : {};
+      const query = { organizationId: req.organizationId };
+      query.$or = [
+        { userId: req.userId },
+        { userId: null }
+      ];
+      
       if (id) {
-        // Mark single notification as read
+        console.log('📖 Marking notification as read:', id);
         await Notification.findOneAndUpdate(
           { _id: id, ...query },
           { isRead: true }
         );
       } else {
-        // Mark all as read
+        console.log('📖 Marking all notifications as read');
         await Notification.updateMany(
           { ...query, isRead: false },
           { isRead: true }
@@ -54,7 +72,13 @@ export default async function handler(req, res) {
 
     // DELETE - Delete notification
     if (method === 'DELETE' && id) {
-      const query = req.organizationId ? { organizationId: req.organizationId } : {};
+      const query = { organizationId: req.organizationId };
+      query.$or = [
+        { userId: req.userId },
+        { userId: null }
+      ];
+      
+      console.log('🗑️ Deleting notification:', id);
       await Notification.findOneAndDelete({ 
         _id: id, 
         ...query

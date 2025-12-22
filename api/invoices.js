@@ -6,6 +6,7 @@ import InventoryHistory from '../lib/models/InventoryHistory.js';
 import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
 import { generateInvoicePDF } from '../lib/pdfGenerator.js';
 import { numberToWords } from '../lib/numberToWords.js';
+import { notifyInvoiceCreated, notifyPaymentReceived } from '../lib/services/notificationService.js';
 
 
 async function runMiddleware(req, res, fn) {
@@ -421,7 +422,12 @@ async function createInvoice(req, res) {
       .populate('items.product', 'name category')
       .populate('createdBy', 'name');
 
-
+    // Create notification
+    try {
+      await notifyInvoiceCreated(req.organizationId, populatedInvoice, customerExists);
+    } catch (notifErr) {
+      console.warn('⚠️ Failed to create notification:', notifErr.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -475,6 +481,14 @@ async function updateInvoicePayment(req, res, id) {
     const updatedInvoice = await Invoice.findById(id)
       .populate('customer', 'name phone')
       .populate('createdBy', 'name');
+
+    // Create payment notification
+    try {
+      const isPartial = updatedInvoice.paymentStatus === 'partial';
+      await notifyPaymentReceived(req.organizationId, updatedInvoice, amount, isPartial);
+    } catch (notifErr) {
+      console.warn('⚠️ Failed to create notification:', notifErr.message);
+    }
 
     return res.json({ 
       success: true, 

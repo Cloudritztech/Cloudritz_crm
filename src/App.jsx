@@ -31,6 +31,8 @@ import Toast from './components/ui/Toast';
 import BlockedAccountModal from './components/BlockedAccountModal';
 import ModernLayout from './components/ModernLayout';
 import InstallPrompt from './components/InstallPrompt';
+import NotificationPrompt from './components/NotificationPrompt';
+import ProtectedRoute from './components/ProtectedRoute';
 const Login = lazyWithRetry(() => import('./pages/Login'));
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
 const Support = lazyWithRetry(() => import('./pages/Support'));
@@ -162,21 +164,64 @@ function AppContent() {
                           <Routes>
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/support" element={<Support />} />
-                            <Route path="/products" element={<Products />} />
-                            <Route path="/products/:id" element={<ProductDetail />} />
-                            <Route path="/customers" element={<Customers />} />
-                            <Route path="/customers/:id" element={<CustomerDetail />} />
-                            <Route path="/invoices" element={<Invoices />} />
-                            <Route path="/invoices/add" element={<AddInvoice />} />
-                            <Route path="/invoices/view/:id" element={<ViewInvoice />} />
-                            <Route path="/sales-reports" element={<SalesReports />} />
-                            <Route path="/expenses" element={<Expenses />} />
-                            <Route path="/employees" element={<Employees />} />
+                            <Route path="/products" element={
+                              <ProtectedRoute requiredPermission="view_products">
+                                <Products />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/products/:id" element={
+                              <ProtectedRoute requiredPermission="view_products">
+                                <ProductDetail />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/customers" element={
+                              <ProtectedRoute requiredPermission="view_customers">
+                                <Customers />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/customers/:id" element={
+                              <ProtectedRoute requiredPermission="view_customers">
+                                <CustomerDetail />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/invoices" element={
+                              <ProtectedRoute requiredPermission="view_invoices">
+                                <Invoices />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/invoices/add" element={
+                              <ProtectedRoute requiredPermission="create_invoice">
+                                <AddInvoice />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/invoices/view/:id" element={
+                              <ProtectedRoute requiredPermission="view_invoices">
+                                <ViewInvoice />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/sales-reports" element={
+                              <ProtectedRoute requiredPermission="view_reports">
+                                <SalesReports />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/expenses" element={
+                              <ProtectedRoute requiredPermission="view_expenses">
+                                <Expenses />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/employees" element={
+                              <ProtectedRoute requiredPermission="manage_users">
+                                <Employees />
+                              </ProtectedRoute>
+                            } />
                             <Route path="/business-profile" element={<BusinessProfile />} />
                             <Route path="/profile" element={<Profile />} />
-                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/settings" element={
+                              <ProtectedRoute requiredPermission="view_settings">
+                                <Settings />
+                              </ProtectedRoute>
+                            } />
                             <Route path="/notifications" element={<Notifications />} />
-
                           </Routes>
                         </Suspense>
                       </ModernLayout>
@@ -187,6 +232,7 @@ function AppContent() {
               </Routes>
               <Toast />
               <InstallPrompt />
+              <NotificationPrompt />
             </div>
           </Router>
           </ErrorBoundary>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Package, Users, FileText, DollarSign, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import UserMenu from './UserMenu';
 import BottomNav from './BottomNav';
 import NotificationBell from './NotificationBell';
@@ -9,9 +10,10 @@ import NotificationBell from './NotificationBell';
 const ModernLayout = ({ children }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { hasPermission, PERMISSIONS } = usePermissions();
   const businessName = user?.businessProfile?.businessName || 'Cloudritz CRM';
-  const businessLogo = user?.businessProfile?.logo || ''; // Shop's logo for profile
-  const appLogo = '/cloudritz-logo.png'; // Cloudritz CRM logo
+  const businessLogo = user?.businessProfile?.logo || '';
+  const appLogo = '/cloudritz-logo.png';
 
   useEffect(() => {
     if (businessName) {
@@ -19,14 +21,49 @@ const ModernLayout = ({ children }) => {
     }
   }, [businessName]);
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Products', href: '/products', icon: Package },
-    { name: 'Customers', href: '/customers', icon: Users },
-    { name: 'Invoices', href: '/invoices', icon: FileText },
-    { name: 'Expenses', href: '/expenses', icon: DollarSign },
-    { name: 'Employees', href: '/employees', icon: UserCheck },
+  const allNavigation = [
+    { 
+      name: 'Dashboard', 
+      href: '/', 
+      icon: Home,
+      permission: PERMISSIONS.VIEW_DASHBOARD
+    },
+    { 
+      name: 'Products', 
+      href: '/products', 
+      icon: Package,
+      permission: PERMISSIONS.VIEW_PRODUCTS
+    },
+    { 
+      name: 'Customers', 
+      href: '/customers', 
+      icon: Users,
+      permission: PERMISSIONS.VIEW_CUSTOMERS
+    },
+    { 
+      name: 'Invoices', 
+      href: '/invoices', 
+      icon: FileText,
+      permission: PERMISSIONS.VIEW_INVOICES
+    },
+    { 
+      name: 'Expenses', 
+      href: '/expenses', 
+      icon: DollarSign,
+      permission: PERMISSIONS.VIEW_EXPENSES
+    },
+    { 
+      name: 'Employees', 
+      href: '/employees', 
+      icon: UserCheck,
+      permission: PERMISSIONS.MANAGE_USERS
+    },
   ];
+
+  // Filter navigation based on permissions
+  const navigation = allNavigation.filter(item => 
+    !item.permission || hasPermission(item.permission)
+  );
 
   const isActive = (href) => {
     if (href === '/') return location.pathname === '/';

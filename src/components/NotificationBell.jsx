@@ -74,24 +74,36 @@ export default function NotificationBell() {
 
   const getNotificationIcon = (type) => {
     const icons = {
-      account_blocked: '🚫',
-      account_unblocked: '✅',
-      settings_updated: '⚙️',
-      admin_message: '💬',
-      payment_reminder: '💰',
-      system_update: '🔔'
+      invoice_created: '📝',
+      payment_received: '💵',
+      payment_partial: '💳',
+      invoice_paid: '✅',
+      expense_created: '📊',
+      ticket_reply: '💬',
+      ticket_resolved: '✔️',
+      employee_created: '👥',
+      payment_reminder: '⏰',
+      invoice_overdue: '⚠️',
+      low_stock: '📦',
+      system_announcement: '🔔'
     };
     return icons[type] || '📢';
   };
 
   const getNotificationColor = (type) => {
     const colors = {
-      account_blocked: 'bg-red-50 border-red-200',
-      account_unblocked: 'bg-green-50 border-green-200',
-      settings_updated: 'bg-blue-50 border-blue-200',
-      admin_message: 'bg-purple-50 border-purple-200',
+      invoice_created: 'bg-blue-50 border-blue-200',
+      payment_received: 'bg-green-50 border-green-200',
+      payment_partial: 'bg-yellow-50 border-yellow-200',
+      invoice_paid: 'bg-green-50 border-green-200',
+      expense_created: 'bg-orange-50 border-orange-200',
+      ticket_reply: 'bg-purple-50 border-purple-200',
+      ticket_resolved: 'bg-green-50 border-green-200',
+      employee_created: 'bg-indigo-50 border-indigo-200',
       payment_reminder: 'bg-yellow-50 border-yellow-200',
-      system_update: 'bg-indigo-50 border-indigo-200'
+      invoice_overdue: 'bg-red-50 border-red-200',
+      low_stock: 'bg-orange-50 border-orange-200',
+      system_announcement: 'bg-blue-50 border-blue-200'
     };
     return colors[type] || 'bg-gray-50 border-gray-200';
   };

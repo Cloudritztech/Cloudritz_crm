@@ -3,6 +3,7 @@ import Expense from '../lib/models/Expense.js';
 import Employee from '../lib/models/Employee.js';
 import User from '../lib/models/User.js';
 import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
+import { notifyExpenseCreated } from '../lib/services/notificationService.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -119,6 +120,14 @@ export default async function handler(req, res) {
         }
 
         const expense = await Expense.create({ ...cleanData, organizationId: req.organizationId, createdBy: req.user._id });
+        
+        // Create notification
+        try {
+          await notifyExpenseCreated(req.organizationId, expense);
+        } catch (notifErr) {
+          console.warn('⚠️ Failed to create notification:', notifErr.message);
+        }
+        
         return res.status(201).json({ success: true, expense });
 
       case 'PUT':

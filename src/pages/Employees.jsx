@@ -15,7 +15,13 @@ const Employees = () => {
     department: '',
     salary: '',
     joiningDate: new Date().toISOString().split('T')[0],
-    status: 'active'
+    status: 'active',
+    // Login credentials
+    createLogin: false,
+    role: 'staff',
+    username: '',
+    password: '',
+    permissions: []
   });
 
   useEffect(() => {
@@ -47,7 +53,20 @@ const Employees = () => {
       }
       setShowModal(false);
       setEditingId(null);
-      setFormData({ name: '', phone: '', email: '', department: '', salary: '', joiningDate: new Date().toISOString().split('T')[0], status: 'active' });
+      setFormData({ 
+        name: '', 
+        phone: '', 
+        email: '', 
+        department: '', 
+        salary: '', 
+        joiningDate: new Date().toISOString().split('T')[0], 
+        status: 'active',
+        createLogin: false,
+        role: 'staff',
+        username: '',
+        password: '',
+        permissions: []
+      });
       fetchEmployees();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed');
@@ -82,7 +101,20 @@ const Employees = () => {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ name: '', phone: '', email: '', department: '', salary: '', joiningDate: new Date().toISOString().split('T')[0], status: 'active' });
+    setFormData({ 
+      name: '', 
+      phone: '', 
+      email: '', 
+      department: '', 
+      salary: '', 
+      joiningDate: new Date().toISOString().split('T')[0], 
+      status: 'active',
+      createLogin: false,
+      role: 'staff',
+      username: '',
+      password: '',
+      permissions: []
+    });
   };
 
   if (loading) {
@@ -166,23 +198,147 @@ const Employees = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{editingId ? 'Edit Employee' : 'Add Employee'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input type="text" placeholder="Name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="input-field" required />
-              <input type="tel" placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="input-field" required />
-              <input type="email" placeholder="Email (optional)" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="input-field" />
-              <input type="text" placeholder="Department" value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="input-field" required />
-              <input type="number" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="input-field" required />
-              <input type="date" value={formData.joiningDate} onChange={(e) => setFormData({...formData, joiningDate: e.target.value})} className="input-field" required />
-              <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="input-field">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <div className="flex gap-3">
-                <button type="button" onClick={handleModalClose} className="btn-secondary flex-1">Cancel</button>
-                <button type="submit" className="btn-primary flex-1">{editingId ? 'Update' : 'Add'}</button>
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Full Name *" 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                  className="input-field" 
+                  required 
+                />
+                <input 
+                  type="tel" 
+                  placeholder="Phone *" 
+                  value={formData.phone} 
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                  className="input-field" 
+                  required 
+                />
+              </div>
+              
+              <input 
+                type="email" 
+                placeholder="Email (optional)" 
+                value={formData.email} 
+                onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                className="input-field" 
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Department *" 
+                  value={formData.department} 
+                  onChange={(e) => setFormData({...formData, department: e.target.value})} 
+                  className="input-field" 
+                  required 
+                />
+                <input 
+                  type="number" 
+                  placeholder="Salary *" 
+                  value={formData.salary} 
+                  onChange={(e) => setFormData({...formData, salary: e.target.value})} 
+                  className="input-field" 
+                  required 
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input 
+                  type="date" 
+                  value={formData.joiningDate} 
+                  onChange={(e) => setFormData({...formData, joiningDate: e.target.value})} 
+                  className="input-field" 
+                  required 
+                />
+                <select 
+                  value={formData.status} 
+                  onChange={(e) => setFormData({...formData, status: e.target.value})} 
+                  className="input-field"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* Login Credentials Section */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <input 
+                    type="checkbox" 
+                    id="createLogin"
+                    checked={formData.createLogin}
+                    onChange={(e) => setFormData({...formData, createLogin: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="createLogin" className="font-semibold text-gray-900">
+                    Create Login Credentials (Allow system access)
+                  </label>
+                </div>
+
+                {formData.createLogin && (
+                  <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-3">
+                      🔒 Create username and password for this employee to login to the system
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input 
+                        type="text" 
+                        placeholder="Username *" 
+                        value={formData.username} 
+                        onChange={(e) => setFormData({...formData, username: e.target.value})} 
+                        className="input-field" 
+                        required={formData.createLogin}
+                      />
+                      <input 
+                        type="password" 
+                        placeholder="Password *" 
+                        value={formData.password} 
+                        onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                        className="input-field" 
+                        required={formData.createLogin}
+                        minLength="6"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Role & Access Level *
+                      </label>
+                      <select 
+                        value={formData.role} 
+                        onChange={(e) => setFormData({...formData, role: e.target.value})} 
+                        className="input-field"
+                        required={formData.createLogin}
+                      >
+                        <option value="staff">Staff (View & Create Only)</option>
+                        <option value="manager">Manager (Can Edit, No Delete)</option>
+                        <option value="admin">Admin (Full Access)</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.role === 'staff' && '• Can view products, customers, invoices and create basic records'}
+                        {formData.role === 'manager' && '• Can create and edit records, view reports, cannot delete'}
+                        {formData.role === 'admin' && '• Full access to all features except super admin functions'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={handleModalClose} className="btn-secondary flex-1">
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary flex-1">
+                  {editingId ? 'Update Employee' : 'Create Employee'}
+                </button>
               </div>
             </form>
           </div>

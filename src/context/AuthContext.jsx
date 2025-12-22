@@ -28,6 +28,14 @@ export const AuthProvider = ({ children }) => {
         if (token && userData) {
           const parsedUser = JSON.parse(userData);
           if (parsedUser.id && parsedUser.email) {
+            // Ensure role is set (default to 'admin' if missing)
+            if (!parsedUser.role) {
+              parsedUser.role = 'admin';
+            }
+            // Ensure permissions array exists
+            if (!parsedUser.permissions) {
+              parsedUser.permissions = [];
+            }
             setUser(parsedUser);
             setLoading(false);
             return;
@@ -59,6 +67,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid response from server');
       }
       
+      // Ensure role and permissions
+      if (!user.role) user.role = 'admin';
+      if (!user.permissions) user.permissions = [];
+      
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
@@ -82,6 +94,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register(userData);
       const { token, user } = response.data;
+      
+      if (!user.role) user.role = 'admin';
+      if (!user.permissions) user.permissions = [];
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -115,6 +130,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
+    if (!userData.role) userData.role = user?.role || 'admin';
+    if (!userData.permissions) userData.permissions = user?.permissions || [];
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   };
@@ -126,7 +143,9 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     loading,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    userRole: user?.role,
+    userPermissions: user?.permissions || []
   };
 
   return (

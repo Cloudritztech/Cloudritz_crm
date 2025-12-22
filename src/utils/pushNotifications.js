@@ -1,4 +1,4 @@
-// Push Notifications Manager
+// Push Notifications Manager with Service Worker
 export const requestNotificationPermission = async () => {
   if (!('Notification' in window)) {
     console.log('This browser does not support notifications');
@@ -6,22 +6,38 @@ export const requestNotificationPermission = async () => {
   }
 
   if (Notification.permission === 'granted') {
+    await registerServiceWorker();
     return true;
   }
 
   if (Notification.permission !== 'denied') {
     const permission = await Notification.requestPermission();
-    return permission === 'granted';
+    if (permission === 'granted') {
+      await registerServiceWorker();
+      return true;
+    }
   }
 
   return false;
 };
 
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('✅ Service Worker registered');
+      return registration;
+    } catch (error) {
+      console.error('❌ Service Worker registration failed:', error);
+    }
+  }
+}
+
 export const showNotification = (title, options = {}) => {
   if (Notification.permission === 'granted') {
     const notification = new Notification(title, {
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/logo.png',
+      badge: '/logo.png',
       vibrate: [200, 100, 200],
       tag: options.tag || 'crm-notification',
       requireInteraction: false,
@@ -36,6 +52,7 @@ export const showNotification = (title, options = {}) => {
       notification.close();
     };
 
+    setTimeout(() => notification.close(), 8000);
     return notification;
   }
 };
