@@ -59,15 +59,26 @@ export default async function handler(req, res) {
 
   if (action === 'login' && req.method === 'POST') {
     try {
-      const { email, password, loginType = 'user' } = req.body;
+      const { email, identifier, password, loginType = 'user' } = req.body;
+      const loginIdentifier = identifier || email;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+      if (!loginIdentifier || !password) {
+        return res.status(400).json({ message: 'Email/Mobile and password are required' });
+      }
+
+      // Detect if identifier is Indian mobile number (10 digits)
+      const isIndianMobile = /^[6-9]\d{9}$/.test(loginIdentifier);
+      
+      let queryField = {};
+      if (isIndianMobile) {
+        queryField = { phone: loginIdentifier };
+      } else {
+        queryField = { email: loginIdentifier.toLowerCase() };
       }
 
       // Employee Login
       if (loginType === 'employee') {
-        const employee = await Employee.findOne({ email: email.toLowerCase(), status: 'active' });
+        const employee = await Employee.findOne({ ...queryField, status: 'active' });
         
         if (!employee) {
           return res.status(401).json({ message: 'Invalid credentials' });
@@ -120,7 +131,7 @@ export default async function handler(req, res) {
       }
 
       // User Login (Admin/Manager/Staff)
-      const user = await User.findOne({ email: email.toLowerCase() });
+      const user = await User.findOne(queryField);
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }

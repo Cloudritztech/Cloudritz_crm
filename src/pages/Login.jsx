@@ -4,11 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Phone } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -112,13 +112,13 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <Input
-                name="email"
-                type="email"
-                label="Email Address"
-                placeholder="Enter your email"
-                value={formData.email}
+                name="identifier"
+                type="text"
+                label="Email or Mobile Number"
+                placeholder="Enter email or 10-digit mobile"
+                value={formData.identifier}
                 onChange={handleChange}
-                leftIcon={Mail}
+                leftIcon={formData.identifier?.match(/^[0-9]/) ? Phone : Mail}
                 required
               />
 
