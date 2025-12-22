@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 
 const Table = ({ children, className, ...props }) => (
   <div className={clsx('table-container', className)} {...props}>
-    <div className="w-full overflow-x-auto">
+    <div className="w-full" style={{ overflowX: 'auto', overflowY: 'visible' }}>
       <table className="w-full max-w-full divide-y divide-gray-200 break-words whitespace-normal">
         {children}
       </table>
@@ -151,29 +151,33 @@ const ResponsiveTable = ({
         {data.map((row, index) => (
           <div 
             key={index}
-            className={clsx(
-              'card-compact',
-              onRowClick && 'cursor-pointer hover:shadow-medium'
-            )}
-            onClick={() => onRowClick?.(row, index)}
+            className="card-compact relative"
           >
-            {columns.map((column, colIndex) => {
-              if (column.hideOnMobile) return null;
-              
-              return (
-                <div key={colIndex} className={clsx(
-                  'flex justify-between items-center',
-                  colIndex > 0 && 'mt-3 pt-3 border-t border-gray-100'
-                )}>
-                  <span className="text-sm font-medium text-gray-600 break-words whitespace-normal">
-                    {column.header}
-                  </span>
-                  <span className="text-sm text-gray-900 text-right break-words whitespace-normal">
-                    {column.render ? column.render(row, index) : row[column.key]}
-                  </span>
-                </div>
-              );
-            })}
+            <div onClick={() => onRowClick?.(row, index)} className="cursor-pointer">
+              {columns.map((column, colIndex) => {
+                if (column.hideOnMobile && column.key !== 'actions') return null;
+                
+                return (
+                  <div key={colIndex} className={clsx(
+                    'flex justify-between items-center',
+                    colIndex > 0 && 'mt-3 pt-3 border-t border-gray-100'
+                  )}>
+                    <span className="text-sm font-medium text-gray-600 break-words whitespace-normal">
+                      {column.header}
+                    </span>
+                    <span className="text-sm text-gray-900 text-right break-words whitespace-normal">
+                      {column.render ? column.render(row, index) : row[column.key]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Actions for mobile */}
+            {columns.find(col => col.key === 'actions') && (
+              <div className="absolute top-4 right-4">
+                {columns.find(col => col.key === 'actions').render(row, index)}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -214,10 +218,23 @@ export const StatusBadge = ({ status, variant }) => {
 // Action menu for table rows
 export const TableActions = ({ actions = [], row, index }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 4,
+        left: rect.right - 192
+      });
+    }
+  }, [isOpen]);
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -230,10 +247,19 @@ export const TableActions = ({ actions = [], row, index }) => {
       {isOpen && (
         <>
           <div 
-            className="fixed inset-0 z-10" 
+            className="fixed inset-0" 
+            style={{ zIndex: 9998 }}
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-8 z-20 w-48 bg-white rounded-xl shadow-strong border border-gray-200 py-2">
+          <div 
+            className="fixed bg-white rounded-xl shadow-strong border border-gray-200 py-2"
+            style={{ 
+              zIndex: 9999,
+              width: '192px',
+              top: `${position.top}px`,
+              left: `${position.left}px`
+            }}
+          >
             {actions.map((action, actionIndex) => (
               <button
                 key={actionIndex}
@@ -243,7 +269,7 @@ export const TableActions = ({ actions = [], row, index }) => {
                   setIsOpen(false);
                 }}
                 className={clsx(
-                  'w-full flex items-center px-4 py-2 text-sm text-left transition-colors break-words whitespace-normal',
+                  'w-full flex items-center px-4 py-2 text-sm text-left transition-colors',
                   action.variant === 'danger' 
                     ? 'text-red-600 hover:bg-red-50' 
                     : 'text-gray-700 hover:bg-gray-50'

@@ -386,27 +386,33 @@ async function createInvoice(req, res) {
       console.warn('⚠️ Failed to update customer:', custErr.message);
     }
 
-    // Invoice created successfully - now update stock
+    // Invoice created successfully - now update stock and log history
+    console.log('📦 Updating stock for', processedItems.length, 'items');
+    
     for (const item of processedItems) {
       if (item.productRef) {
         const previousStock = item.productRef.stock;
         item.productRef.stock -= item.quantity;
         await item.productRef.save();
+        
+        console.log(`✅ Stock updated for ${item.productRef.name}: ${previousStock} → ${item.productRef.stock}`);
 
         // Log inventory history
-        try {
-          await InventoryHistory.create({
-            organizationId: req.organizationId,
-            product: item.product,
-            type: 'sale',
-            quantity: -item.quantity,
-            previousStock: previousStock,
-            newStock: item.productRef.stock,
-            updatedBy: req.userId
-          });
-        } catch (invErr) {
-          console.warn('⚠️ Failed to log inventory:', invErr.message);
-        }
+        const historyData = {
+          organizationId: req.organizationId,
+          product: item.product,
+          type: 'sale',
+          quantity: -item.quantity,
+          previousStock: previousStock,
+          newStock: item.productRef.stock,
+          reason: `Sale via invoice ${invoiceNumber}`,
+          updatedBy: req.userId || null
+        };
+        
+        console.log('📝 Creating inventory history:', historyData);
+        
+        const history = await InventoryHistory.create(historyData);
+        console.log('✅ Inventory history created:', history._id);
       }
     }
 
@@ -428,29 +434,53 @@ async function createInvoice(req, res) {
   }
 }
 
-// Update invoice payment
+// Update invoice payment - FIXED for partial payments
 async function updateInvoicePayment(req, res, id) {
   try {
-    const { paymentStatus, paidAmount, paymentNotes } = req.body;
+    const { amount, method = 'cash', reference, notes } = req.body;
 
-    const invoice = await Invoice.findById(id);
-    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-
-    const totalAmount = invoice.grandTotal || invoice.total;
-
-    invoice.paymentStatus = paymentStatus;
-    invoice.paidAmount = paidAmount || 0;
-    invoice.pendingAmount = totalAmount - (paidAmount || 0);
-    invoice.paymentNotes = paymentNotes;
-
-    if (paymentStatus === 'paid') {
-      invoice.paidAmount = totalAmount;
-      invoice.pendingAmount = 0;
-      invoice.paymentDate = new Date();
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid payment amount required' });
     }
 
+    const invoice = await Invoice.findById(id);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    const totalAmount = invoice.grandTotal || invoice.total;
+    const currentPending = invoice.pendingAmount || totalAmount;
+
+    // Prevent overpayment
+    if (amount > currentPending) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Payment amount (₹${amount}) exceeds pending amount (₹${currentPending})` 
+      });
+    }
+
+    // Add new payment entry
+    invoice.payments.push({
+      amount: parseFloat(amount),
+      date: new Date(),
+      method,
+      reference: reference || '',
+      notes: notes || '',
+      collectedBy: req.userId
+    });
+
+    // Save will trigger pre-save hook to recalculate amounts
     await invoice.save();
-    return res.json({ success: true, invoice });
+
+    const updatedInvoice = await Invoice.findById(id)
+      .populate('customer', 'name phone')
+      .populate('createdBy', 'name');
+
+    return res.json({ 
+      success: true, 
+      message: 'Payment recorded successfully',
+      invoice: updatedInvoice 
+    });
   } catch (error) {
     console.error('❌ Payment update error:', error);
     return res.status(500).json({ success: false, message: error.message });

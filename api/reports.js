@@ -49,6 +49,14 @@ export default async function handler(req, res) {
       return await handleSalesReports(req, res);
     }
 
+    if (action === 'financial-trends') {
+      return await handleFinancialTrends(req, res);
+    }
+
+    if (action === 'gst-summary') {
+      return await handleGSTSummary(req, res);
+    }
+
     console.log('📊 Fetching comprehensive dashboard statistics...');
 
     const now = new Date();
@@ -75,7 +83,7 @@ export default async function handler(req, res) {
       inventoryValue,
       recentInvoices,
       pendingPayments,
-      totalTilesSold,
+      totalItemSold,
       topProducts,
       totalExpenses,
       monthlyExpenses
@@ -125,10 +133,17 @@ export default async function handler(req, res) {
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
-      // Pending payments
+      // Pending payments - FIXED: Sum pendingAmount instead of total
       Invoice.aggregate([
-        { $match: { organizationId: req.organizationId, status: 'pending' } },
-        { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } }
+        { $match: { 
+          organizationId: req.organizationId, 
+          paymentStatus: { $in: ['unpaid', 'partial'] } 
+        }},
+        { $group: { 
+          _id: null, 
+          totalPending: { $sum: "$pendingAmount" }, 
+          count: { $sum: 1 } 
+        }}
       ]),
       // Total tiles sold (from tiles category)
       Invoice.aggregate([
@@ -180,13 +195,14 @@ export default async function handler(req, res) {
       totalProducts: totalProducts || 0,
       inventoryValue: inventoryValue[0]?.totalValue || 0,
       recentInvoices: recentInvoices || [],
-      pendingPayments: pendingPayments[0]?.total || 0,
+      pendingPayments: pendingPayments[0]?.totalPending || 0,
       pendingCount: pendingPayments[0]?.count || 0,
-      totalTilesSold: totalTilesSold[0]?.totalQuantity || 0,
+      totalItemSold: totalItemSold[0]?.totalQuantity || 0,
       topProducts: topProducts || [],
       totalExpenses: totalExpenses[0]?.total || 0,
       monthlyExpenses: monthlyExpenses[0]?.total || 0,
-      profit: (totalRevenue[0]?.total || 0) - (totalExpenses[0]?.total || 0)
+      profit: (totalRevenue[0]?.total || 0) - (totalExpenses[0]?.total || 0),
+      // Note: This dashboard profit is simplified. Use Sales Reports for accurate COGS-based calculations.
     };
 
     console.log('✅ Comprehensive dashboard stats:', stats);
@@ -217,7 +233,7 @@ export default async function handler(req, res) {
 
 async function handleSalesReports(req, res) {
   try {
-    console.log('📊 Fetching sales reports with filters...');
+    console.log('📊 Fetching sales reports with correct financial calculations...');
     
     const { period, startDate, endDate } = req.query;
     
@@ -271,13 +287,13 @@ async function handleSalesReports(req, res) {
     
     const Expense = (await import('../lib/models/Expense.js')).default;
     
-    const [salesData, previousPeriodData, expensesData] = await Promise.all([
-      // Current period sales
+    const [salesData, previousPeriodData, expensesData, cogsData] = await Promise.all([
+      // Current period sales (Revenue)
       Invoice.aggregate([
         { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
         { $group: { 
           _id: null, 
-          totalAmount: { $sum: "$total" }, 
+          totalRevenue: { $sum: "$total" }, 
           totalOrders: { $sum: 1 },
           averageOrder: { $avg: "$total" }
         }}
@@ -291,32 +307,68 @@ async function handleSalesReports(req, res) {
             $lt: filterStartDate
           }
         }},
-        { $group: { _id: null, totalAmount: { $sum: "$total" } }}
+        { $group: { _id: null, totalRevenue: { $sum: "$total" } }}
       ]),
-      // Expenses for the selected period
+      // Extra Expenses (operational costs only)
       Expense.aggregate([
         { $match: { organizationId: req.organizationId, expenseDate: { $gte: filterStartDate, $lte: filterEndDate } } },
         { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } }
+      ]),
+      // COGS - Cost of Goods Sold (purchase cost of ONLY sold products)
+      Invoice.aggregate([
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $unwind: "$items" },
+        { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'product' } },
+        { $unwind: "$product" },
+        { $group: { 
+          _id: null, 
+          totalCOGS: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+        }}
       ])
     ]);
     
-    const currentData = salesData[0] || { totalAmount: 0, totalOrders: 0, averageOrder: 0 };
-    const previousData = previousPeriodData[0] || { totalAmount: 0 };
+    const currentData = salesData[0] || { totalRevenue: 0, totalOrders: 0, averageOrder: 0 };
+    const previousData = previousPeriodData[0] || { totalRevenue: 0 };
     const expensesCurrentData = expensesData[0] || { total: 0, count: 0 };
+    const cogsCurrentData = cogsData[0] || { totalCOGS: 0 };
     
-    const growthRate = previousData.totalAmount > 0 
-      ? ((currentData.totalAmount - previousData.totalAmount) / previousData.totalAmount * 100)
+    const growthRate = previousData.totalRevenue > 0 
+      ? ((currentData.totalRevenue - previousData.totalRevenue) / previousData.totalRevenue * 100)
       : 0;
     
+    // Correct Financial Calculations
+    const totalSales = currentData.totalRevenue;
+    const cogs = cogsCurrentData.totalCOGS;
+    const extraExpenses = expensesCurrentData.total;
+    const netProfit = totalSales - cogs - extraExpenses;
+    
     const result = {
-      totalAmount: currentData.totalAmount,
+      // Revenue metrics
+      totalSales: totalSales,
       totalOrders: currentData.totalOrders,
       averageOrder: currentData.averageOrder || 0,
       growthRate: growthRate.toFixed(1),
+      
+      // Cost breakdown
+      cogs: cogs,
+      extraExpenses: extraExpenses,
+      netProfit: netProfit,
+      
+      // Legacy fields for compatibility
+      totalAmount: totalSales,
       expenses: {
-        total: expensesCurrentData.total,
+        total: extraExpenses,
         count: expensesCurrentData.count
       },
+      
+      // Pie chart data (parts of sales)
+      pieChartData: {
+        cogs: cogs,
+        extraExpenses: extraExpenses,
+        netProfit: Math.max(0, netProfit), // Show 0 if loss
+        totalSales: totalSales
+      },
+      
       period: period || 'today',
       dateRange: {
         start: filterStartDate,
@@ -324,7 +376,7 @@ async function handleSalesReports(req, res) {
       }
     };
     
-    console.log('✅ Sales reports result:', result);
+    console.log('✅ Corrected sales reports result:', result);
     
     return res.status(200).json({
       success: true,
@@ -340,9 +392,219 @@ async function handleSalesReports(req, res) {
   }
 }
 
+async function handleFinancialTrends(req, res) {
+  try {
+    console.log('📈 Fetching financial trends for org:', req.organizationId);
+    
+    if (!req.organizationId) {
+      return res.status(400).json({ success: false, message: 'Organization ID required' });
+    }
+    
+    const { period = 'monthly', months = 12 } = req.query;
+    const Expense = (await import('../lib/models/Expense.js')).default;
+    
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+    
+    if (period === 'monthly') {
+      // Monthly trends
+      const [revenueData, cogsData, expenseData] = await Promise.all([
+        // Monthly Revenue
+        Invoice.aggregate([
+          { $match: { organizationId: req.organizationId, createdAt: { $gte: startDate } } },
+          { $group: {
+            _id: { 
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" }
+            },
+            revenue: { $sum: "$total" }
+          }},
+          { $sort: { "_id.year": 1, "_id.month": 1 } }
+        ]),
+        // Monthly COGS - TENANT ISOLATED
+        Invoice.aggregate([
+          { $match: { organizationId: req.organizationId, createdAt: { $gte: startDate } } },
+          { $unwind: "$items" },
+          { $lookup: { 
+            from: 'products', 
+            localField: 'items.product', 
+            foreignField: '_id', 
+            as: 'product',
+            pipeline: [{ $match: { organizationId: req.organizationId } }]
+          }},
+          { $unwind: "$product" },
+          { $group: {
+            _id: { 
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" }
+            },
+            cogs: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+          }},
+          { $sort: { "_id.year": 1, "_id.month": 1 } }
+        ]),
+        // Monthly Expenses
+        Expense.aggregate([
+          { $match: { organizationId: req.organizationId, expenseDate: { $gte: startDate } } },
+          { $group: {
+            _id: { 
+              year: { $year: "$expenseDate" },
+              month: { $month: "$expenseDate" }
+            },
+            extraExpenses: { $sum: "$amount" }
+          }},
+          { $sort: { "_id.year": 1, "_id.month": 1 } }
+        ])
+      ]);
+      
+      // Merge data by month
+      const trendsMap = new Map();
+      
+      // Generate all months in range
+      for (let i = 0; i < months; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        trendsMap.set(key, {
+          period: key,
+          revenue: 0,
+          cogs: 0,
+          extraExpenses: 0,
+          netProfit: 0
+        });
+      }
+      
+      // Add revenue data
+      revenueData.forEach(item => {
+        const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+        if (trendsMap.has(key)) {
+          trendsMap.get(key).revenue = item.revenue;
+        }
+      });
+      
+      // Add COGS data
+      cogsData.forEach(item => {
+        const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+        if (trendsMap.has(key)) {
+          trendsMap.get(key).cogs = item.cogs;
+        }
+      });
+      
+      // Add expense data
+      expenseData.forEach(item => {
+        const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+        if (trendsMap.has(key)) {
+          trendsMap.get(key).extraExpenses = item.extraExpenses;
+        }
+      });
+      
+      // Calculate net profit
+      const trends = Array.from(trendsMap.values()).map(item => ({
+        ...item,
+        netProfit: item.revenue - item.cogs - item.extraExpenses
+      }));
+      
+      return res.status(200).json({ success: true, trends, period: 'monthly' });
+      
+    } else {
+      // Yearly trends
+      const years = 5;
+      const yearStartDate = new Date(now.getFullYear() - (years - 1), 0, 1);
+      
+      const [revenueData, cogsData, expenseData] = await Promise.all([
+        // Yearly Revenue
+        Invoice.aggregate([
+          { $match: { organizationId: req.organizationId, createdAt: { $gte: yearStartDate } } },
+          { $group: {
+            _id: { year: { $year: "$createdAt" } },
+            revenue: { $sum: "$total" }
+          }},
+          { $sort: { "_id.year": 1 } }
+        ]),
+        // Yearly COGS - TENANT ISOLATED
+        Invoice.aggregate([
+          { $match: { organizationId: req.organizationId, createdAt: { $gte: yearStartDate } } },
+          { $unwind: "$items" },
+          { $lookup: { 
+            from: 'products', 
+            localField: 'items.product', 
+            foreignField: '_id', 
+            as: 'product',
+            pipeline: [{ $match: { organizationId: req.organizationId } }]
+          }},
+          { $unwind: "$product" },
+          { $group: {
+            _id: { year: { $year: "$createdAt" } },
+            cogs: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+          }},
+          { $sort: { "_id.year": 1 } }
+        ]),
+        // Yearly Expenses
+        Expense.aggregate([
+          { $match: { organizationId: req.organizationId, expenseDate: { $gte: yearStartDate } } },
+          { $group: {
+            _id: { year: { $year: "$expenseDate" } },
+            extraExpenses: { $sum: "$amount" }
+          }},
+          { $sort: { "_id.year": 1 } }
+        ])
+      ]);
+      
+      // Merge data by year
+      const trendsMap = new Map();
+      
+      // Generate all years in range
+      for (let i = 0; i < years; i++) {
+        const year = now.getFullYear() - (years - 1 - i);
+        const key = String(year);
+        trendsMap.set(key, {
+          period: key,
+          revenue: 0,
+          cogs: 0,
+          extraExpenses: 0,
+          netProfit: 0
+        });
+      }
+      
+      // Add data
+      revenueData.forEach(item => {
+        const key = String(item._id.year);
+        if (trendsMap.has(key)) trendsMap.get(key).revenue = item.revenue;
+      });
+      
+      cogsData.forEach(item => {
+        const key = String(item._id.year);
+        if (trendsMap.has(key)) trendsMap.get(key).cogs = item.cogs;
+      });
+      
+      expenseData.forEach(item => {
+        const key = String(item._id.year);
+        if (trendsMap.has(key)) trendsMap.get(key).extraExpenses = item.extraExpenses;
+      });
+      
+      // Calculate net profit
+      const trends = Array.from(trendsMap.values()).map(item => ({
+        ...item,
+        netProfit: item.revenue - item.cogs - item.extraExpenses
+      }));
+      
+      return res.status(200).json({ success: true, trends, period: 'yearly' });
+    }
+  } catch (error) {
+    console.error('❌ Financial trends error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch financial trends',
+      error: error.message
+    });
+  }
+}
+
 async function handleSalesAnalytics(req, res) {
   try {
-    console.log('📈 Fetching sales analytics...');
+    console.log('📈 Fetching sales analytics for org:', req.organizationId);
+    
+    if (!req.organizationId) {
+      return res.status(400).json({ success: false, message: 'Organization ID required' });
+    }
     
     const today = new Date();
     const yesterday = new Date(today);
@@ -376,6 +638,149 @@ async function handleSalesAnalytics(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch sales analytics',
+      error: error.message
+    });
+  }
+}
+
+async function handleGSTSummary(req, res) {
+  try {
+    console.log('📊 Fetching GST summary for org:', req.organizationId);
+    
+    if (!req.organizationId) {
+      return res.status(400).json({ success: false, message: 'Organization ID required' });
+    }
+    
+    const { period, startDate, endDate, month, year } = req.query;
+    const Expense = (await import('../lib/models/Expense.js')).default;
+    
+    let filterStartDate, filterEndDate;
+    
+    if (period === 'custom' && startDate && endDate) {
+      filterStartDate = new Date(startDate + 'T00:00:00.000Z');
+      filterEndDate = new Date(endDate + 'T23:59:59.999Z');
+    } else if (month && year) {
+      filterStartDate = new Date(year, month - 1, 1);
+      filterEndDate = new Date(year, month, 0, 23, 59, 59, 999);
+    } else {
+      const now = new Date();
+      filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      filterEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+    
+    console.log('📅 GST Period:', { filterStartDate, filterEndDate });
+    
+    const [gstData, cogsData, expensesData, invoicesList] = await Promise.all([
+      // GST Summary
+      Invoice.aggregate([
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $group: {
+          _id: null,
+          totalSales: { $sum: "$grandTotal" },
+          totalTaxableAmount: { $sum: "$totalTaxableAmount" },
+          totalCGST: { $sum: "$totalCgst" },
+          totalSGST: { $sum: "$totalSgst" },
+          totalGST: { $sum: { $add: ["$totalCgst", "$totalSgst"] } },
+          totalInvoices: { $sum: 1 }
+        }}
+      ]),
+      // COGS
+      Invoice.aggregate([
+        { $match: { organizationId: req.organizationId, createdAt: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $unwind: "$items" },
+        { $lookup: { 
+          from: 'products', 
+          localField: 'items.product', 
+          foreignField: '_id', 
+          as: 'product',
+          pipeline: [{ $match: { organizationId: req.organizationId } }]
+        }},
+        { $unwind: "$product" },
+        { $group: { 
+          _id: null, 
+          totalCOGS: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+        }}
+      ]),
+      // Expenses
+      Expense.aggregate([
+        { $match: { organizationId: req.organizationId, expenseDate: { $gte: filterStartDate, $lte: filterEndDate } } },
+        { $group: { _id: null, totalExpenses: { $sum: "$amount" } } }
+      ]),
+      // Sales Register (Invoice List)
+      Invoice.find({ 
+        organizationId: req.organizationId, 
+        createdAt: { $gte: filterStartDate, $lte: filterEndDate } 
+      })
+      .populate('customer', 'name gstin phone')
+      .select('invoiceNumber createdAt customer totalTaxableAmount totalCgst totalSgst grandTotal')
+      .sort({ createdAt: 1 })
+      .lean()
+    ]);
+    
+    const gst = gstData[0] || { 
+      totalSales: 0, 
+      totalTaxableAmount: 0, 
+      totalCGST: 0, 
+      totalSGST: 0, 
+      totalGST: 0,
+      totalInvoices: 0
+    };
+    const cogs = cogsData[0]?.totalCOGS || 0;
+    const expenses = expensesData[0]?.totalExpenses || 0;
+    
+    // Calculate Profit After Tax
+    const grossProfit = gst.totalSales - cogs;
+    const profitBeforeTax = grossProfit - expenses;
+    const profitAfterTax = profitBeforeTax; // GST is output tax, not income tax
+    
+    const result = {
+      period: {
+        start: filterStartDate,
+        end: filterEndDate,
+        month: filterStartDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+      },
+      gstSummary: {
+        totalSales: gst.totalSales,
+        taxableSales: gst.totalTaxableAmount,
+        cgst: gst.totalCGST,
+        sgst: gst.totalSGST,
+        igst: 0, // IGST for inter-state (not implemented yet)
+        totalGST: gst.totalGST,
+        totalInvoices: gst.totalInvoices
+      },
+      financials: {
+        totalSales: gst.totalSales,
+        cogs: cogs,
+        grossProfit: grossProfit,
+        expenses: expenses,
+        profitBeforeTax: profitBeforeTax,
+        profitAfterTax: profitAfterTax,
+        profitMargin: gst.totalSales > 0 ? ((profitAfterTax / gst.totalSales) * 100).toFixed(2) : '0.00'
+      },
+      salesRegister: invoicesList.map(inv => ({
+        invoiceNumber: inv.invoiceNumber,
+        date: inv.createdAt,
+        customerName: inv.customer?.name || 'N/A',
+        gstin: inv.customer?.gstin || '-',
+        taxableAmount: inv.totalTaxableAmount || 0,
+        cgst: inv.totalCgst || 0,
+        sgst: inv.totalSgst || 0,
+        totalGST: (inv.totalCgst || 0) + (inv.totalSgst || 0),
+        invoiceTotal: inv.grandTotal || 0
+      }))
+    };
+    
+    console.log('✅ GST Summary:', result.gstSummary);
+    
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('❌ GST summary error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch GST summary',
       error: error.message
     });
   }

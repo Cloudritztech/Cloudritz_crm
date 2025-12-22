@@ -1,5 +1,6 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../lib/models/User.js';
+import Employee from '../lib/models/Employee.js';
 import Organization from '../lib/models/Organization.js';
 import jwt from 'jsonwebtoken';
 import { authenticate } from '../lib/middleware/tenant.js';
@@ -58,12 +59,67 @@ export default async function handler(req, res) {
 
   if (action === 'login' && req.method === 'POST') {
     try {
-      const { email, password } = req.body;
+      const { email, password, loginType = 'user' } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
 
+      // Employee Login
+      if (loginType === 'employee') {
+        const employee = await Employee.findOne({ email: email.toLowerCase(), status: 'active' });
+        
+        if (!employee) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        const isMatch = await employee.comparePassword(password);
+        if (!isMatch) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Check organization
+        const organization = await Organization.findById(employee.organizationId);
+        if (!organization || !organization.isActive) {
+          return res.status(403).json({ message: 'Organization inactive' });
+        }
+        if (organization.subscription?.isBlocked) {
+          return res.status(403).json({ message: 'Organization access blocked' });
+        }
+
+        const token = jwt.sign(
+          { 
+            userId: employee._id, 
+            organizationId: employee.organizationId, 
+            role: 'employee', 
+            email: employee.email,
+            isEmployee: true
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRE || '7d' }
+        );
+
+        return res.json({
+          success: true,
+          token,
+          user: {
+            id: employee._id,
+            name: employee.name,
+            email: employee.email,
+            role: 'employee',
+            organizationId: employee.organizationId,
+            permissions: employee.permissions,
+            isEmployee: true
+          },
+          organization: {
+            id: organization._id,
+            name: organization.name,
+            subdomain: organization.subdomain
+          }
+        });
+      }
+
+      // User Login (Admin/Manager/Staff)
       const user = await User.findOne({ email: email.toLowerCase() });
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });

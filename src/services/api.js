@@ -159,6 +159,15 @@ export const productsAPI = {
     apiCache.clear('products_');
     return response;
   },
+  getInventoryHistory: async (id) => {
+    const cacheKey = `inventory_history_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get(`/products?id=${id}&action=history`);
+    apiCache.set(cacheKey, response.data, 60000); // 1 min
+    return response;
+  },
 };
 
 // Customers API with caching
@@ -318,6 +327,24 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=sales-reports', { params });
+    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    return response;
+  },
+  getFinancialTrends: async (params) => {
+    const cacheKey = `financialTrends_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=financial-trends', { params });
+    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    return response;
+  },
+  getGSTSummary: async (params) => {
+    const cacheKey = `gstSummary_${JSON.stringify(params || {})}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) return { data: cached };
+    
+    const response = await api.get('/reports?action=gst-summary', { params });
     apiCache.set(cacheKey, response.data, 120000); // 2 min
     return response;
   },

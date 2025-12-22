@@ -62,11 +62,41 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'Insufficient stock' });
       }
       
+      const previousStock = product.stock;
       product.stock = type === 'IN' ? product.stock + qty : product.stock - qty;
-      product.stockHistory.push({ type, qty, note, date: new Date() });
       await product.save();
       
+      // Create inventory history
+      await InventoryHistory.create({
+        organizationId: req.organizationId,
+        product: product._id,
+        type: type === 'IN' ? 'purchase' : 'sale',
+        quantity: type === 'IN' ? qty : -qty,
+        previousStock,
+        newStock: product.stock,
+        reason: note || `Manual ${type} adjustment`,
+        updatedBy: req.userId
+      });
+      
       return res.json({ success: true, product });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // Get inventory history for a product
+  if (productId && method === 'GET' && productAction === 'history') {
+    try {
+      const history = await InventoryHistory.find({ 
+        organizationId: req.organizationId,
+        product: productId 
+      })
+      .populate('updatedBy', 'name')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+      
+      return res.json({ success: true, history });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
     }

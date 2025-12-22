@@ -9,6 +9,8 @@ import Input from '../components/ui/Input';
 import { StatCard } from '../components/ui/Card';
 import Loading from '../components/ui/Loading';
 import SalesChart from '../components/SalesChart';
+import FinancialTrends from '../components/FinancialTrends';
+import GSTSummaryCard from '../components/GSTSummaryCard';
 
 const SalesReports = () => {
   const navigate = useNavigate();
@@ -17,10 +19,19 @@ const SalesReports = () => {
   const [customStartDate, setCustomStartDate] = useState(searchParams.get('start') || '');
   const [customEndDate, setCustomEndDate] = useState(searchParams.get('end') || '');
   const [salesData, setSalesData] = useState({
-    totalAmount: 0,
+    totalSales: 0,
     totalOrders: 0,
     averageOrder: 0,
-    growthRate: '0.0'
+    growthRate: '0.0',
+    cogs: 0,
+    extraExpenses: 0,
+    netProfit: 0,
+    pieChartData: {
+      cogs: 0,
+      extraExpenses: 0,
+      netProfit: 0,
+      totalSales: 0
+    }
   });
   const [expenseData, setExpenseData] = useState({ total: 0, count: 0 });
   const [loading, setLoading] = useState(false);
@@ -63,13 +74,36 @@ const SalesReports = () => {
       
       if (salesResponse.data?.success && salesResponse.data?.data) {
         const data = salesResponse.data.data;
-        setSalesData(data);
-        setExpenseData(data.expenses || { total: 0, count: 0 });
+        setSalesData({
+          totalSales: data.totalSales || data.totalAmount || 0,
+          totalOrders: data.totalOrders || 0,
+          averageOrder: data.averageOrder || 0,
+          growthRate: data.growthRate || '0.0',
+          cogs: data.cogs || 0,
+          extraExpenses: data.extraExpenses || (data.expenses?.total || 0),
+          netProfit: data.netProfit || 0,
+          pieChartData: data.pieChartData || {
+            cogs: data.cogs || 0,
+            extraExpenses: data.extraExpenses || (data.expenses?.total || 0),
+            netProfit: data.netProfit || 0,
+            totalSales: data.totalSales || data.totalAmount || 0
+          }
+        });
+        setExpenseData(data.expenses || { total: data.extraExpenses || 0, count: 0 });
         generateAIInsights(data);
       }
     } catch (error) {
       setError(error.response?.data?.message || error.message || 'Failed to fetch data');
-      setSalesData({ totalAmount: 0, totalOrders: 0, averageOrder: 0, growthRate: '0.0' });
+      setSalesData({ 
+        totalSales: 0, 
+        totalOrders: 0, 
+        averageOrder: 0, 
+        growthRate: '0.0',
+        cogs: 0,
+        extraExpenses: 0,
+        netProfit: 0,
+        pieChartData: { cogs: 0, extraExpenses: 0, netProfit: 0, totalSales: 0 }
+      });
       setExpenseData({ total: 0, count: 0 });
     } finally {
       setLoading(false);
@@ -211,13 +245,17 @@ const SalesReports = () => {
         'Notes': exp.notes || '-'
       }));
       
-      // Summary calculations
+      // Summary calculations with correct COGS
       const totalSales = invoices.reduce((sum, inv) => sum + (inv.grandTotal || inv.total || 0), 0);
       const totalSubtotal = invoices.reduce((sum, inv) => sum + (inv.subtotal || 0), 0);
       const totalDiscount = invoices.reduce((sum, inv) => sum + (inv.discount || 0), 0);
       const totalTax = invoices.reduce((sum, inv) => sum + ((inv.totalCgst || 0) + (inv.totalSgst || 0)), 0);
       const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-      const netProfit = totalSales - totalExpenses;
+      
+      // Calculate COGS from sold products (this is a simplified calculation for export)
+      // In production, this should match the backend aggregation
+      const estimatedCOGS = totalSales * 0.6; // Placeholder - should be calculated from actual product purchase prices
+      const netProfit = totalSales - estimatedCOGS - totalExpenses;
       
       const summary = [
         { 'Metric': 'SALES SUMMARY', 'Value': '', 'Details': '' },
@@ -225,13 +263,14 @@ const SalesReports = () => {
         { 'Metric': 'Gross Sales', 'Value': totalSubtotal, 'Details': 'Before discount & tax' },
         { 'Metric': 'Total Discount', 'Value': totalDiscount, 'Details': 'Discounts given' },
         { 'Metric': 'Total Tax (GST)', 'Value': totalTax, 'Details': 'CGST + SGST' },
-        { 'Metric': 'Net Sales', 'Value': totalSales, 'Details': 'Final sales amount' },
+        { 'Metric': 'Net Sales (Revenue)', 'Value': totalSales, 'Details': 'Final sales amount' },
         { 'Metric': '', 'Value': '', 'Details': '' },
-        { 'Metric': 'EXPENSE SUMMARY', 'Value': '', 'Details': '' },
-        { 'Metric': 'Total Expenses', 'Value': totalExpenses, 'Details': `${expenses.length} transactions` },
+        { 'Metric': 'COST BREAKDOWN', 'Value': '', 'Details': '' },
+        { 'Metric': 'COGS (Estimated)', 'Value': estimatedCOGS, 'Details': 'Cost of goods sold' },
+        { 'Metric': 'Extra Expenses', 'Value': totalExpenses, 'Details': `${expenses.length} transactions` },
         { 'Metric': '', 'Value': '', 'Details': '' },
-        { 'Metric': 'NET PROFIT', 'Value': netProfit, 'Details': 'Sales - Expenses' },
-        { 'Metric': 'Profit Margin', 'Value': totalSales > 0 ? `${((netProfit / totalSales) * 100).toFixed(2)}%` : '0%', 'Details': 'Profit / Sales' }
+        { 'Metric': 'NET PROFIT', 'Value': netProfit, 'Details': 'Revenue - COGS - Expenses' },
+        { 'Metric': 'Profit Margin', 'Value': totalSales > 0 ? `${((netProfit / totalSales) * 100).toFixed(2)}%` : '0%', 'Details': 'Profit / Revenue' }
       ];
       
       // Create workbook
@@ -364,8 +403,8 @@ const SalesReports = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <StatCard
               icon={TrendingUp}
-              title="Total Sales"
-              value={formatCurrency(salesData.totalAmount)}
+              title="Total Sales (Revenue)"
+              value={formatCurrency(salesData.totalSales)}
               subtitle={quickFilters.find(f => f.key === selectedPeriod)?.label || 'Selected Period'}
               color="success"
             />
@@ -378,23 +417,30 @@ const SalesReports = () => {
             />
             <StatCard
               icon={DollarSign}
-              title="Total Expenses"
-              value={formatCurrency(expenseData.total)}
-              subtitle={`${expenseData.count} transactions`}
+              title="Extra Expenses"
+              value={formatCurrency(salesData.extraExpenses)}
+              subtitle={`Operational costs only`}
               color="danger"
             />
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <StatCard
               icon={TrendingUp}
-              title="Average Order"
-              value={formatCurrency(salesData.averageOrder)}
-              subtitle="Per order value"
-              color="info"
+              title="COGS (Cost of Goods Sold)"
+              value={formatCurrency(salesData.cogs)}
+              subtitle="Purchase cost of sold items"
+              color="warning"
             />
             <StatCard
               icon={Calendar}
+              title="Net Profit"
+              value={formatCurrency(salesData.netProfit)}
+              subtitle={`Sales - COGS - Expenses`}
+              color={salesData.netProfit >= 0 ? 'success' : 'danger'}
+            />
+            <StatCard
+              icon={TrendingUp}
               title="Growth Rate"
               value={`${salesData.growthRate > 0 ? '+' : ''}${salesData.growthRate}%`}
               subtitle="vs previous period"
@@ -444,107 +490,212 @@ const SalesReports = () => {
         </div>
       )}
 
-      {/* Sales Visualization - Pie Chart */}
+      {/* Financial Breakdown - Donut Chart */}
       {!loading && (() => {
-        const pieData = [
-          { label: 'Total Sales', value: salesData.totalAmount || 0, color: '#22c55e', orders: salesData.totalOrders },
-          { label: 'Total Expenses', value: expenseData.total || 0, color: '#f97316', count: expenseData.count },
-          { label: 'Net Profit', value: Math.max(0, (salesData.totalAmount || 0) - (expenseData.total || 0)), color: '#3b82f6', isProfit: true }
-        ].filter(item => item.value > 0);
+        const { cogs, extraExpenses, netProfit, totalSales } = salesData.pieChartData;
         
-        const total = pieData.reduce((sum, item) => sum + item.value, 0);
-        
-        if (total === 0) {
+        // Only show breakdown if there are sales
+        if (totalSales <= 0) {
           return (
             <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Overview</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Breakdown</h3>
               <div className="flex flex-col items-center justify-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">No data available for the selected period</p>
+                <p className="text-gray-500 dark:text-gray-400">No sales data available for the selected period</p>
               </div>
             </div>
           );
         }
         
+        // Prepare donut chart slices (parts of total sales)
+        const slices = [
+          { 
+            label: 'COGS', 
+            value: cogs, 
+            color: '#f97316', 
+            description: 'Cost of Goods Sold'
+          },
+          { 
+            label: 'Extra Expenses', 
+            value: extraExpenses, 
+            color: '#ef4444', 
+            description: 'Operational Expenses'
+          },
+          { 
+            label: 'Net Profit', 
+            value: Math.max(0, netProfit), 
+            color: netProfit >= 0 ? '#22c55e' : '#ef4444', 
+            description: netProfit >= 0 ? 'Profit' : 'Loss'
+          }
+        ].filter(slice => slice.value > 0);
+        
+        // Calculate angles for each slice
         let currentAngle = 0;
+        const slicesWithAngles = slices.map(slice => {
+          const percentage = (slice.value / totalSales) * 100;
+          const angle = (percentage / 100) * 360;
+          const startAngle = currentAngle;
+          const endAngle = currentAngle + angle;
+          currentAngle = endAngle;
+          
+          return {
+            ...slice,
+            percentage,
+            angle,
+            startAngle,
+            endAngle
+          };
+        });
         
         return (
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Financial Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
+              Financial Breakdown - Sales Distribution
+            </h3>
             <div className="flex flex-col items-center">
-              <svg width="300" height="300" viewBox="0 0 300 300" className="mx-auto">
-                {pieData.map((item, index) => {
-                  const percentage = (item.value / total) * 100;
-                  const angle = (percentage / 100) * 360;
-                  const startAngle = currentAngle;
-                  const endAngle = currentAngle + angle;
-                  currentAngle = endAngle;
+              {/* Donut Chart */}
+              <svg width="320" height="320" viewBox="0 0 320 320" className="mx-auto">
+                {slicesWithAngles.map((slice, index) => {
+                  if (slice.angle === 0) return null;
                   
-                  if (angle === 0) return null;
+                  const startRad = (slice.startAngle - 90) * (Math.PI / 180);
+                  const endRad = (slice.endAngle - 90) * (Math.PI / 180);
                   
-                  const startRad = (startAngle - 90) * (Math.PI / 180);
-                  const endRad = (endAngle - 90) * (Math.PI / 180);
+                  const outerRadius = 140;
+                  const innerRadius = 80;
                   
-                  const x1 = 150 + 120 * Math.cos(startRad);
-                  const y1 = 150 + 120 * Math.sin(startRad);
-                  const x2 = 150 + 120 * Math.cos(endRad);
-                  const y2 = 150 + 120 * Math.sin(endRad);
+                  const x1 = 160 + outerRadius * Math.cos(startRad);
+                  const y1 = 160 + outerRadius * Math.sin(startRad);
+                  const x2 = 160 + outerRadius * Math.cos(endRad);
+                  const y2 = 160 + outerRadius * Math.sin(endRad);
                   
-                  const largeArc = angle > 180 ? 1 : 0;
-                  const path = `M 150 150 L ${x1} ${y1} A 120 120 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                  const x3 = 160 + innerRadius * Math.cos(endRad);
+                  const y3 = 160 + innerRadius * Math.sin(endRad);
+                  const x4 = 160 + innerRadius * Math.cos(startRad);
+                  const y4 = 160 + innerRadius * Math.sin(startRad);
+                  
+                  const largeArc = slice.angle > 180 ? 1 : 0;
+                  
+                  const path = [
+                    `M ${x1} ${y1}`,
+                    `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+                    `L ${x3} ${y3}`,
+                    `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+                    'Z'
+                  ].join(' ');
                   
                   return (
-                    <g key={index}>
-                      <path
-                        d={path}
-                        fill={item.color}
-                        stroke="white"
-                        strokeWidth="2"
-                        className="cursor-pointer transition-all duration-200"
-                        style={{ opacity: hoveredSegment?.label === item.label ? 0.8 : 1 }}
-                        onMouseEnter={() => setHoveredSegment(item)}
-                        onMouseLeave={() => setHoveredSegment(null)}
-                      />
-                    </g>
+                    <path
+                      key={index}
+                      d={path}
+                      fill={slice.color}
+                      stroke="white"
+                      strokeWidth="2"
+                      className="cursor-pointer transition-all duration-200 hover:opacity-80"
+                      onMouseEnter={() => setHoveredSegment(slice)}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
                   );
                 })}
-                <circle cx="150" cy="150" r="60" fill="white" stroke="#e5e7eb" strokeWidth="2" />
-                <text x="150" y="140" textAnchor="middle" fontSize="14" fontWeight="600" fill="#6b7280">Total</text>
-                <text x="150" y="160" textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827">{formatCurrency(total)}</text>
-                <text x="150" y="175" textAnchor="middle" fontSize="11" fill="#9ca3af">{salesData.totalOrders} orders</text>
+                
+                {/* Center circle with total sales */}
+                <circle cx="160" cy="160" r="75" fill="white" stroke="#e5e7eb" strokeWidth="2" />
+                <text x="160" y="145" textAnchor="middle" fontSize="14" fontWeight="600" fill="#6b7280">
+                  Total Sales
+                </text>
+                <text x="160" y="165" textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827">
+                  {formatCurrency(totalSales)}
+                </text>
+                <text x="160" y="180" textAnchor="middle" fontSize="11" fill="#9ca3af">
+                  {salesData.totalOrders} orders
+                </text>
               </svg>
               
+              {/* Hovered segment details */}
               {hoveredSegment && (
                 <div className="mt-6 w-full max-w-md">
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl text-center border-2 transition-all" style={{ borderColor: hoveredSegment.color }}>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{hoveredSegment.label}</p>
+                  <div 
+                    className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl text-center border-2 transition-all" 
+                    style={{ borderColor: hoveredSegment.color }}
+                  >
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                      {hoveredSegment.description}
+                    </p>
                     <p className="text-3xl font-bold mb-2" style={{ color: hoveredSegment.color }}>
                       {formatCurrency(hoveredSegment.value)}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {hoveredSegment.orders !== undefined ? `${hoveredSegment.orders} orders` : `${hoveredSegment.count} transactions`}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                      {((hoveredSegment.value / total) * 100).toFixed(1)}% of total
+                      {hoveredSegment.percentage.toFixed(1)}% of total sales
                     </p>
                   </div>
                 </div>
               )}
               
-              <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-md">
-                {pieData.map((item, index) => (
+              {/* Legend */}
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+                {slicesWithAngles.map((slice, index) => (
                   <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+                    <div 
+                      className="w-4 h-4 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: slice.color }}
+                    ></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{item.label}</p>
-                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{formatCurrency(item.value)}</p>
+                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {slice.label}
+                      </p>
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                        {formatCurrency(slice.value)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {slice.percentage.toFixed(1)}%
+                      </p>
                     </div>
                   </div>
                 ))}
+              </div>
+              
+              {/* Financial Summary */}
+              <div className="mt-6 w-full max-w-md bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center">
+                  Financial Summary
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Revenue:</span>
+                    <span className="font-semibold text-green-600">{formatCurrency(totalSales)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">COGS:</span>
+                    <span className="font-semibold text-orange-600">-{formatCurrency(cogs)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Expenses:</span>
+                    <span className="font-semibold text-red-600">-{formatCurrency(extraExpenses)}</span>
+                  </div>
+                  <hr className="border-gray-300 dark:border-gray-600" />
+                  <div className="flex justify-between font-bold">
+                    <span className="text-gray-900 dark:text-gray-100">Net Profit:</span>
+                    <span className={netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCurrency(netProfit)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400">Profit Margin:</span>
+                    <span className={netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : '0.0'}%
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         );
       })()}
+
+      {/* Financial Trends Charts */}
+      <FinancialTrends />
+
+      {/* GST Summary */}
+      <GSTSummaryCard />
     </div>
   );
 };

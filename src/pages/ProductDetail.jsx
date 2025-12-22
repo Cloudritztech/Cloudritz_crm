@@ -10,6 +10,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
+  const [inventoryHistory, setInventoryHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showStockModal, setShowStockModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -19,6 +20,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     fetchProduct();
+    fetchInventoryHistory();
   }, [id]);
 
   const fetchProduct = async () => {
@@ -29,6 +31,15 @@ const ProductDetail = () => {
       toast.error('Failed to fetch product');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInventoryHistory = async () => {
+    try {
+      const response = await productsAPI.getInventoryHistory(id);
+      setInventoryHistory(response.data.history || []);
+    } catch (error) {
+      console.error('Failed to fetch inventory history:', error);
     }
   };
 
@@ -49,6 +60,7 @@ const ProductDetail = () => {
       setStockQty('');
       setStockNote('');
       fetchProduct();
+      fetchInventoryHistory();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update stock');
     }
@@ -187,26 +199,38 @@ const ProductDetail = () => {
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Date</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Type</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Note</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Previous Stock</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">New Stock</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Reason</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {product.stockHistory?.length > 0 ? (
-                product.stockHistory.map((entry, idx) => (
+              {inventoryHistory?.length > 0 ? (
+                inventoryHistory.map((entry, idx) => (
                   <tr key={idx}>
-                    <td className="px-4 py-2 text-sm">{new Date(entry.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2 text-sm">{new Date(entry.createdAt).toLocaleString()}</td>
                     <td className="px-4 py-2">
-                      <span className={`px-2 py-1 text-xs rounded ${entry.type === 'IN' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-                        {entry.type}
+                      <span className={`px-2 py-1 text-xs rounded ${
+                        entry.type === 'purchase' ? 'bg-green-100 text-green-800' : 
+                        entry.type === 'sale' ? 'bg-orange-100 text-orange-800' : 
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {entry.type.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-sm">{entry.qty}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{entry.note || '-'}</td>
+                    <td className="px-4 py-2 text-sm font-semibold">
+                      <span className={entry.quantity > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {entry.quantity > 0 ? '+' : ''}{entry.quantity}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-sm">{entry.previousStock}</td>
+                    <td className="px-4 py-2 text-sm font-semibold">{entry.newStock}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{entry.reason || '-'}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-4 py-8 text-center text-gray-500">No stock movements yet</td>
+                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">No stock movements yet</td>
                 </tr>
               )}
             </tbody>

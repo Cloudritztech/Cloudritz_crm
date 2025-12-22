@@ -19,8 +19,11 @@ import { StatCard } from '../components/ui/Card';
 import { SkeletonStats, SkeletonCard } from '../components/ui/Loading';
 import Button from '../components/ui/Button';
 import SalesSummaryCard from '../components/SalesSummaryCard';
+import RestrictedAccess from '../components/RestrictedAccess';
+import { useEmployeePermissions } from '../hooks/useEmployeePermissions';
 
 const Dashboard = () => {
+  const { canAccessDashboard, isEmployee } = useEmployeePermissions();
   const [stats, setStats] = useState(() => {
     // Load from cache immediately
     const cached = localStorage.getItem('dashboard_cache');
@@ -82,6 +85,28 @@ const Dashboard = () => {
   };
 
   window.refreshDashboard = fetchAllData;
+
+  // Check employee permissions
+  if (isEmployee() && !canAccessDashboard()) {
+    return (
+      <RestrictedAccess 
+        title="Dashboard Access Restricted"
+        message="You are not allowed to view the dashboard. Please contact your administrator for access."
+      >
+        {/* Render blurred dashboard content */}
+        <div className="p-6">
+          <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+          <div className="grid grid-cols-4 gap-6 mb-6">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-white p-6 rounded-lg shadow">
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </RestrictedAccess>
+    );
+  }
 
 
 
