@@ -2,24 +2,28 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 
 // Retry lazy loading with exponential backoff
-const lazyWithRetry = (componentImport) => {
+const lazyWithRetry = (componentImport, retries = 3) => {
   return lazy(() => {
     return new Promise((resolve, reject) => {
-      const hasRefreshed = JSON.parse(
-        window.sessionStorage.getItem('retry-lazy-refreshed') || 'false'
-      );
-
       componentImport()
-        .then((component) => {
-          window.sessionStorage.setItem('retry-lazy-refreshed', 'false');
-          resolve(component);
-        })
+        .then(resolve)
         .catch((error) => {
-          if (!hasRefreshed) {
-            window.sessionStorage.setItem('retry-lazy-refreshed', 'true');
-            return window.location.reload();
+          if (retries > 0) {
+            // Retry after a short delay
+            setTimeout(() => {
+              lazyWithRetry(componentImport, retries - 1)().then(resolve).catch(reject);
+            }, 1000);
+          } else {
+            // After all retries, reload the page once
+            const hasRefreshed = sessionStorage.getItem('page-refreshed');
+            if (!hasRefreshed) {
+              sessionStorage.setItem('page-refreshed', 'true');
+              window.location.reload();
+            } else {
+              sessionStorage.removeItem('page-refreshed');
+              reject(error);
+            }
           }
-          reject(error);
         });
     });
   });
@@ -77,26 +81,38 @@ const SkeletonLoader = () => (
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error loading component:', error, errorInfo);
+    console.error('Error Boundary caught:', error, errorInfo);
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+    sessionStorage.removeItem('page-refreshed');
+    window.location.reload();
+  };
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+          <div className="text-center max-w-md">
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Something went wrong</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">The page failed to load. Please try again.</p>
             <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              onClick={this.handleReset}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Reload Page
             </button>
