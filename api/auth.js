@@ -80,15 +80,26 @@ export default async function handler(req, res) {
         queryField = { username: loginIdentifier };
       }
 
+      console.log('🔐 Login attempt:', { loginIdentifier, queryField, loginType });
+
       // Employee Login
       if (loginType === 'employee') {
         const employee = await Employee.findOne({ ...queryField, status: 'active' });
         
+        console.log('👤 Employee found:', employee ? 'Yes' : 'No');
+        
         if (!employee) {
           return res.status(401).json({ message: 'Invalid credentials' });
         }
+        
+        // Check if employee has password (login enabled)
+        if (!employee.password) {
+          return res.status(401).json({ message: 'Login not enabled for this employee' });
+        }
 
         const isMatch = await employee.comparePassword(password);
+        console.log('🔑 Password match:', isMatch);
+        
         if (!isMatch) {
           return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -106,7 +117,7 @@ export default async function handler(req, res) {
           { 
             userId: employee._id, 
             organizationId: employee.organizationId, 
-            role: 'employee', 
+            role: employee.role || 'staff',
             email: employee.email,
             isEmployee: true
           },
@@ -121,7 +132,7 @@ export default async function handler(req, res) {
             id: employee._id,
             name: employee.name,
             email: employee.email,
-            role: 'employee',
+            role: employee.role || 'staff',
             organizationId: employee.organizationId,
             permissions: employee.permissions,
             isEmployee: true
@@ -136,6 +147,7 @@ export default async function handler(req, res) {
 
       // User Login (Admin/Manager/Staff)
       const user = await User.findOne(queryField);
+      console.log('👤 User found:', user ? 'Yes' : 'No');
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }

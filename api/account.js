@@ -364,17 +364,40 @@ export default async function handler(req, res) {
           if (req.method === 'POST') {
             const { createLogin, username, password, role, ...employeeData } = req.body;
             
-            // Add organizationId and createdBy
+            // If creating login credentials, create a User instead of Employee
+            if (createLogin && (username || employeeData.email) && password) {
+              const userData = {
+                name: employeeData.name,
+                email: employeeData.email || `${username}@temp.local`,
+                username: username,
+                password: password,
+                phone: employeeData.phone,
+                role: role || 'staff',
+                organizationId: req.organizationId,
+                isActive: employeeData.status === 'active'
+              };
+              
+              const user = await User.create(userData);
+              
+              // Also create employee record for tracking
+              const employee = await Employee.create({
+                ...employeeData,
+                userId: user._id,
+                organizationId: req.organizationId,
+                createdBy: req.userId
+              });
+              
+              return res.status(201).json({ 
+                success: true, 
+                employee,
+                message: 'Employee created with login access'
+              });
+            }
+            
+            // Regular employee without login
             employeeData.createdBy = req.userId;
             if (req.organizationId) {
               employeeData.organizationId = req.organizationId;
-            }
-            
-            // If creating login credentials
-            if (createLogin && username && password) {
-              employeeData.username = username;
-              employeeData.password = password;
-              employeeData.role = role || 'staff';
             }
             
             const employee = await Employee.create(employeeData);
