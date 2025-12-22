@@ -348,6 +348,75 @@ export default async function handler(req, res) {
 
       // EMPLOYEES
       if (type === 'employees') {
+        // Superadmin sees all employees, others see only their org
+        if (req.user.role === 'superadmin') {
+          if (req.method === 'GET') {
+            if (action === 'single' && req.query.id) {
+              const employee = await Employee.findById(req.query.id);
+              if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+              return res.json({ success: true, employee });
+            }
+            
+            const employees = await Employee.find({}).sort({ createdAt: -1 });
+            return res.json({ success: true, employees });
+          }
+
+          if (req.method === 'POST') {
+            const { createLogin, username, password, role, organizationId, ...employeeData } = req.body;
+            
+            if (!organizationId) {
+              return res.status(400).json({ success: false, message: 'Organization ID required' });
+            }
+            
+            if (createLogin && (username || employeeData.email) && password) {
+              const userData = {
+                name: employeeData.name,
+                email: employeeData.email || `${username}@temp.local`,
+                username: username,
+                password: password,
+                phone: employeeData.phone,
+                role: role || 'staff',
+                organizationId: organizationId,
+                isActive: employeeData.status === 'active'
+              };
+              
+              const user = await User.create(userData);
+              
+              const employee = await Employee.create({
+                ...employeeData,
+                userId: user._id,
+                organizationId: organizationId,
+                createdBy: req.userId
+              });
+              
+              return res.status(201).json({ success: true, employee });
+            }
+            
+            const employee = await Employee.create({
+              ...employeeData,
+              organizationId: organizationId,
+              createdBy: req.userId
+            });
+            return res.status(201).json({ success: true, employee });
+          }
+
+          if (req.method === 'PUT') {
+            if (!req.query.id) return res.status(400).json({ success: false, message: 'Employee ID required' });
+            const updated = await Employee.findByIdAndUpdate(req.query.id, req.body, { new: true });
+            if (!updated) return res.status(404).json({ success: false, message: 'Employee not found' });
+            return res.json({ success: true, employee: updated });
+          }
+
+          if (req.method === 'DELETE') {
+            if (!req.query.id) return res.status(400).json({ success: false, message: 'Employee ID required' });
+            const deleted = await Employee.findByIdAndDelete(req.query.id);
+            if (!deleted) return res.status(404).json({ success: false, message: 'Employee not found' });
+            return res.json({ success: true, message: 'Employee deleted' });
+          }
+          
+          return res.status(405).json({ success: false, message: 'Method not allowed' });
+        }
+        
         return await tenantIsolation(req, res, async () => {
           if (req.method === 'GET') {
             if (action === 'single' && req.query.id) {

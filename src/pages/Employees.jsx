@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { employeesAPI } from '../services/api';
-import { Plus, UserCheck, Phone, Mail, Briefcase, Edit2, Trash2, Calendar } from 'lucide-react';
+import { Plus, UserCheck, Phone, Mail, Briefcase, Edit2, Trash2, Calendar, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const { user } = useAuth();
+  const isSuperadmin = user?.role === 'superadmin';
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -16,6 +20,7 @@ const Employees = () => {
     salary: '',
     joiningDate: new Date().toISOString().split('T')[0],
     status: 'active',
+    organizationId: '',
     // Login credentials
     createLogin: false,
     role: 'staff',
@@ -61,6 +66,7 @@ const Employees = () => {
         salary: '', 
         joiningDate: new Date().toISOString().split('T')[0], 
         status: 'active',
+        organizationId: '',
         createLogin: false,
         role: 'staff',
         username: '',
@@ -82,7 +88,13 @@ const Employees = () => {
       department: employee.department,
       salary: employee.salary,
       joiningDate: new Date(employee.joiningDate).toISOString().split('T')[0],
-      status: employee.status
+      status: employee.status,
+      // Don't allow editing login credentials
+      createLogin: false,
+      role: 'staff',
+      username: '',
+      password: '',
+      permissions: []
     });
     setShowModal(true);
   };
@@ -164,7 +176,12 @@ const Employees = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                 {employee.name?.charAt(0).toUpperCase()}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end gap-2">
+                {employee.userId && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                    🔑 Login Access
+                  </span>
+                )}
                 <span className={`text-xs px-2 py-1 rounded-full ${employee.status === 'active' ? 'badge-success' : 'badge-danger'}`}>
                   {employee.status}
                 </span>
@@ -172,6 +189,12 @@ const Employees = () => {
             </div>
             <h3 className="font-semibold text-lg mb-1">{employee.name}</h3>
             <p className="text-sm text-gray-600 mb-3 flex items-center"><Briefcase className="h-4 w-4 mr-1" />{employee.department}</p>
+            {isSuperadmin && employee.organizationId && (
+              <p className="text-xs text-gray-500 mb-2 flex items-center">
+                <Building2 className="h-3 w-3 mr-1" />
+                Org: {employee.organizationId.toString().slice(-8)}
+              </p>
+            )}
             <div className="space-y-2 text-sm text-gray-600">
               <p className="flex items-center"><Phone className="h-4 w-4 mr-2" />{employee.phone}</p>
               {employee.email && <p className="flex items-center"><Mail className="h-4 w-4 mr-2" />{employee.email}</p>}
@@ -202,6 +225,26 @@ const Employees = () => {
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{editingId ? 'Edit Employee' : 'Add Employee'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Organization Selector - Only for Superadmin */}
+              {isSuperadmin && !editingId && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Organization ID * (Superadmin Only)
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter Organization ID" 
+                    value={formData.organizationId} 
+                    onChange={(e) => setFormData({...formData, organizationId: e.target.value})} 
+                    className="input-field" 
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter the MongoDB ObjectId of the organization this employee belongs to
+                  </p>
+                </div>
+              )}
+
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input 
@@ -267,70 +310,72 @@ const Employees = () => {
                 </select>
               </div>
 
-              {/* Login Credentials Section */}
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <input 
-                    type="checkbox" 
-                    id="createLogin"
-                    checked={formData.createLogin}
-                    onChange={(e) => setFormData({...formData, createLogin: e.target.checked})}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <label htmlFor="createLogin" className="font-semibold text-gray-900">
-                    Create Login Credentials (Allow system access)
-                  </label>
-                </div>
-
-                {formData.createLogin && (
-                  <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-3">
-                      🔒 Create username and password for this employee to login to the system
-                    </p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input 
-                        type="text" 
-                        placeholder="Username *" 
-                        value={formData.username} 
-                        onChange={(e) => setFormData({...formData, username: e.target.value})} 
-                        className="input-field" 
-                        required={formData.createLogin}
-                      />
-                      <input 
-                        type="password" 
-                        placeholder="Password *" 
-                        value={formData.password} 
-                        onChange={(e) => setFormData({...formData, password: e.target.value})} 
-                        className="input-field" 
-                        required={formData.createLogin}
-                        minLength="6"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Role & Access Level *
-                      </label>
-                      <select 
-                        value={formData.role} 
-                        onChange={(e) => setFormData({...formData, role: e.target.value})} 
-                        className="input-field"
-                        required={formData.createLogin}
-                      >
-                        <option value="staff">Staff (View & Create Only)</option>
-                        <option value="manager">Manager (Can Edit, No Delete)</option>
-                        <option value="admin">Admin (Full Access)</option>
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formData.role === 'staff' && '• Can view products, customers, invoices and create basic records'}
-                        {formData.role === 'manager' && '• Can create and edit records, view reports, cannot delete'}
-                        {formData.role === 'admin' && '• Full access to all features except super admin functions'}
-                      </p>
-                    </div>
+              {/* Login Credentials Section - Only for new employees */}
+              {!editingId && (
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <input 
+                      type="checkbox" 
+                      id="createLogin"
+                      checked={formData.createLogin}
+                      onChange={(e) => setFormData({...formData, createLogin: e.target.checked})}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <label htmlFor="createLogin" className="font-semibold text-gray-900">
+                      Create Login Credentials (Allow system access)
+                    </label>
                   </div>
-                )}
-              </div>
+
+                  {formData.createLogin && (
+                    <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-3">
+                        🔒 Create username and password for this employee to login to the system
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input 
+                          type="text" 
+                          placeholder="Username *" 
+                          value={formData.username} 
+                          onChange={(e) => setFormData({...formData, username: e.target.value})} 
+                          className="input-field" 
+                          required={formData.createLogin}
+                        />
+                        <input 
+                          type="password" 
+                          placeholder="Password *" 
+                          value={formData.password} 
+                          onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                          className="input-field" 
+                          required={formData.createLogin}
+                          minLength="6"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Role & Access Level *
+                        </label>
+                        <select 
+                          value={formData.role} 
+                          onChange={(e) => setFormData({...formData, role: e.target.value})} 
+                          className="input-field"
+                          required={formData.createLogin}
+                        >
+                          <option value="staff">Staff (View & Create Only)</option>
+                          <option value="manager">Manager (Can Edit, No Delete)</option>
+                          <option value="admin">Admin (Full Access)</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formData.role === 'staff' && '• Can view products, customers, invoices and create basic records'}
+                          {formData.role === 'manager' && '• Can create and edit records, view reports, cannot delete'}
+                          {formData.role === 'admin' && '• Full access to all features except super admin functions'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={handleModalClose} className="btn-secondary flex-1">
