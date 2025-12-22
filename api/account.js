@@ -362,10 +362,21 @@ export default async function handler(req, res) {
           }
 
           if (req.method === 'POST') {
-            const employeeData = { ...req.body, createdBy: req.userId };
+            const { createLogin, username, password, role, ...employeeData } = req.body;
+            
+            // Add organizationId and createdBy
+            employeeData.createdBy = req.userId;
             if (req.organizationId) {
               employeeData.organizationId = req.organizationId;
             }
+            
+            // If creating login credentials
+            if (createLogin && username && password) {
+              employeeData.username = username;
+              employeeData.password = password;
+              employeeData.role = role || 'staff';
+            }
+            
             const employee = await Employee.create(employeeData);
             return res.status(201).json({ success: true, employee });
           }

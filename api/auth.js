@@ -66,14 +66,18 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'Email/Mobile and password are required' });
       }
 
-      // Detect if identifier is Indian mobile number (10 digits)
+      // Detect if identifier is Indian mobile number (10 digits) or username
       const isIndianMobile = /^[6-9]\d{9}$/.test(loginIdentifier);
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
       
       let queryField = {};
       if (isIndianMobile) {
         queryField = { phone: loginIdentifier };
-      } else {
+      } else if (isEmail) {
         queryField = { email: loginIdentifier.toLowerCase() };
+      } else {
+        // Assume it's a username
+        queryField = { username: loginIdentifier };
       }
 
       // Employee Login
