@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         queryField = { username: loginIdentifier };
       }
 
-      console.log('🔐 Login attempt:', { loginIdentifier, queryField, loginType });
+      console.log('🔐 Login attempt:', { loginIdentifier, queryField, loginType, isIndianMobile, isEmail });
 
       // Employee Login
       if (loginType === 'employee') {
@@ -89,11 +89,13 @@ export default async function handler(req, res) {
         console.log('👤 Employee found:', employee ? 'Yes' : 'No');
         
         if (!employee) {
+          console.log('❌ Employee not found with query:', queryField);
           return res.status(401).json({ message: 'Invalid credentials' });
         }
         
         // Check if employee has password (login enabled)
         if (!employee.password) {
+          console.log('❌ Employee has no password');
           return res.status(401).json({ message: 'Login not enabled for this employee' });
         }
 
@@ -148,16 +150,34 @@ export default async function handler(req, res) {
       // User Login (Admin/Manager/Staff)
       const user = await User.findOne(queryField);
       console.log('👤 User found:', user ? 'Yes' : 'No');
+      console.log('🔍 Query used:', queryField);
+      
       if (!user) {
+        console.log('❌ User not found with query:', queryField);
+        // Try to find any user with similar identifier for debugging
+        const debugUser = await User.findOne({ 
+          $or: [
+            { email: loginIdentifier },
+            { username: loginIdentifier },
+            { phone: loginIdentifier }
+          ]
+        }).select('email username phone role');
+        console.log('🔍 Debug - Similar user found:', debugUser ? JSON.stringify(debugUser) : 'None');
         return res.status(401).json({ message: 'Invalid credentials' });
       }
       
+      console.log('✅ User details:', { id: user._id, email: user.email, username: user.username, phone: user.phone, role: user.role, isActive: user.isActive });
+      
       if (user.isActive === false) {
+        console.log('❌ User account is deactivated');
         return res.status(401).json({ message: 'Account deactivated' });
       }
 
       const isMatch = await user.comparePassword(password);
+      console.log('🔑 Password match:', isMatch);
+      
       if (!isMatch) {
+        console.log('❌ Password does not match');
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
