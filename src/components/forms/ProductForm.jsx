@@ -17,7 +17,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
     purchasePrice: product?.purchasePrice || '',
     stock: product?.stock || '',
     taxIncluded: product?.taxIncluded || false,
-    lowStockLimit: product?.lowStockLimit || '10',
+    lowStockLimit: product?.lowStockLimit || '0',
     category: product?.category || 'accessories'
   });
   const [imagePreview, setImagePreview] = useState(product?.image || '');
