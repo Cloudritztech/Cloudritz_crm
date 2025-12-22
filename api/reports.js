@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       return await handleGSTSummary(req, res);
     }
 
-    console.log('📊 Fetching comprehensive dashboard statistics...');
+    // Dashboard statistics
 
     const now = new Date();
     const today = new Date(now.setHours(0, 0, 0, 0));
@@ -205,7 +205,7 @@ export default async function handler(req, res) {
       // Note: This dashboard profit is simplified. Use Sales Reports for accurate COGS-based calculations.
     };
 
-    console.log('✅ Comprehensive dashboard stats:', stats);
+    // Dashboard stats ready
 
     return res.status(200).json({ 
       success: true, 
@@ -233,7 +233,7 @@ export default async function handler(req, res) {
 
 async function handleSalesReports(req, res) {
   try {
-    console.log('📊 Fetching sales reports with correct financial calculations...');
+    // Sales reports calculation
     
     const { period, startDate, endDate } = req.query;
     
@@ -283,7 +283,7 @@ async function handleSalesReports(req, res) {
       }
     }
     
-    console.log('📅 Date filter:', { period, filterStartDate, filterEndDate });
+    // Date filter applied
     
     const Expense = (await import('../lib/models/Expense.js')).default;
     
@@ -376,7 +376,7 @@ async function handleSalesReports(req, res) {
       }
     };
     
-    console.log('✅ Corrected sales reports result:', result);
+    // Sales reports ready
     
     return res.status(200).json({
       success: true,
