@@ -71,10 +71,17 @@ export default async function handler(req, res) {
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
       
       let queryField = {};
-      if (isIndianMobile) {
-        queryField = { phone: loginIdentifier };
-      } else if (isEmail) {
+      if (isEmail) {
         queryField = { email: loginIdentifier.toLowerCase() };
+      } else if (isIndianMobile) {
+        // For 10-digit numbers, try both phone and username
+        queryField = { 
+          $or: [
+            { phone: loginIdentifier },
+            { phone: '0' + loginIdentifier }, // Try with leading 0
+            { username: loginIdentifier }
+          ]
+        };
       } else {
         // Assume it's a username
         queryField = { username: loginIdentifier };
