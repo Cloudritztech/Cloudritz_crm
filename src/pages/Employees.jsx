@@ -49,11 +49,18 @@ const Employees = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const submitData = { ...formData };
+      
+      // Auto-add organizationId for non-superadmin users
+      if (!isSuperadmin && user?.organizationId) {
+        submitData.organizationId = user.organizationId;
+      }
+      
       if (editingId) {
-        await employeesAPI.update(editingId, formData);
+        await employeesAPI.update(editingId, submitData);
         toast.success('Employee updated');
       } else {
-        await employeesAPI.create(formData);
+        await employeesAPI.create(submitData);
         toast.success('Employee added');
       }
       setShowModal(false);
