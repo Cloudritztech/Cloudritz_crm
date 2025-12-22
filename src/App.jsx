@@ -74,12 +74,6 @@ const SkeletonLoader = () => (
   </div>
 );
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-};
-
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
