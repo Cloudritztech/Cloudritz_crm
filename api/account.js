@@ -374,7 +374,7 @@ export default async function handler(req, res) {
                 email: employeeData.email || `${username}@temp.local`,
                 username: username,
                 password: password,
-                phone: employeeData.phone,
+                phone: employeeData.phone?.replace(/^0+/, ''), // Remove leading zeros
                 role: role || 'staff',
                 organizationId: organizationId,
                 isActive: employeeData.status === 'active'
