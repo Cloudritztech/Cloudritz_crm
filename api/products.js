@@ -2,8 +2,9 @@ import connectDB from '../lib/mongodb.js';
 import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
 import InventoryHistory from '../lib/models/InventoryHistory.js';
-import { authenticate, tenantIsolation, checkSubscriptionLimit } from '../lib/middleware/tenant.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 import { deleteImage } from '../lib/cloudinary.js';
+import { notifyLowStock } from '../lib/services/notificationService.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -53,6 +54,8 @@ export default async function handler(req, res) {
   if (productId && method === 'POST' && productAction === 'stock') {
     try {
       const { type, qty, note } = req.body;
+      console.log('📦 Stock update request:', { productId, type, qty, organizationId: req.organizationId });
+      
       if (!type || !qty) return res.status(400).json({ success: false, message: 'Type and quantity required' });
       
       const product = await Product.findById(productId);
@@ -66,6 +69,8 @@ export default async function handler(req, res) {
       product.stock = type === 'IN' ? product.stock + qty : product.stock - qty;
       await product.save();
       
+      console.log(`✅ Stock updated: ${previousStock} → ${product.stock}, lowStockLimit: ${product.lowStockLimit}`);
+      
       // Create inventory history
       await InventoryHistory.create({
         organizationId: req.organizationId,
@@ -78,8 +83,29 @@ export default async function handler(req, res) {
         updatedBy: req.userId
       });
       
+      // Check for low stock and send notification
+      if (product.stock <= product.lowStockLimit) {
+        console.log('⚠️ Low stock detected! Fetching all low stock products...');
+        
+        const lowStockProducts = await Product.find({ 
+          organizationId: req.organizationId, 
+          $expr: { $lte: ['$stock', '$lowStockLimit'] } 
+        }).select('name stock lowStockLimit').limit(10).lean();
+        
+        console.log(`📦 Found ${lowStockProducts.length} low stock products:`, lowStockProducts.map(p => p.name));
+        
+        if (lowStockProducts.length > 0) {
+          console.log('🔔 Calling notifyLowStock...');
+          await notifyLowStock(req.organizationId, lowStockProducts);
+          console.log('✅ Low stock notification sent!');
+        }
+      } else {
+        console.log('✓ Stock level OK, no notification needed');
+      }
+      
       return res.json({ success: true, product });
     } catch (error) {
+      console.error('❌ Stock update error:', error);
       return res.status(500).json({ success: false, message: error.message });
     }
   }
@@ -219,10 +245,14 @@ export default async function handler(req, res) {
 
   if (productId && method === 'DELETE') {
     try {
+      const product = await Product.findOne({ _id: productId, organizationId: req.organizationId });
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
       await Product.findByIdAndDelete(productId);
       return res.json({ success: true, message: 'Product deleted successfully' });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return res.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -253,8 +283,7 @@ export default async function handler(req, res) {
 
     case 'POST':
       try {
-        await checkSubscriptionLimit('products')(req, res, async () => {
-          const product = await Product.create({ ...req.body, organizationId: req.organizationId });
+        const product = await Product.create({ ...req.body, organizationId: req.organizationId });
         
         await InventoryHistory.create({
           organizationId: req.organizationId,
@@ -283,10 +312,9 @@ export default async function handler(req, res) {
           });
         }
 
-          return res.status(201).json({ success: true, product });
-        });
+        return res.status(201).json({ success: true, product });
       } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
       }
       break;
 

@@ -71,6 +71,7 @@ const ProductDetail = () => {
       try {
         await productsAPI.delete(id);
         toast.success('Product deleted');
+        window.dispatchEvent(new Event('data-changed'));
         navigate('/products');
       } catch (error) {
         toast.error('Failed to delete product');

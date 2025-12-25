@@ -23,7 +23,12 @@ export default async function handler(req, res) {
 
       const { action, id } = req.query;
 
-      if (req.method === 'GET') {
+      // Only superadmin can access below endpoints
+      if (req.userRole !== 'superadmin') {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
+      if (req.method === 'POST') {
         if (action === 'organizations') {
           const organizations = await Organization.find({})
             .select('-__v')

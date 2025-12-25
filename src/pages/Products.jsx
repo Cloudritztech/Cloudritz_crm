@@ -106,8 +106,9 @@ const Products = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await productsAPI.delete(id);
+        setProducts(prev => prev.filter(p => p._id !== id));
         toast.success('Product deleted successfully');
-        fetchProducts();
+        window.dispatchEvent(new Event('data-changed'));
       } catch (error) {
         toast.error('Failed to delete product');
       }

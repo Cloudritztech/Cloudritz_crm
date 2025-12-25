@@ -4,6 +4,7 @@ import Customer from '../lib/models/Customer.js';
 import Product from '../lib/models/Product.js';
 import User from '../lib/models/User.js';
 import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
+import { notifyPendingPayments } from '../lib/services/notificationService.js';
 
 async function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
@@ -206,6 +207,18 @@ export default async function handler(req, res) {
     };
 
     // Dashboard stats ready
+
+    // Send notification for pending payments
+    if (pendingPayments[0]?.count > 0) {
+      const pendingInvoices = await Invoice.find({ 
+        organizationId: req.organizationId, 
+        paymentStatus: { $in: ['unpaid', 'partial'] } 
+      }).select('_id invoiceNumber pendingAmount').limit(10).lean();
+      
+      notifyPendingPayments(req.organizationId, pendingInvoices).catch(err => 
+        console.warn('Failed to send pending payment notification:', err)
+      );
+    }
 
     return res.status(200).json({ 
       success: true, 

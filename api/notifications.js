@@ -1,9 +1,14 @@
 import connectDB from '../lib/mongodb.js';
 import Notification from '../lib/models/Notification.js';
-import { authenticate } from '../lib/middleware/auth.js';
-import { tenantIsolation } from '../lib/middleware/tenant.js';
+import { authenticate, tenantIsolation } from '../lib/middleware/tenant.js';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   await connectDB();
 
   return authenticate(req, res, () => {
@@ -17,14 +22,10 @@ export default async function handler(req, res) {
     if (method === 'GET' && !action) {
       const query = { organizationId: req.organizationId };
       
-      // Filter by userId if present (user-specific notifications)
-      // OR fetch org-wide notifications (userId: null)
       query.$or = [
         { userId: req.userId },
         { userId: null }
       ];
-      
-      console.log('📥 Fetching notifications for:', { organizationId: req.organizationId, userId: req.userId });
       
       const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
@@ -35,8 +36,6 @@ export default async function handler(req, res) {
         ...query,
         isRead: false
       });
-      
-      console.log(`✅ Found ${notifications.length} notifications (${unreadCount} unread)`);
 
       return res.status(200).json({ 
         success: true, 
@@ -54,13 +53,11 @@ export default async function handler(req, res) {
       ];
       
       if (id) {
-        console.log('📖 Marking notification as read:', id);
         await Notification.findOneAndUpdate(
           { _id: id, ...query },
           { isRead: true }
         );
       } else {
-        console.log('📖 Marking all notifications as read');
         await Notification.updateMany(
           { ...query, isRead: false },
           { isRead: true }
@@ -78,7 +75,6 @@ export default async function handler(req, res) {
         { userId: null }
       ];
       
-      console.log('🗑️ Deleting notification:', id);
       await Notification.findOneAndDelete({ 
         _id: id, 
         ...query
@@ -90,6 +86,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid request' });
 
   } catch (error) {
+    console.error('❌ Notification API error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
     });
