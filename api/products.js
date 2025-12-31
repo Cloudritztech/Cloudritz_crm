@@ -296,22 +296,6 @@ export default async function handler(req, res) {
           updatedBy: req.userId
         });
 
-        // Auto-create purchase expense
-        if (product.purchasePrice && product.stock > 0) {
-          const Expense = (await import('../lib/models/Expense.js')).default;
-          await Expense.create({
-            organizationId: req.organizationId,
-            title: `Purchase: ${product.name}`,
-            type: 'purchase',
-            description: `Initial stock purchase - ${product.stock} units`,
-            amount: parseFloat((product.purchasePrice * product.stock).toFixed(2)),
-            paymentMethod: 'bank',
-            expenseDate: new Date(),
-            product: product._id,
-            createdBy: req.userId
-          });
-        }
-
         return res.status(201).json({ success: true, product });
       } catch (error) {
         return res.status(500).json({ success: false, message: error.message });

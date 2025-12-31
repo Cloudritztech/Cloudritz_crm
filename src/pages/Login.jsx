@@ -119,6 +119,7 @@ const Login = () => {
                 value={formData.identifier}
                 onChange={handleChange}
                 leftIcon={formData.identifier?.match(/^[0-9]/) ? Phone : Mail}
+                autoComplete="username"
                 required
               />
 
@@ -130,6 +131,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 leftIcon={Lock}
+                autoComplete="current-password"
                 required
               />
 
@@ -144,21 +146,6 @@ const Login = () => {
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
-
-            {/* Admin Panel Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Are you an administrator?{' '}
-                <a 
-                  href="https://admin.cloudritz.com" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Go to Admin Panel →
-                </a>
-              </p>
-            </div>
           </div>
 
           {/* Footer */}

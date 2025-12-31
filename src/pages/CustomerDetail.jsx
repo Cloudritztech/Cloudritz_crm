@@ -72,13 +72,12 @@ const CustomerDetail = () => {
     e.preventDefault();
     try {
       const paymentAmount = parseFloat(paymentForm.amount);
-      const newPaidAmount = selectedInvoice.paidAmount + paymentAmount;
       
       await invoicesAPI.updatePayment(selectedInvoice._id, {
-        paidAmount: newPaidAmount,
-        paymentMethod: paymentForm.paymentMethod,
-        paymentDate: paymentForm.paymentDate,
-        paymentNotes: paymentForm.notes
+        amount: paymentAmount,
+        method: paymentForm.paymentMethod,
+        reference: paymentForm.transactionId,
+        notes: paymentForm.notes
       });
 
       toast.success('Payment recorded successfully');
@@ -100,11 +99,11 @@ const CustomerDetail = () => {
     if (!window.confirm(`Mark invoice ${invoice.invoiceNumber} as fully paid?`)) return;
     
     try {
+      const pendingAmount = invoice.pendingAmount || invoice.grandTotal;
       await invoicesAPI.updatePayment(invoice._id, {
-        paidAmount: invoice.grandTotal,
-        paymentMethod: 'cash',
-        paymentDate: new Date().toISOString(),
-        paymentNotes: 'Marked as paid'
+        amount: pendingAmount,
+        method: 'cash',
+        notes: 'Marked as paid'
       });
 
       toast.success('Invoice marked as paid');

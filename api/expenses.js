@@ -30,6 +30,20 @@ export default async function handler(req, res) {
 
     switch (method) {
       case 'GET':
+        if (query.action === 'cleanup-purchases') {
+          // Remove incorrect 'purchase' type expenses
+          const result = await Expense.deleteMany({ 
+            organizationId: req.organizationId, 
+            type: 'purchase' 
+          });
+          
+          return res.status(200).json({
+            success: true,
+            message: `Removed ${result.deletedCount} incorrect purchase expenses`,
+            deletedCount: result.deletedCount
+          });
+        }
+
         if (query.action === 'summary') {
           const { startDate, endDate, type } = query;
           let matchQuery = {};

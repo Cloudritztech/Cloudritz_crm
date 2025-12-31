@@ -443,6 +443,11 @@ export const expensesAPI = {
     apiCache.clear('expenses_');
     apiCache.clear(`expense_${id}`);
     return response;
+  },
+  cleanupPurchases: async () => {
+    const response = await api.get('/expenses?action=cleanup-purchases');
+    apiCache.clear(); // Clear all cache
+    return response;
   }
 };
 

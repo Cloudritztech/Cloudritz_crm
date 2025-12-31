@@ -47,7 +47,7 @@ const Settings = () => {
         if (activeTab === 'invoice') {
           setInvoiceSettings(data.settings);
         } else if (activeTab === 'categories') {
-          setCategorySettings(data.settings || { categories: ['Tiles', 'Sanitary', 'WPC Doors', 'Accessories'] });
+          setCategorySettings(data.settings || { categories: [] });
         } else if (activeTab === 'integrations') {
           setIntegrationSettings(data.settings);
         } else if (activeTab === 'backup') {
@@ -368,7 +368,7 @@ const Settings = () => {
                   <p className="text-sm text-gray-600 mb-4">Customize categories for your business type</p>
                   
                   <div className="space-y-3 mb-4">
-                    {categorySettings.categories.map((cat, index) => (
+                    {categorySettings.categories?.length > 0 ? categorySettings.categories.map((cat, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="font-medium">{cat}</span>
                         <button
@@ -381,7 +381,11 @@ const Settings = () => {
                           Remove
                         </button>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No categories added yet. Add your first category below.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2">

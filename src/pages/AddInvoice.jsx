@@ -213,6 +213,8 @@ const AddInvoice = () => {
       };
       
       console.log('📤 Sending invoice data:', invoiceData);
+      console.log('🔍 Payment Status being sent:', invoiceData.paymentStatus);
+      console.log('🔍 Form Data Payment Status:', formData.paymentStatus);
       console.log('📊 Calculated totals:', totals);
       
       const response = await invoicesAPI.create(invoiceData);
@@ -412,7 +414,7 @@ const AddInvoice = () => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
+                <option value="unpaid">Pending</option>
               </select>
             </div>
           </div>

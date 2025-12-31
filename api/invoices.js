@@ -202,9 +202,12 @@ async function createInvoice(req, res) {
 
     const {
       customer, items, discount = 0, discountType = 'amount', applyGST = true,
-      paymentMethod = 'cash', notes = '', dueDate, terms, buyerDetails,
+      paymentMethod = 'cash', paymentStatus = 'unpaid', notes = '', dueDate, terms, buyerDetails,
       destination, deliveryNote, referenceNo, buyerOrderNo
     } = req.body;
+
+    console.log('💰 Payment Status from frontend:', paymentStatus);
+    console.log('💰 Full request body:', JSON.stringify(req.body, null, 2));
 
     if (!customer || !items || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Customer and items required' });
@@ -318,7 +321,7 @@ async function createInvoice(req, res) {
     const invoiceNumber = `${yearMonth}-${String(monthCount + 1).padStart(3, '0')}`;
     console.log('📝 Generated invoice number:', invoiceNumber);
 
-    const invoice = await Invoice.create({
+    const invoiceData = {
       invoiceNumber,
       organizationId: req.organizationId,
       customer,
@@ -343,18 +346,7 @@ async function createInvoice(req, res) {
         stateCode: '09'
       },
       modeOfPayment: paymentMethod,
-      destination: (() => {
-        const destValue = destination || [
-          buyerDetails?.street || customerExists.address?.street,
-          buyerDetails?.city || customerExists.address?.city,
-          buyerDetails?.state || customerExists.address?.state,
-          buyerDetails?.pincode || customerExists.address?.pincode
-        ].filter(Boolean).join(', ') || '';
-        console.log('📍 Destination value:', destValue);
-        console.log('📍 Customer address:', customerExists.address);
-        console.log('📍 Buyer details:', buyerDetails);
-        return destValue;
-      })(),
+      destination: destination || '',
       deliveryNote: deliveryNote || '',
       referenceNo: referenceNo || '',
       buyerOrderNo: buyerOrderNo || '',
@@ -376,7 +368,59 @@ async function createInvoice(req, res) {
       dueDate: dueDate ? new Date(dueDate) : null,
       terms: terms || 'Payment due within 30 days',
       createdBy: req.userId || null
-    });
+    };
+
+    // Set payment status based on selection - FIXED
+    if (paymentStatus === 'paid') {
+      invoiceData.paymentStatus = 'paid';
+      invoiceData.status = 'paid';
+      invoiceData.paidAmount = grandTotal;
+      invoiceData.pendingAmount = 0;
+      invoiceData.paymentDate = new Date();
+      invoiceData.payments = [{
+        amount: grandTotal,
+        date: new Date(),
+        method: paymentMethod,
+        reference: 'Initial payment',
+        notes: 'Paid during invoice creation',
+        collectedBy: req.userId
+      }];
+    } else {
+      // paymentStatus is 'unpaid' or any other value
+      invoiceData.paymentStatus = 'unpaid';
+      invoiceData.status = 'pending';
+      invoiceData.paidAmount = 0;
+      invoiceData.pendingAmount = grandTotal;
+      invoiceData.payments = [];
+    }
+
+    console.log('💰 Final invoice payment status before save:', invoiceData.paymentStatus);
+    console.log('💰 Final invoice status before save:', invoiceData.status);
+    console.log('💰 Final invoice paidAmount before save:', invoiceData.paidAmount);
+
+    const invoice = await Invoice.create(invoiceData);
+    
+    console.log('💰 Saved invoice payment status:', invoice.paymentStatus);
+    console.log('💰 Saved invoice status:', invoice.status);
+    console.log('💰 Saved invoice paidAmount:', invoice.paidAmount);
+    
+    // FORCE UPDATE if payment status is wrong
+    if (paymentStatus === 'paid' && invoice.paymentStatus !== 'paid') {
+      console.log('🔧 FORCE UPDATING payment status to paid');
+      await Invoice.updateOne(
+        { _id: invoice._id },
+        {
+          $set: {
+            paymentStatus: 'paid',
+            status: 'paid',
+            paidAmount: grandTotal,
+            pendingAmount: 0,
+            paymentDate: new Date()
+          }
+        }
+      );
+      console.log('🔧 FORCE UPDATE completed');
+    }
 
     try {
       await Customer.findByIdAndUpdate(customer, {
@@ -421,6 +465,9 @@ async function createInvoice(req, res) {
       .populate('customer', 'name phone address')
       .populate('items.product', 'name category')
       .populate('createdBy', 'name');
+
+    console.log('💰 Final populated invoice payment status:', populatedInvoice.paymentStatus);
+    console.log('💰 Final populated invoice status:', populatedInvoice.status);
 
     // Create notification
     try {
@@ -475,7 +522,10 @@ async function updateInvoicePayment(req, res, id) {
       collectedBy: req.userId
     });
 
-    // Save will trigger pre-save hook to recalculate amounts
+    // Recalculate payment status manually
+    invoice.recalculatePaymentStatus();
+    
+    // Save without triggering pre-save hook payment calculations
     await invoice.save();
 
     const updatedInvoice = await Invoice.findById(id)
@@ -500,5 +550,4 @@ async function updateInvoicePayment(req, res, id) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
-
 

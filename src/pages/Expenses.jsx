@@ -48,6 +48,18 @@ const Expenses = () => {
     }
   };
 
+  const cleanupPurchaseExpenses = async () => {
+    if (!window.confirm('This will remove all incorrect "purchase" type expenses from your records. This action cannot be undone. Continue?')) return;
+    
+    try {
+      const res = await expensesAPI.cleanupPurchases();
+      toast.success(`Removed ${res.data.deletedCount} incorrect purchase expenses`);
+      fetchExpenses();
+    } catch (error) {
+      toast.error('Failed to cleanup purchase expenses');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -90,9 +102,14 @@ const Expenses = () => {
           <h1 className="text-3xl font-bold">Expenses</h1>
           <p className="text-gray-600">Track business expenses</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center px-4 py-2 rounded-xl">
-          <Plus className="h-4 w-4 mr-2" />Add Expense
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center px-4 py-2 rounded-xl">
+            <Plus className="h-4 w-4 mr-2" />Add Expense
+          </button>
+          <button onClick={cleanupPurchaseExpenses} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm">
+            Cleanup Purchase Expenses
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -129,7 +146,6 @@ const Expenses = () => {
             <option value="utilities">Utilities</option>
             <option value="travel">Travel</option>
             <option value="marketing">Marketing</option>
-            <option value="purchase">Purchase</option>
             <option value="miscellaneous">Miscellaneous</option>
           </select>
         </div>
@@ -180,7 +196,6 @@ const Expenses = () => {
                 <option value="utilities">Utilities</option>
                 <option value="travel">Travel</option>
                 <option value="marketing">Marketing</option>
-                <option value="purchase">Purchase</option>
                 <option value="miscellaneous">Miscellaneous</option>
               </select>
               {formData.type === 'salary' && (
