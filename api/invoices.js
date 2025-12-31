@@ -156,11 +156,11 @@ async function generatePDF(req, res, id) {
 
     // Add company and bank details to invoice
     invoice.companyDetails = {
-      name: profile.businessName || 'Anvi Tiles & Decorhub',
-      address: profile.address || 'Gorakhpur, Uttar Pradesh',
+      name: profile.businessName || '',
+      address: profile.address || '',
       gstin: profile.gstin || '',
-      state: profile.state || 'UTTAR PRADESH',
-      stateCode: profile.stateCode || '09',
+      state: profile.state || '',
+      stateCode: profile.stateCode || '',
       mobile: profile.phone || '',
       email: profile.email || '',
       logo: profile.logo || ''
@@ -366,7 +366,7 @@ async function createInvoice(req, res) {
       paymentMethod: paymentMethod,
       notes: notes || '',
       dueDate: dueDate ? new Date(dueDate) : null,
-      terms: terms || 'Payment due within 30 days',
+      terms: terms || '',
       createdBy: req.userId || null
     };
 
