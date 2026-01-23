@@ -83,35 +83,8 @@ export const productsAPI = {
     const cached = apiCache.get(cacheKey);
     if (cached) return { data: cached };
     
-    // Try IndexedDB for installed app
-    if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
-      try {
-        const { localDB } = await import('../utils/localDB.js');
-        const localData = await localDB.getAll('products');
-        if (localData && localData.length > 0) {
-          // Return local data, sync in background
-          setTimeout(() => {
-            api.get('/products', { params }).then(res => {
-              if (res.data?.success) {
-                localDB.bulkSet('products', res.data.products || []).catch(console.error);
-              }
-            }).catch(console.error);
-          }, 100);
-          return { data: { success: true, products: localData } };
-        }
-      } catch (e) {}
-    }
-    
     const response = await api.get('/products', { params });
-    apiCache.set(cacheKey, response.data, 300000); // 5 min
-    
-    // Store in IndexedDB for offline
-    if (response.data?.success && response.data.products) {
-      try {
-        const { localDB } = await import('../utils/localDB.js');
-        localDB.bulkSet('products', response.data.products).catch(console.error);
-      } catch (e) {}
-    }
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     
     return response;
   },
@@ -121,28 +94,27 @@ export const productsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get(`/products?id=${id}`);
-    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   create: async (product) => {
     const response = await api.post('/products', product);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('products');
     return response;
   },
   update: async (id, product) => {
     const response = await api.put(`/products?id=${id}`, product);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('products');
     return response;
   },
   delete: async (id) => {
     const response = await api.delete(`/products?id=${id}`);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('products');
     return response;
   },
   updateStock: async (id, data) => {
     const response = await api.post(`/products?id=${id}&action=stock`, data);
-    apiCache.clear(`product_${id}`);
-    apiCache.clear('products_');
+    apiCache.invalidateRelated('products');
     return response;
   },
   getLowStock: async () => {
@@ -151,12 +123,12 @@ export const productsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/products?lowStock=true');
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 30000); // Reduced to 30 sec
     return response;
   },
   syncExcel: async (products) => {
     const response = await api.post('/products?action=sync-excel', { products });
-    apiCache.clear('products_');
+    apiCache.invalidateRelated('products');
     return response;
   },
   getInventoryHistory: async (id) => {
@@ -165,7 +137,7 @@ export const productsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get(`/products?id=${id}&action=history`);
-    apiCache.set(cacheKey, response.data, 60000); // 1 min
+    apiCache.set(cacheKey, response.data, 30000); // Reduced to 30 sec
     return response;
   },
 };
@@ -219,12 +191,12 @@ export const customersAPI = {
   },
   create: async (customer) => {
     const response = await api.post('/customers', customer);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('customers');
     return response;
   },
   update: async (id, customer) => {
     const response = await api.put(`/customers?id=${id}`, customer);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('customers');
     return response;
   },
   getPurchaseHistory: async (id) => {
@@ -260,16 +232,19 @@ export const invoicesAPI = {
   },
   create: async (invoice) => {
     const response = await api.post('/invoices', invoice);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('invoices');
+    return response;
+  },
+  update: async (id, invoice) => {
+    const response = await api.put(`/invoice?id=${id}`, invoice);
+    apiCache.invalidateRelated('invoices');
     return response;
   },
   generatePDF: (id) => api.get(`/invoices?id=${id}&action=pdf`, { responseType: 'blob' }),
   getWhatsAppLink: (id) => api.get(`/invoices?id=${id}&action=whatsapp`),
   updatePayment: async (id, paymentData) => {
     const response = await api.put(`/invoices?id=${id}&action=payment`, paymentData);
-    apiCache.clear(`invoice_${id}`);
-    apiCache.clear('invoices_');
-    apiCache.clear('dashboard');
+    apiCache.invalidateRelated('invoices');
     return response;
   },
 };
@@ -282,7 +257,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=sales', { params });
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getProfit: async (params) => {
@@ -291,7 +266,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=profit', { params });
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getTopProducts: async (params) => {
@@ -300,7 +275,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=top-products', { params });
-    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getDashboard: async () => {
@@ -309,7 +284,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports');
-    apiCache.set(cacheKey, response.data, 300000); // 5 min
+    apiCache.set(cacheKey, response.data, 30000); // Reduced to 30 sec
     return response;
   },
   getSalesAnalytics: async () => {
@@ -318,7 +293,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=sales-analytics');
-    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getSalesReports: async (params) => {
@@ -327,7 +302,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=sales-reports', { params });
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getFinancialTrends: async (params) => {
@@ -336,7 +311,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=financial-trends', { params });
-    apiCache.set(cacheKey, response.data, 180000); // 3 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
   getGSTSummary: async (params) => {
@@ -345,7 +320,7 @@ export const reportsAPI = {
     if (cached) return { data: cached };
     
     const response = await api.get('/reports?action=gst-summary', { params });
-    apiCache.set(cacheKey, response.data, 120000); // 2 min
+    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
     return response;
   },
 };
@@ -430,23 +405,22 @@ export const expensesAPI = {
   },
   create: async (data) => {
     const response = await api.post('/expenses', data);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('expenses');
     return response;
   },
   update: async (id, data) => {
     const response = await api.put(`/expenses?id=${id}`, data);
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('expenses');
     return response;
   },
   delete: async (id) => {
     const response = await api.delete(`/expenses?id=${id}`);
-    apiCache.clear('expenses_');
-    apiCache.clear(`expense_${id}`);
+    apiCache.invalidateRelated('expenses');
     return response;
   },
   cleanupPurchases: async () => {
     const response = await api.get('/expenses?action=cleanup-purchases');
-    apiCache.clear(); // Clear all cache
+    apiCache.invalidateRelated('expenses');
     return response;
   }
 };

@@ -44,6 +44,7 @@ const Products = lazyWithRetry(() => import('./pages/Products'));
 const Customers = lazyWithRetry(() => import('./pages/Customers'));
 const Invoices = lazyWithRetry(() => import('./pages/Invoices'));
 const AddInvoice = lazyWithRetry(() => import('./pages/AddInvoice'));
+const EditInvoice = lazyWithRetry(() => import('./pages/EditInvoice'));
 const ViewInvoice = lazyWithRetry(() => import('./pages/ViewInvoice'));
 const SalesReports = lazyWithRetry(() => import('./pages/SalesReports'));
 const BusinessProfile = lazyWithRetry(() => import('./pages/BusinessProfile'));
@@ -202,6 +203,11 @@ function AppContent() {
                             <Route path="/invoices/add" element={
                               <ProtectedRoute requiredPermission="create_invoice">
                                 <AddInvoice />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/invoices/edit/:id" element={
+                              <ProtectedRoute requiredPermission="edit_invoice">
+                                <EditInvoice />
                               </ProtectedRoute>
                             } />
                             <Route path="/invoices/view/:id" element={

@@ -1,19 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { customersAPI, productsAPI, invoicesAPI } from '../services/api';
+import { draftManager } from '../utils/draftManager';
+import toast from 'react-hot-toast';
 
 const AddInvoice = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  
+  const DRAFT_ID = 'invoice_draft';
+  
   const [formData, setFormData] = useState({
     customer: "",
+    customerName: "", // For draft display
     items: [{ product: "", quantity: 1, price: 0, discount: 0, discountType: "amount", name: "", isCustom: false }],
     discount: 0,
     discountType: "amount",
     paymentMethod: "cash",
     paymentStatus: "paid",
+    paidAmount: 0,
     notes: "",
     
     // GST Controls
@@ -49,7 +58,59 @@ const AddInvoice = () => {
 
   useEffect(() => {
     fetchData();
+    
+    // Check for existing draft
+    if (draftManager.hasRecentDraft(DRAFT_ID) && !draftLoaded) {
+      setShowDraftModal(true);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      draftManager.clearAllTimers();
+    };
   }, []);
+  
+  // Auto-save draft when form data changes
+  useEffect(() => {
+    if (draftLoaded && (formData.customer || formData.items.some(item => item.product))) {
+      // Update customer name for draft display
+      const customer = customers.find(c => c._id === formData.customer);
+      const updatedFormData = {
+        ...formData,
+        customerName: customer?.name || ''
+      };
+      draftManager.autoSave(DRAFT_ID, updatedFormData);
+    }
+  }, [formData, customers, draftLoaded]);
+  
+  // Load draft
+  const loadDraft = useCallback(() => {
+    const draft = draftManager.getDraft(DRAFT_ID);
+    if (draft) {
+      setFormData(draft.data);
+      setDraftLoaded(true);
+      toast.success('Draft restored successfully!');
+    }
+    setShowDraftModal(false);
+  }, []);
+  
+  // Discard draft
+  const discardDraft = useCallback(() => {
+    draftManager.deleteDraft(DRAFT_ID);
+    setDraftLoaded(true);
+    setShowDraftModal(false);
+  }, []);
+  
+  // Clear draft after successful submission
+  const clearDraft = useCallback(() => {
+    draftManager.deleteDraft(DRAFT_ID);
+  }, []);
+
+  // Update form data with auto-save
+  const updateFormData = useCallback((updates) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+    if (!draftLoaded) setDraftLoaded(true);
+  }, [draftLoaded]);
 
   const fetchData = async () => {
     try {
@@ -202,6 +263,7 @@ const AddInvoice = () => {
         discountType: formData.discountType,
         paymentMethod: formData.paymentMethod || 'cash',
         paymentStatus: formData.paymentStatus || 'paid',
+        paidAmount: formData.paidAmount || 0,
         deliveryNote: formData.deliveryNote,
         referenceNo: formData.referenceNo,
         buyerOrderNo: formData.buyerOrderNo,
@@ -223,7 +285,8 @@ const AddInvoice = () => {
       console.log('Invoice response data:', response.data);
       
       if (response.data?.success) {
-        alert("Invoice created successfully!");
+        clearDraft(); // Clear draft after successful creation
+        toast.success("Invoice created successfully!");
         // Trigger data refresh event
         window.dispatchEvent(new Event('data-changed'));
         navigate("/invoices");
@@ -243,15 +306,14 @@ const AddInvoice = () => {
   };
 
   const addItem = () => {
-    setFormData({
-      ...formData,
+    updateFormData({
       items: [...formData.items, { product: "", quantity: 1, price: 0, discount: 0, discountType: "amount", name: "", isCustom: false }]
     });
   };
 
   const removeItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    setFormData({ ...formData, items: newItems });
+    updateFormData({ items: newItems });
   };
 
   const updateItem = (index, field, value) => {
@@ -267,7 +329,7 @@ const AddInvoice = () => {
       }
     }
     
-    setFormData({ ...formData, items: newItems });
+    updateFormData({ items: newItems });
   };
 
   const calculateTotals = () => {
@@ -371,7 +433,7 @@ const AddInvoice = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={formData.customer}
-                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  onChange={(e) => updateFormData({ customer: e.target.value })}}
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   required
                 >
@@ -396,7 +458,7 @@ const AddInvoice = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
               <select
                 value={formData.paymentMethod}
-                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                onChange={(e) => updateFormData({ paymentMethod: e.target.value })}}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="cash">Cash</option>
@@ -410,12 +472,59 @@ const AddInvoice = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Status</label>
               <select
                 value={formData.paymentStatus}
-                onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value })}
+                onChange={(e) => {
+                  const status = e.target.value;
+                  const grandTotal = parseFloat(calculateTotals().grandTotal);
+                  updateFormData({ 
+                    paymentStatus: status,
+                    paidAmount: status === 'paid' ? grandTotal : status === 'partial' ? 0 : 0
+                  });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="paid">Paid</option>
                 <option value="unpaid">Pending</option>
+                <option value="partial">Partial Payment</option>
               </select>
+            </div>
+            
+            {/* Paid Amount Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {formData.paymentStatus === 'paid' ? 'Amount Paid' : formData.paymentStatus === 'partial' ? 'Advance Amount' : 'Paid Amount'}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">₹</span>
+                <input
+                  type="number"
+                  value={formData.paidAmount || ''}
+                  onChange={(e) => {
+                    const amount = parseFloat(e.target.value) || 0;
+                    const grandTotal = parseFloat(calculateTotals().grandTotal);
+                    let status = formData.paymentStatus;
+                    
+                    // Auto-update status based on amount
+                    if (amount === 0) status = 'unpaid';
+                    else if (amount >= grandTotal) status = 'paid';
+                    else status = 'partial';
+                    
+                    updateFormData({ 
+                      paidAmount: amount,
+                      paymentStatus: status
+                    });
+                  }}
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  step="0.01"
+                  min="0"
+                  max={calculateTotals().grandTotal}
+                  placeholder="0.00"
+                />
+              </div>
+              {formData.paidAmount > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Pending: ₹{(parseFloat(calculateTotals().grandTotal) - (formData.paidAmount || 0)).toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -874,13 +983,49 @@ const AddInvoice = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/invoices")}
+            onClick={() => {
+              clearDraft();
+              navigate("/invoices");
+            }}
             className="flex-1 px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
           >
             Cancel
           </button>
         </div>
       </form>
+
+      {/* Draft Restore Modal */}
+      {showDraftModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Draft Found</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                You have an unsaved invoice draft. Would you like to continue where you left off?
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={loadDraft}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                >
+                  Restore Draft
+                </button>
+                <button
+                  onClick={discardDraft}
+                  className="flex-1 px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors"
+                >
+                  Start Fresh
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Add Customer Modal */}
       {showQuickCustomer && (

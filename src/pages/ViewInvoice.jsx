@@ -192,6 +192,12 @@ const ViewInvoice = () => {
           <button onClick={handleShare} disabled={sharing} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-600 text-white rounded-md sm:rounded-lg hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
             {sharing ? <><Loader className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" /><span className="hidden sm:inline">Generating...</span></> : <><Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Share</span></>}
           </button>
+          <button onClick={() => navigate(`/invoices/edit/${id}`)} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-orange-600 text-white rounded-md sm:rounded-lg hover:bg-orange-700 whitespace-nowrap">
+            <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span className="hidden sm:inline">Edit</span>
+          </button>
           <button onClick={handlePrint} className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 whitespace-nowrap">
             <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Print</span>
           </button>
@@ -245,11 +251,10 @@ const ViewInvoice = () => {
             <tr style={{backgroundColor: '#f0f0f0'}}>
               <th style={{border: '1px solid #000', padding: '8px', width: '35px'}}>Sl</th>
               <th style={{border: '1px solid #000', padding: '8px', textAlign: 'left'}}>Description</th>
-              <th style={{border: '1px solid #000', padding: '8px', width: '55px'}}>HSN</th>
               <th style={{border: '1px solid #000', padding: '8px', width: '45px'}}>Qty</th>
               <th style={{border: '1px solid #000', padding: '8px', width: '65px'}}>Rate</th>
-              <th style={{border: '1px solid #000', padding: '8px', width: '70px'}}>Taxable</th>
-              <th style={{border: '1px solid #000', padding: '8px', width: '60px'}}>GST</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '70px'}}>Gross</th>
+              <th style={{border: '1px solid #000', padding: '8px', width: '70px'}}>Discount</th>
               <th style={{border: '1px solid #000', padding: '8px', width: '75px'}}>Amount</th>
             </tr>
           </thead>
@@ -257,22 +262,22 @@ const ViewInvoice = () => {
               const taxableValue = item.taxableValue || (item.quantity * item.price);
               const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
               const totalAmount = taxableValue + gstAmount;
+              const itemDiscount = parseFloat(item.discount) || 0;
+              const itemGross = item.quantity * item.price;
+              const discountAmount = item.discountType === 'percentage' ? (itemGross * itemDiscount) / 100 : itemDiscount;
               return (
                 <tr key={index}>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{index + 1}</td>
                   <td style={{border: '1px solid #000', padding: '8px'}}>{item.product?.name || 'Product'}</td>
-                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{item.product?.hsnCode || '6907'}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'center'}}>{item.quantity}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{item.price.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{taxableValue.toFixed(2)}</td>
-                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{gstAmount.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{itemGross.toFixed(2)}</td>
+                  <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>{discountAmount > 0 ? `₹${discountAmount.toFixed(2)}` : '-'}</td>
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
                 </tr>
               );
             })}<tr style={{fontWeight: '700'}}>
-              <td colSpan="5" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
-              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.totalTaxableAmount || invoice.subtotal).toFixed(2)}</td>
-              <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
+              <td colSpan="6" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
               <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
             </tr></tbody>
         </table>
@@ -282,17 +287,20 @@ const ViewInvoice = () => {
           <div style={{border: '2px solid #000', borderTop: 'none', padding: '10px', fontSize: '11px'}}>
             <table style={{width: '100%', borderCollapse: 'collapse'}}>
               <tbody>
-                {invoice.discount > 0 && (
-                  <>
-                    <tr>
-                      <td style={{padding: '3px 0'}}>Item Total:</td>
-                      <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{invoice.subtotal.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                      <td style={{padding: '3px 0'}}>Discount:</td>
-                      <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.discount.toFixed(2)}</td>
-                    </tr>
-                  </>
+                <tr>
+                  <td style={{padding: '3px 0', fontWeight: '700'}}>Total Amount (Before Discount):</td>
+                  <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '700'}}>₹{invoice.subtotal.toFixed(2)}</td>
+                </tr>
+                
+                {((invoice.discount > 0) || (invoice.items && invoice.items.some(item => item.discount > 0))) && (
+                  <tr>
+                    <td style={{padding: '3px 0'}}>Total Discount Applied:</td>
+                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{((invoice.discount || 0) + (invoice.items?.reduce((sum, item) => {
+                      const itemDiscount = parseFloat(item.discount) || 0;
+                      const itemGross = item.quantity * item.price;
+                      return sum + (item.discountType === 'percentage' ? (itemGross * itemDiscount) / 100 : itemDiscount);
+                    }, 0) || 0)).toFixed(2)}</td>
+                  </tr>
                 )}
                 
                 <tr>
@@ -315,13 +323,6 @@ const ViewInvoice = () => {
                       <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>₹{((invoice.totalCgst || 0) + (invoice.totalSgst || 0)).toFixed(2)}</td>
                     </tr>
                   </>
-                )}
-                
-                {invoice.autoDiscount > 0 && (
-                  <tr>
-                    <td style={{padding: '3px 0'}}>Auto GST Discount:</td>
-                    <td style={{textAlign: 'right', padding: '3px 0', fontWeight: '600'}}>-₹{invoice.autoDiscount.toFixed(2)}</td>
-                  </tr>
                 )}
                 
                 {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
@@ -401,6 +402,8 @@ const ViewInvoice = () => {
                   <th className="text-left py-1">Item</th>
                   <th className="text-center py-1 w-12">Qty</th>
                   <th className="text-right py-1 w-16">Rate</th>
+                  <th className="text-right py-1 w-16">Gross</th>
+                  <th className="text-right py-1 w-16">Discount</th>
                   <th className="text-right py-1 w-20">Amount</th>
                 </tr>
               </thead>
@@ -409,25 +412,34 @@ const ViewInvoice = () => {
                   const taxableValue = item.taxableValue || (item.quantity * item.price);
                   const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
                   const totalAmount = invoice.reverseGST ? taxableValue : (taxableValue + gstAmount);
+                  const itemDiscount = parseFloat(item.discount) || 0;
+                  const itemGross = item.quantity * item.price;
+                  const discountAmount = item.discountType === 'percentage' ? (itemGross * itemDiscount) / 100 : itemDiscount;
                   return (
                     <tr key={index} className="border-b border-dotted border-gray-300">
                       <td className="py-1">{item.product?.name || 'Product'}</td>
                       <td className="text-center py-1">{item.quantity}</td>
                       <td className="text-right py-1">₹{item.price.toFixed(2)}</td>
+                      <td className="text-right py-1">₹{itemGross.toFixed(2)}</td>
+                      <td className="text-right py-1">{discountAmount > 0 ? `₹${discountAmount.toFixed(2)}` : '-'}</td>
                       <td className="text-right py-1">₹{totalAmount.toFixed(2)}</td>
                     </tr>
                   );
-                })}
+                })}}
               </tbody>
             </table>
 
             <div className="border-t border-gray-400 pt-2 text-xs space-y-1">
-              <div className="flex justify-between"><span>Item Total:</span><span>₹{(invoice.subtotal || 0).toFixed(2)}</span></div>
+              <div className="flex justify-between font-semibold"><span>Total Amount (Before Discount):</span><span>₹{(invoice.subtotal || 0).toFixed(2)}</span></div>
               
-              {invoice.discount > 0 && (
+              {((invoice.discount > 0) || (invoice.items && invoice.items.some(item => item.discount > 0))) && (
                 <div className="flex justify-between">
-                  <span>Additional Discount:</span>
-                  <span>-₹{invoice.discount.toFixed(2)}</span>
+                  <span>Total Discount Applied:</span>
+                  <span>-₹{((invoice.discount || 0) + (invoice.items?.reduce((sum, item) => {
+                    const itemDiscount = parseFloat(item.discount) || 0;
+                    const itemGross = item.quantity * item.price;
+                    return sum + (item.discountType === 'percentage' ? (itemGross * itemDiscount) / 100 : itemDiscount);
+                  }, 0) || 0)).toFixed(2)}</span>
                 </div>
               )}
               
@@ -450,13 +462,6 @@ const ViewInvoice = () => {
                 </>
               )}
               
-              {invoice.autoDiscount > 0 && (
-                <div className="flex justify-between">
-                  <span>Auto GST Discount:</span>
-                  <span>-₹{invoice.autoDiscount.toFixed(2)}</span>
-                </div>
-              )}
-              
               {invoice.roundOff && parseFloat(invoice.roundOff) !== 0 && (
                 <div className="flex justify-between"><span>Round Off:</span><span>{parseFloat(invoice.roundOff) >= 0 ? '+' : ''}₹{invoice.roundOff.toFixed(2)}</span></div>
               )}
@@ -465,6 +470,20 @@ const ViewInvoice = () => {
                 <span>GRAND TOTAL:</span>
                 <span>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</span>
               </div>
+              
+              {(invoice.paidAmount > 0) && (
+                <div className="flex justify-between font-semibold text-green-600 dark:text-green-400">
+                  <span>Amount Paid:</span>
+                  <span>₹{invoice.paidAmount.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {(invoice.pendingAmount > 0) && (
+                <div className="flex justify-between font-semibold text-red-600 dark:text-red-400">
+                  <span>Pending Amount:</span>
+                  <span>₹{invoice.pendingAmount.toFixed(2)}</span>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-400 pt-2 mt-2 text-xs">

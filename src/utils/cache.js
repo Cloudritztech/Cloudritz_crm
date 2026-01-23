@@ -40,6 +40,20 @@ class Cache {
     }
   }
 
+  // Clear all related caches when data changes
+  invalidateRelated(type) {
+    const patterns = {
+      products: ['products_', 'product_', 'dashboard', 'salesAnalytics', 'topProducts_', 'inventory_history_'],
+      invoices: ['invoices_', 'invoice_', 'dashboard', 'sales_', 'profit_', 'salesReports_', 'financialTrends_'],
+      customers: ['customers_', 'customer_', 'dashboard'],
+      expenses: ['expenses_', 'expense_', 'dashboard', 'profit_', 'financialTrends_'],
+      reports: ['dashboard', 'sales_', 'profit_', 'salesAnalytics', 'topProducts_', 'salesReports_', 'financialTrends_', 'gstSummary_']
+    };
+    
+    const clearPatterns = patterns[type] || [];
+    clearPatterns.forEach(pattern => this.clear(pattern));
+  }
+
   has(key) {
     const item = this.cache.get(key);
     if (!item) return false;
