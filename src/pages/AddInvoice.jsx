@@ -458,7 +458,7 @@ const AddInvoice = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
               <select
                 value={formData.paymentMethod}
-                onChange={(e) => updateFormData({ paymentMethod: e.target.value })}}
+                onChange={(e) => updateFormData({ paymentMethod: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="cash">Cash</option>
