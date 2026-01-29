@@ -61,9 +61,10 @@ const CustomerDetail = () => {
 
   const handleAddPayment = (invoice) => {
     setSelectedInvoice(invoice);
+    const pendingAmount = invoice.pendingAmount || invoice.grandTotal || 0;
     setPaymentForm({
       ...paymentForm,
-      amount: invoice.pendingAmount.toFixed(2)
+      amount: pendingAmount.toFixed(2)
     });
     setShowPaymentModal(true);
   };
@@ -122,9 +123,9 @@ const CustomerDetail = () => {
     return badges[status] || badges.pending;
   };
 
-  const totalPending = invoices.reduce((sum, inv) => sum + (inv.pendingAmount || 0), 0);
+  const totalPending = invoices.reduce((sum, inv) => sum + (inv.pendingAmount || inv.grandTotal || 0), 0);
   const totalPaid = invoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
+  const totalAmount = invoices.reduce((sum, inv) => sum + (inv.grandTotal || inv.total || 0), 0);
 
   if (loading) {
     return (
@@ -260,12 +261,12 @@ const CustomerDetail = () => {
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(invoice.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-right font-medium">₹{invoice.grandTotal.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-right font-medium">₹{(invoice.grandTotal || invoice.total || 0).toFixed(2)}</td>
                   <td className="px-6 py-4 text-right text-green-600 font-medium">
                     ₹{(invoice.paidAmount || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-right text-red-600 font-medium">
-                    ₹{(invoice.pendingAmount || invoice.grandTotal).toFixed(2)}
+                    ₹{(invoice.pendingAmount || invoice.grandTotal || invoice.total || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(invoice.paymentStatus || 'pending')}`}>
@@ -324,7 +325,7 @@ const CustomerDetail = () => {
                     {payment.invoiceNumber}
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-green-600">
-                    ₹{payment.amount.toFixed(2)}
+                    ₹{(payment.amount || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <span className="px-2 py-1 bg-gray-100 rounded text-xs uppercase">
@@ -377,7 +378,7 @@ const CustomerDetail = () => {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Pending: ₹{selectedInvoice?.pendingAmount.toFixed(2)}
+                  Pending: ₹{(selectedInvoice?.pendingAmount || selectedInvoice?.grandTotal || selectedInvoice?.total || 0).toFixed(2)}
                 </p>
               </div>
               <div>
