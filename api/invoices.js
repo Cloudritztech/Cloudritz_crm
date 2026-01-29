@@ -26,48 +26,64 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+    console.log('🚀 Invoice API called:', req.method, req.url);
+    
     await connectDB();
+    console.log('✅ Database connected');
+    
     await authenticate(req, res, async () => {
+      console.log('✅ Authentication passed, user:', req.userId);
+      console.log('✅ Organization ID:', req.organizationId);
+      
       await tenantIsolation(req, res, async () => {
+        console.log('✅ Tenant isolation passed');
 
-    const { method, query } = req;
-    const { id, action } = query;
+        const { method, query } = req;
+        const { id, action } = query;
 
-    // Payment operations
-    if (action === 'payment') {
-      if (method === 'PUT' && id) return await updateInvoicePayment(req, res, id);
-      return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+        // Payment operations
+        if (action === 'payment') {
+          if (method === 'PUT' && id) return await updateInvoicePayment(req, res, id);
+          return res.status(405).json({ success: false, message: 'Method not allowed' });
+        }
 
-    // PDF generation
-    if (action === 'pdf' && id) {
-      if (method === 'GET') return await generatePDF(req, res, id);
-      return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+        // PDF generation
+        if (action === 'pdf' && id) {
+          if (method === 'GET') return await generatePDF(req, res, id);
+          return res.status(405).json({ success: false, message: 'Method not allowed' });
+        }
 
-    // Single invoice operations
-    if (id) {
-      if (method === 'GET') return await getInvoice(req, res, id);
-      if (method === 'PUT') return await updateInvoice(req, res, id);
-      if (method === 'DELETE') return await deleteInvoice(req, res, id);
-      return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+        // Single invoice operations
+        if (id) {
+          if (method === 'GET') return await getInvoice(req, res, id);
+          if (method === 'PUT') return await updateInvoice(req, res, id);
+          if (method === 'DELETE') return await deleteInvoice(req, res, id);
+          return res.status(405).json({ success: false, message: 'Method not allowed' });
+        }
 
-    // List/Create invoices
-    if (method === 'GET') return await listInvoices(req, res, query);
-    if (method === 'POST') {
-      await checkSubscriptionLimit('invoices')(req, res, async () => {
-        return await createInvoice(req, res);
-      });
-      return;
-    }
+        // List/Create invoices
+        if (method === 'GET') {
+          console.log('📋 Calling listInvoices...');
+          return await listInvoices(req, res, query);
+        }
+        if (method === 'POST') {
+          await checkSubscriptionLimit('invoices')(req, res, async () => {
+            return await createInvoice(req, res);
+          });
+          return;
+        }
 
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
       });
     });
   } catch (error) {
     console.error('❌ Invoice API error:', error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('❌ Error stack:', error.stack);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error', 
+      error: error.message 
+    });
   }
 }
 
@@ -75,6 +91,13 @@ export default async function handler(req, res) {
 async function listInvoices(req, res, query) {
   try {
     console.log('📋 Fetching invoices list...');
+    console.log('🔍 Organization ID:', req.organizationId);
+    console.log('🔍 Query params:', query);
+    
+    if (!req.organizationId) {
+      console.error('❌ No organization ID found');
+      return res.status(400).json({ success: false, message: 'Organization ID required' });
+    }
     
     const { search, status, startDate, endDate, customer, limit = 50 } = query;
     const filter = { organizationId: req.organizationId };
@@ -89,13 +112,16 @@ async function listInvoices(req, res, query) {
     
     if (search) {
       try {
+        console.log('🔍 Searching customers with term:', search);
         const customers = await Customer.find({
           organizationId: req.organizationId,
           $or: [
             { name: { $regex: search, $options: 'i' } },
             { phone: { $regex: search, $options: 'i' } }
           ]
-        }).select('_id');
+        }).select('_id').lean();
+        
+        console.log('✅ Found customers:', customers.length);
         
         filter.$or = [
           { invoiceNumber: { $regex: search, $options: 'i' } },
@@ -106,7 +132,7 @@ async function listInvoices(req, res, query) {
       }
     }
 
-    console.log('🔍 Query filter:', JSON.stringify(filter));
+    console.log('🔍 Final query filter:', JSON.stringify(filter));
 
     const invoices = await Invoice.find(filter)
       .populate('customer', 'name phone')
@@ -120,7 +146,12 @@ async function listInvoices(req, res, query) {
     return res.status(200).json({ success: true, invoices });
   } catch (error) {
     console.error('❌ List invoices error:', error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('❌ Error stack:', error.stack);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch invoices', 
+      error: error.message 
+    });
   }
 }
 
@@ -732,190 +763,6 @@ async function updateInvoice(req, res, id) {
     }
 
     console.log('✅ Invoice update completed successfully');
-
-    return res.status(200).json({
-      success: true,
-      message: 'Invoice updated successfully',
-      invoice: updatedInvoice
-    });
-  } catch (error) {
-    console.error('❌ Update invoice error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}ale
-        discount: itemDiscount,
-        discountType: itemDiscountType,
-        taxableValue: parseFloat(taxableValue.toFixed(2)),
-        cgstRate: 9,
-        sgstRate: 9,
-        cgstAmount: parseFloat(cgstAmount.toFixed(2)),
-        sgstAmount: parseFloat(sgstAmount.toFixed(2)),
-        total: parseFloat(itemTotal.toFixed(2))
-      });
-    }
-
-    // Calculate totals (same logic as create)
-    let additionalDiscount = parseFloat(discount) || 0;
-    let amountAfterItemDiscount = grossAmount - itemDiscountTotal;
-
-    if (discountType === 'percentage') {
-      additionalDiscount = (amountAfterItemDiscount * additionalDiscount) / 100;
-    }
-
-    let taxableAmount = grossAmount - itemDiscountTotal - additionalDiscount;
-    let totalCgst = 0;
-    let totalSgst = 0;
-    let totalGst = 0;
-
-    if (applyGST) {
-      totalCgst = (taxableAmount * 9) / 100;
-      totalSgst = (taxableAmount * 9) / 100;
-      totalGst = totalCgst + totalSgst;
-    }
-
-    let subtotal = applyGST ? (taxableAmount + totalGst) : taxableAmount;
-    const roundOff = Math.round(subtotal) - subtotal;
-    const grandTotal = Math.round(subtotal);
-    const amountInWords = numberToWords(grandTotal);
-
-    const invoiceItems = processedItems.map(({ productRef, ...item }) => item);
-
-    // Update invoice data
-    const updateData = {
-      customer,
-      buyerDetails: {
-        name: customerExists.name,
-        address: buyerDetails?.street ?
-          `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
-          customerExists.address?.street || 'Address not provided',
-        mobile: customerExists.phone,
-        gstin: buyerDetails?.gstin || 'N/A',
-        state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
-        stateCode: '09'
-      },
-      consigneeDetails: {
-        name: customerExists.name,
-        address: buyerDetails?.street ?
-          `${buyerDetails.street}, ${buyerDetails.city || ''}, ${buyerDetails.state || 'UTTAR PRADESH'} ${buyerDetails.pincode || ''}` :
-          customerExists.address?.street || 'Address not provided',
-        mobile: customerExists.phone,
-        gstin: buyerDetails?.gstin || 'N/A',
-        state: buyerDetails?.state || customerExists.address?.state || 'UTTAR PRADESH',
-        stateCode: '09'
-      },
-      modeOfPayment: paymentMethod,
-      destination: destination || '',
-      deliveryNote: deliveryNote || '',
-      referenceNo: referenceNo || '',
-      buyerOrderNo: buyerOrderNo || '',
-      items: invoiceItems,
-      subtotal: parseFloat(grossAmount.toFixed(2)),
-      totalTaxableAmount: parseFloat(taxableAmount.toFixed(2)),
-      totalCgst: parseFloat(totalCgst.toFixed(2)),
-      totalSgst: parseFloat(totalSgst.toFixed(2)),
-      tax: parseFloat(totalGst.toFixed(2)),
-      discount: parseFloat(additionalDiscount.toFixed(2)),
-      discountType: discountType,
-      applyGST: applyGST,
-      roundOff: parseFloat(roundOff.toFixed(2)),
-      grandTotal: grandTotal,
-      total: grandTotal,
-      amountInWords: amountInWords,
-      paymentMethod: paymentMethod,
-      notes: notes || '',
-      dueDate: dueDate ? new Date(dueDate) : null,
-      terms: terms || '',
-      updatedBy: req.userId || null,
-      updatedAt: new Date()
-    };
-
-    // Update payment status if changed
-    const paidAmountValue = parseFloat(paidAmount) || 0;
-    if (paymentStatus === 'paid' || paidAmountValue >= grandTotal) {
-      updateData.paymentStatus = 'paid';
-      updateData.status = 'paid';
-      updateData.paidAmount = grandTotal;
-      updateData.pendingAmount = 0;
-    } else if (paymentStatus === 'partial' || (paidAmountValue > 0 && paidAmountValue < grandTotal)) {
-      updateData.paymentStatus = 'partial';
-      updateData.status = 'partial';
-      updateData.paidAmount = paidAmountValue;
-      updateData.pendingAmount = grandTotal - paidAmountValue;
-    } else {
-      updateData.paymentStatus = 'unpaid';
-      updateData.status = 'pending';
-      updateData.paidAmount = 0;
-      updateData.pendingAmount = grandTotal;
-    }
-
-    const updatedInvoice = await Invoice.findByIdAndUpdate(id, updateData, { new: true })
-      .populate('customer', 'name phone address')
-      .populate('items.product', 'name category')
-      .populate('createdBy', 'name');
-
-    // Update stock for new items - batch operations
-    const bulkProductOps = [];
-    const inventoryHistoryOps = [];
-
-    for (const item of processedItems) {
-      if (item.productRef) {
-        const previousStock = item.productRef.stock;
-        const newStock = previousStock - item.quantity;
-        
-        // Batch product updates
-        const updateFields = { stock: newStock };
-        if (item.price !== item.productRef.sellingPrice) {
-          updateFields.sellingPrice = item.price;
-        }
-        
-        bulkProductOps.push({
-          updateOne: {
-            filter: { _id: item.product },
-            update: { $set: updateFields }
-          }
-        });
-
-        // Batch inventory history
-        inventoryHistoryOps.push({
-          organizationId: req.organizationId,
-          product: item.product,
-          type: 'sale_update',
-          quantity: -item.quantity,
-          previousStock: previousStock,
-          newStock: newStock,
-          reason: `Invoice ${existingInvoice.invoiceNumber} updated`,
-          updatedBy: req.userId || null
-        });
-      }
-    }
-
-    // Execute batch operations
-    if (bulkProductOps.length > 0) {
-      await Product.bulkWrite(bulkProductOps);
-    }
-    if (inventoryHistoryOps.length > 0) {
-      await InventoryHistory.insertMany(inventoryHistoryOps);
-    }
-
-    // Log inventory history for restored items (old items that were removed)
-    for (const oldItem of existingInvoice.items) {
-      const stillExists = processedItems.find(newItem => 
-        newItem.product.toString() === oldItem.product.toString()
-      );
-      
-      if (!stillExists) {
-        await InventoryHistory.create({
-          organizationId: req.organizationId,
-          product: oldItem.product,
-          type: 'sale_reversal',
-          quantity: oldItem.quantity,
-          previousStock: 0,
-          newStock: 0,
-          reason: `Item removed from invoice ${existingInvoice.invoiceNumber}`,
-          updatedBy: req.userId || null
-        });
-      }
-    }
 
     return res.status(200).json({
       success: true,
