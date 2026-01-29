@@ -74,6 +74,8 @@ export default async function handler(req, res) {
 // List invoices
 async function listInvoices(req, res, query) {
   try {
+    console.log('📋 Fetching invoices list...');
+    
     const { search, status, startDate, endDate, customer, limit = 50 } = query;
     const filter = { organizationId: req.organizationId };
     
@@ -86,18 +88,25 @@ async function listInvoices(req, res, query) {
     }
     
     if (search) {
-      const customers = await Customer.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } }
-        ]
-      }).select('_id');
-      
-      filter.$or = [
-        { invoiceNumber: { $regex: search, $options: 'i' } },
-        { customer: { $in: customers.map(c => c._id) } }
-      ];
+      try {
+        const customers = await Customer.find({
+          organizationId: req.organizationId,
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } }
+          ]
+        }).select('_id');
+        
+        filter.$or = [
+          { invoiceNumber: { $regex: search, $options: 'i' } },
+          { customer: { $in: customers.map(c => c._id) } }
+        ];
+      } catch (searchError) {
+        console.warn('⚠️ Search error, continuing without search:', searchError.message);
+      }
     }
+
+    console.log('🔍 Query filter:', JSON.stringify(filter));
 
     const invoices = await Invoice.find(filter)
       .populate('customer', 'name phone')
@@ -105,6 +114,8 @@ async function listInvoices(req, res, query) {
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .lean();
+
+    console.log(`✅ Found ${invoices.length} invoices`);
 
     return res.status(200).json({ success: true, invoices });
   } catch (error) {
