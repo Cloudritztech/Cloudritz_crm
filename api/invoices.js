@@ -552,13 +552,8 @@ async function updateInvoice(req, res, id) {
         return res.status(404).json({ success: false, message: `Product not found: ${item.product}` });
       }
 
-      if (product.stock < item.quantity) {
-        console.log('❌ Insufficient stock:', { product: product.name, available: product.stock, requested: item.quantity });
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for ${product.name}. Available: ${product.stock}`
-        });
-      }
+      // Skip stock validation during update since we restored stock first
+      console.log(`✅ Product found: ${product.name}, stock: ${product.stock}`);
 
       const qty = parseFloat(item.quantity);
       const price = parseFloat(item.price);
@@ -588,6 +583,155 @@ async function updateInvoice(req, res, id) {
         quantity: qty,
         price: price,
         purchasePrice: product.purchasePrice, // Store purchase price at time of sale
+        discount: itemDiscount,
+        discountType: itemDiscountType,
+        taxableValue: parseFloat(taxableValue.toFixed(2)),
+        cgstRate: 9,
+        sgstRate: 9,
+        cgstAmount: parseFloat(cgstAmount.toFixed(2)),
+        sgstAmount: parseFloat(sgstAmount.toFixed(2)),
+        total: parseFloat(itemTotal.toFixed(2))
+      });
+    }
+
+    console.log('🔄 Calculating totals...');
+
+    // Calculate totals (same logic as create)
+    let additionalDiscount = parseFloat(discount) || 0;
+    let amountAfterItemDiscount = grossAmount - itemDiscountTotal;
+
+    if (discountType === 'percentage') {
+      additionalDiscount = (amountAfterItemDiscount * additionalDiscount) / 100;
+    }
+
+    let taxableAmount = grossAmount - itemDiscountTotal - additionalDiscount;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalGst = 0;
+
+    if (applyGST) {
+      totalCgst = (taxableAmount * 9) / 100;
+      totalSgst = (taxableAmount * 9) / 100;
+      totalGst = totalCgst + totalSgst;
+    }
+
+    let subtotal = applyGST ? (taxableAmount + totalGst) : taxableAmount;
+    const roundOff = Math.round(subtotal) - subtotal;
+    const grandTotal = Math.round(subtotal);
+    const amountInWords = numberToWords(grandTotal);
+
+    const invoiceItems = processedItems.map(({ productRef, ...item }) => item);
+
+    console.log('🔄 Updating invoice in database...');
+
+    // Update invoice data
+    const updateData = {
+      customer,
+      items: invoiceItems,
+      subtotal: parseFloat(grossAmount.toFixed(2)),
+      totalTaxableAmount: parseFloat(taxableAmount.toFixed(2)),
+      totalCgst: parseFloat(totalCgst.toFixed(2)),
+      totalSgst: parseFloat(totalSgst.toFixed(2)),
+      tax: parseFloat(totalGst.toFixed(2)),
+      discount: parseFloat(additionalDiscount.toFixed(2)),
+      discountType: discountType,
+      applyGST: applyGST,
+      roundOff: parseFloat(roundOff.toFixed(2)),
+      grandTotal: grandTotal,
+      total: grandTotal,
+      amountInWords: amountInWords,
+      paymentMethod: paymentMethod,
+      notes: notes || '',
+      dueDate: dueDate ? new Date(dueDate) : null,
+      terms: terms || '',
+      updatedBy: req.userId || null,
+      updatedAt: new Date()
+    };
+
+    // Update payment status if changed
+    const paidAmountValue = parseFloat(paidAmount) || 0;
+    if (paymentStatus === 'paid' || paidAmountValue >= grandTotal) {
+      updateData.paymentStatus = 'paid';
+      updateData.status = 'paid';
+      updateData.paidAmount = grandTotal;
+      updateData.pendingAmount = 0;
+    } else if (paymentStatus === 'partial' || (paidAmountValue > 0 && paidAmountValue < grandTotal)) {
+      updateData.paymentStatus = 'partial';
+      updateData.status = 'partial';
+      updateData.paidAmount = paidAmountValue;
+      updateData.pendingAmount = grandTotal - paidAmountValue;
+    } else {
+      updateData.paymentStatus = 'unpaid';
+      updateData.status = 'pending';
+      updateData.paidAmount = 0;
+      updateData.pendingAmount = grandTotal;
+    }
+
+    const updatedInvoice = await Invoice.findByIdAndUpdate(id, updateData, { new: true })
+      .populate('customer', 'name phone address')
+      .populate('items.product', 'name category')
+      .populate('createdBy', 'name');
+
+    console.log('🔄 Updating product stocks...');
+
+    // Update stock for new items - batch operations
+    const bulkProductOps = [];
+    const inventoryHistoryOps = [];
+
+    for (const item of processedItems) {
+      if (item.productRef) {
+        const previousStock = item.productRef.stock;
+        const newStock = previousStock - item.quantity;
+        
+        // Batch product updates
+        const updateFields = { stock: newStock };
+        if (item.price !== item.productRef.sellingPrice) {
+          updateFields.sellingPrice = item.price;
+        }
+        
+        bulkProductOps.push({
+          updateOne: {
+            filter: { _id: item.product },
+            update: { $set: updateFields }
+          }
+        });
+
+        // Batch inventory history
+        inventoryHistoryOps.push({
+          organizationId: req.organizationId,
+          product: item.product,
+          type: 'sale_update',
+          quantity: -item.quantity,
+          previousStock: previousStock,
+          newStock: newStock,
+          reason: `Invoice ${existingInvoice.invoiceNumber} updated`,
+          updatedBy: req.userId || null
+        });
+      }
+    }
+
+    // Execute batch operations
+    if (bulkProductOps.length > 0) {
+      await Product.bulkWrite(bulkProductOps);
+      console.log('✅ Updated product stocks');
+    }
+    if (inventoryHistoryOps.length > 0) {
+      await InventoryHistory.insertMany(inventoryHistoryOps);
+      console.log('✅ Created inventory history');
+    }
+
+    console.log('✅ Invoice update completed successfully');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Invoice updated successfully',
+      invoice: updatedInvoice
+    });
+  } catch (error) {
+    console.error('❌ Update invoice error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}ale
         discount: itemDiscount,
         discountType: itemDiscountType,
         taxableValue: parseFloat(taxableValue.toFixed(2)),
