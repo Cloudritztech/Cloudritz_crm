@@ -673,31 +673,48 @@ async function updateInvoice(req, res, id) {
       .populate('items.product', 'name category')
       .populate('createdBy', 'name');
 
-    // Update stock for new items
+    // Update stock for new items - batch operations
+    const bulkProductOps = [];
+    const inventoryHistoryOps = [];
+
     for (const item of processedItems) {
       if (item.productRef) {
         const previousStock = item.productRef.stock;
-        item.productRef.stock -= item.quantity;
+        const newStock = previousStock - item.quantity;
         
-        // Update selling price if different from current price
+        // Batch product updates
+        const updateFields = { stock: newStock };
         if (item.price !== item.productRef.sellingPrice) {
-          item.productRef.sellingPrice = item.price;
+          updateFields.sellingPrice = item.price;
         }
         
-        await item.productRef.save();
+        bulkProductOps.push({
+          updateOne: {
+            filter: { _id: item.product },
+            update: { $set: updateFields }
+          }
+        });
 
-        // Log inventory history for stock change
-        await InventoryHistory.create({
+        // Batch inventory history
+        inventoryHistoryOps.push({
           organizationId: req.organizationId,
           product: item.product,
           type: 'sale_update',
           quantity: -item.quantity,
           previousStock: previousStock,
-          newStock: item.productRef.stock,
+          newStock: newStock,
           reason: `Invoice ${existingInvoice.invoiceNumber} updated`,
           updatedBy: req.userId || null
         });
       }
+    }
+
+    // Execute batch operations
+    if (bulkProductOps.length > 0) {
+      await Product.bulkWrite(bulkProductOps);
+    }
+    if (inventoryHistoryOps.length > 0) {
+      await InventoryHistory.insertMany(inventoryHistoryOps);
     }
 
     // Log inventory history for restored items (old items that were removed)
