@@ -13,7 +13,7 @@ const EditInvoice = () => {
   
   const [formData, setFormData] = useState({
     customer: "",
-    items: [{ product: "", quantity: 1, price: 0, discount: 0, discountType: "amount", name: "", isCustom: false }],
+    items: [{ id: Date.now(), product: "", quantity: 1, price: 0, discount: 0, discountType: "amount", name: "", isCustom: false }],
     discount: 0,
     discountType: "amount",
     paymentMethod: "cash",
@@ -60,7 +60,8 @@ const EditInvoice = () => {
         // Pre-fill form with invoice data
         setFormData({
           customer: invoice.customer?._id || invoice.customer,
-          items: invoice.items?.map(item => ({
+          items: invoice.items?.map((item, index) => ({
+            id: Date.now() + index, // Add unique ID
             product: item.product?._id || item.product,
             quantity: item.quantity,
             price: item.price,
@@ -169,14 +170,50 @@ const EditInvoice = () => {
   };
 
   const addItem = () => {
-    updateFormData({
-      items: [...formData.items, { product: "", quantity: 1, price: 0, discount: 0, discountType: "amount", name: "", isCustom: false }]
-    });
+    const newItem = { 
+      id: Date.now(), // Unique ID for React key
+      product: "", 
+      quantity: 1, 
+      price: 0, 
+      discount: 0, 
+      discountType: "amount", 
+      name: "", 
+      isCustom: false 
+    };
+    const newItems = [...formData.items, newItem];
+    updateFormData({ items: newItems });
+    
+    // Fix: Add empty search state for new item
+    const newIndex = newItems.length - 1;
+    setProductSearch({ ...productSearch, [newIndex]: '' });
+    setShowSuggestions({ ...showSuggestions, [newIndex]: false });
   };
 
   const removeItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index);
     updateFormData({ items: newItems });
+    
+    // Fix: Rebuild productSearch and showSuggestions with correct indices
+    const newProductSearch = {};
+    const newShowSuggestions = {};
+    
+    newItems.forEach((item, newIndex) => {
+      // Find the original index for this item
+      const originalIndex = formData.items.findIndex((originalItem, originalIdx) => 
+        originalIdx !== index && originalItem === item
+      );
+      
+      if (originalIndex !== -1 && productSearch[originalIndex]) {
+        newProductSearch[newIndex] = productSearch[originalIndex];
+      } else {
+        newProductSearch[newIndex] = item.name || '';
+      }
+      
+      newShowSuggestions[newIndex] = false;
+    });
+    
+    setProductSearch(newProductSearch);
+    setShowSuggestions(newShowSuggestions);
   };
 
   const updateItem = (index, field, value) => {
@@ -419,7 +456,7 @@ const EditInvoice = () => {
         <div>
           <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Items</h3>
           {formData.items.map((item, index) => (
-            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 mb-4 bg-gray-50 dark:bg-gray-900 relative">
+            <div key={item.id || index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 mb-4 bg-gray-50 dark:bg-gray-900 relative">
               <div className="grid grid-cols-1 md:grid-cols-9 gap-4 items-end">
                 {/* Product Search */}
                 <div className="md:col-span-3">
