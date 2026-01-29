@@ -258,7 +258,8 @@ const ViewInvoice = () => {
               <th style={{border: '1px solid #000', padding: '8px', width: '75px'}}>Amount</th>
             </tr>
           </thead>
-          <tbody>{invoice.items?.map((item, index) => {
+          <tbody>
+            {invoice.items?.map((item, index) => {
               const taxableValue = item.taxableValue || (item.quantity * item.price);
               const gstAmount = (item.cgstAmount || 0) + (item.sgstAmount || 0);
               const totalAmount = taxableValue + gstAmount;
@@ -276,10 +277,12 @@ const ViewInvoice = () => {
                   <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{totalAmount.toFixed(2)}</td>
                 </tr>
               );
-            })}<tr style={{fontWeight: '700'}}>
+            })}
+            <tr style={{fontWeight: '700'}}>
               <td colSpan="6" style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>Total</td>
               <td style={{border: '1px solid #000', padding: '8px', textAlign: 'right'}}>₹{(invoice.grandTotal || invoice.total).toFixed(2)}</td>
-            </tr></tbody>
+            </tr>
+          </tbody>
         </table>
         
         {/* Billing Breakdown */}
@@ -425,7 +428,7 @@ const ViewInvoice = () => {
                       <td className="text-right py-1">₹{totalAmount.toFixed(2)}</td>
                     </tr>
                   );
-                })}}
+                })}
               </tbody>
             </table>
 

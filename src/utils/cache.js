@@ -1,70 +1,39 @@
-// Simple in-memory cache with TTL
-class Cache {
-  constructor() {
+// Simple cache utility for frontend performance
+class SimpleCache {
+  constructor(ttl = 5 * 60 * 1000) { // 5 minutes default
     this.cache = new Map();
+    this.ttl = ttl;
   }
 
-  set(key, value, ttl = 300000) { // 5 minutes default
-    const expiry = Date.now() + ttl;
-    this.cache.set(key, { value, expiry });
+  set(key, data) {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
   }
 
   get(key) {
     const item = this.cache.get(key);
     if (!item) return null;
     
-    if (Date.now() > item.expiry) {
+    if (Date.now() - item.timestamp > this.ttl) {
       this.cache.delete(key);
       return null;
     }
     
-    return item.value;
+    return item.data;
   }
 
-  clear(keyOrPrefix) {
-    if (!keyOrPrefix) {
-      this.cache.clear();
-      return;
-    }
-    
-    // If exact key exists, delete it
-    if (this.cache.has(keyOrPrefix)) {
-      this.cache.delete(keyOrPrefix);
-    }
-    
-    // Also clear all keys that start with this prefix
-    for (const key of this.cache.keys()) {
-      if (key.startsWith(keyOrPrefix)) {
-        this.cache.delete(key);
-      }
-    }
+  clear() {
+    this.cache.clear();
   }
 
-  // Clear all related caches when data changes
-  invalidateRelated(type) {
-    const patterns = {
-      products: ['products_', 'product_', 'dashboard', 'salesAnalytics', 'topProducts_', 'inventory_history_'],
-      invoices: ['invoices_', 'invoice_', 'dashboard', 'sales_', 'profit_', 'salesReports_', 'financialTrends_'],
-      customers: ['customers_', 'customer_', 'dashboard'],
-      expenses: ['expenses_', 'expense_', 'dashboard', 'profit_', 'financialTrends_'],
-      reports: ['dashboard', 'sales_', 'profit_', 'salesAnalytics', 'topProducts_', 'salesReports_', 'financialTrends_', 'gstSummary_']
-    };
-    
-    const clearPatterns = patterns[type] || [];
-    clearPatterns.forEach(pattern => this.clear(pattern));
-  }
-
-  has(key) {
-    const item = this.cache.get(key);
-    if (!item) return false;
-    
-    if (Date.now() > item.expiry) {
-      this.cache.delete(key);
-      return false;
-    }
-    
-    return true;
+  delete(key) {
+    this.cache.delete(key);
   }
 }
 
-export const apiCache = new Cache();
+// Create cache instances
+export const productsCache = new SimpleCache(2 * 60 * 1000); // 2 minutes
+export const customersCache = new SimpleCache(5 * 60 * 1000); // 5 minutes
+export const dashboardCache = new SimpleCache(1 * 60 * 1000); // 1 minute

@@ -219,24 +219,23 @@ export default async function handler(req, res) {
         }
 
         const previousStock = product.stock;
-        const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, { new: true });
+        Object.assign(product, req.body);
+        await product.save();
 
-        if (previousStock !== updatedProduct.stock) {
+        if (previousStock !== product.stock) {
           await InventoryHistory.create({
             organizationId: req.organizationId,
-            product: updatedProduct._id,
+            product: product._id,
             type: 'adjustment',
-            quantity: updatedProduct.stock - previousStock,
+            quantity: product.stock - previousStock,
             previousStock,
-            newStock: updatedProduct.stock,
+            newStock: product.stock,
             reason: 'Manual adjustment',
             updatedBy: req.userId
           });
-
-          // Check for low stock and create notification
         }
 
-        return res.json({ success: true, product: updatedProduct });
+        return res.json({ success: true, product });
       }
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -275,7 +274,10 @@ export default async function handler(req, res) {
         if (req.organizationId) {
           queryObj.organizationId = req.organizationId;
         }
-        const products = await Product.find(queryObj).sort({ createdAt: -1 });
+        const products = await Product.find(queryObj)
+          .select('name sellingPrice purchasePrice stock stockSaleValue stockPurchaseValue category lowStockLimit isActive')
+          .sort({ createdAt: -1 })
+          .lean();
         return res.json({ success: true, products });
       } catch (error) {
         return res.status(500).json({ message: error.message });

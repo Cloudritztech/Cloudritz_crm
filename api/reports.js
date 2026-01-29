@@ -335,7 +335,7 @@ async function handleSalesReports(req, res) {
         { $unwind: "$product" },
         { $group: { 
           _id: null, 
-          totalCOGS: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+          totalCOGS: { $sum: { $multiply: ["$items.quantity", { $ifNull: ["$items.purchasePrice", "$product.purchasePrice"] }] } }
         }}
       ])
     ]);
@@ -451,7 +451,7 @@ async function handleFinancialTrends(req, res) {
               year: { $year: "$createdAt" },
               month: { $month: "$createdAt" }
             },
-            cogs: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+            cogs: { $sum: { $multiply: ["$items.quantity", { $ifNull: ["$items.purchasePrice", "$product.purchasePrice"] }] } }
           }},
           { $sort: { "_id.year": 1, "_id.month": 1 } }
         ]),
@@ -546,7 +546,7 @@ async function handleFinancialTrends(req, res) {
           { $unwind: "$product" },
           { $group: {
             _id: { year: { $year: "$createdAt" } },
-            cogs: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+            cogs: { $sum: { $multiply: ["$items.quantity", { $ifNull: ["$items.purchasePrice", "$product.purchasePrice"] }] } }
           }},
           { $sort: { "_id.year": 1 } }
         ]),
@@ -711,7 +711,7 @@ async function handleGSTSummary(req, res) {
         { $unwind: "$product" },
         { $group: { 
           _id: null, 
-          totalCOGS: { $sum: { $multiply: ["$items.quantity", "$product.purchasePrice"] } }
+          totalCOGS: { $sum: { $multiply: ["$items.quantity", { $ifNull: ["$items.purchasePrice", "$product.purchasePrice"] }] } }
         }}
       ]),
       // Expenses

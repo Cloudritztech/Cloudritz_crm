@@ -59,16 +59,16 @@ const EditInvoice = () => {
         
         // Pre-fill form with invoice data
         setFormData({
-          customer: invoice.customer._id || invoice.customer,
-          items: invoice.items.map(item => ({
-            product: item.product._id || item.product,
+          customer: invoice.customer?._id || invoice.customer,
+          items: invoice.items?.map(item => ({
+            product: item.product?._id || item.product,
             quantity: item.quantity,
             price: item.price,
             discount: item.discount || 0,
             discountType: item.discountType || 'amount',
-            name: item.product.name || '',
+            name: item.product?.name || '',
             isCustom: false
-          })),
+          })) || [],
           discount: invoice.discount || 0,
           discountType: invoice.discountType || 'amount',
           paymentMethod: invoice.paymentMethod || 'cash',
@@ -93,8 +93,8 @@ const EditInvoice = () => {
 
         // Set product search values
         const searchValues = {};
-        invoice.items.forEach((item, index) => {
-          searchValues[index] = item.product.name || '';
+        invoice.items?.forEach((item, index) => {
+          searchValues[index] = item.product?.name || '';
         });
         setProductSearch(searchValues);
       }

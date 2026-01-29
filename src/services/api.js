@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiCache } from '../utils/cache';
+import { productsCache, customersCache, dashboardCache } from '../utils/cache';
 
 // Dynamic API base URL for different environments
 const getApiBaseUrl = () => {
@@ -80,12 +80,11 @@ export const authAPI = {
 export const productsAPI = {
   getAll: async (params) => {
     const cacheKey = `products_${JSON.stringify(params || {})}`;
-    const cached = apiCache.get(cacheKey);
+    const cached = productsCache.get(cacheKey);
     if (cached) return { data: cached };
     
     const response = await api.get('/products', { params });
-    apiCache.set(cacheKey, response.data, 60000); // Reduced to 1 min
-    
+    productsCache.set(cacheKey, response.data);
     return response;
   },
   getById: async (id) => {

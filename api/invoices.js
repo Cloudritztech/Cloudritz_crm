@@ -101,7 +101,7 @@ async function listInvoices(req, res, query) {
 
     const invoices = await Invoice.find(filter)
       .populate('customer', 'name phone')
-      .populate('createdBy', 'name')
+      .select('invoiceNumber customer total paymentStatus status createdAt')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .lean();
@@ -259,6 +259,7 @@ async function createInvoice(req, res) {
         productRef: product, // Store product reference for later stock update
         quantity: qty,
         price: price,
+        purchasePrice: product.purchasePrice, // Store purchase price at time of sale
         discount: itemDiscount,
         discountType: itemDiscountType,
         taxableValue: parseFloat(taxableValue.toFixed(2)),
@@ -413,27 +414,48 @@ async function createInvoice(req, res) {
       console.warn('⚠️ Failed to update customer:', custErr.message);
     }
 
-    // Invoice created successfully - now update stock and log history
+    // Invoice created successfully - batch update stock, prices and log history
+    const bulkProductOps = [];
+    const inventoryHistoryOps = [];
+
     for (const item of processedItems) {
       if (item.productRef) {
         const previousStock = item.productRef.stock;
-        item.productRef.stock -= item.quantity;
-        await item.productRef.save();
+        const newStock = previousStock - item.quantity;
+        
+        // Batch product updates
+        const updateFields = { stock: newStock };
+        if (item.price !== item.productRef.sellingPrice) {
+          updateFields.sellingPrice = item.price;
+        }
+        
+        bulkProductOps.push({
+          updateOne: {
+            filter: { _id: item.product },
+            update: { $set: updateFields }
+          }
+        });
 
-        // Log inventory history
-        const historyData = {
+        // Batch inventory history
+        inventoryHistoryOps.push({
           organizationId: req.organizationId,
           product: item.product,
           type: 'sale',
           quantity: -item.quantity,
           previousStock: previousStock,
-          newStock: item.productRef.stock,
+          newStock: newStock,
           reason: `Sale via invoice ${invoiceNumber}`,
           updatedBy: req.userId || null
-        };
-        
-        await InventoryHistory.create(historyData);
+        });
       }
+    }
+
+    // Execute batch operations
+    if (bulkProductOps.length > 0) {
+      await Product.bulkWrite(bulkProductOps);
+    }
+    if (inventoryHistoryOps.length > 0) {
+      await InventoryHistory.insertMany(inventoryHistoryOps);
     }
 
     const populatedInvoice = await Invoice.findById(invoice._id)
@@ -540,6 +562,7 @@ async function updateInvoice(req, res, id) {
         productRef: product,
         quantity: qty,
         price: price,
+        purchasePrice: product.purchasePrice, // Store purchase price at time of sale
         discount: itemDiscount,
         discountType: itemDiscountType,
         taxableValue: parseFloat(taxableValue.toFixed(2)),
@@ -653,8 +676,47 @@ async function updateInvoice(req, res, id) {
     // Update stock for new items
     for (const item of processedItems) {
       if (item.productRef) {
+        const previousStock = item.productRef.stock;
         item.productRef.stock -= item.quantity;
+        
+        // Update selling price if different from current price
+        if (item.price !== item.productRef.sellingPrice) {
+          item.productRef.sellingPrice = item.price;
+        }
+        
         await item.productRef.save();
+
+        // Log inventory history for stock change
+        await InventoryHistory.create({
+          organizationId: req.organizationId,
+          product: item.product,
+          type: 'sale_update',
+          quantity: -item.quantity,
+          previousStock: previousStock,
+          newStock: item.productRef.stock,
+          reason: `Invoice ${existingInvoice.invoiceNumber} updated`,
+          updatedBy: req.userId || null
+        });
+      }
+    }
+
+    // Log inventory history for restored items (old items that were removed)
+    for (const oldItem of existingInvoice.items) {
+      const stillExists = processedItems.find(newItem => 
+        newItem.product.toString() === oldItem.product.toString()
+      );
+      
+      if (!stillExists) {
+        await InventoryHistory.create({
+          organizationId: req.organizationId,
+          product: oldItem.product,
+          type: 'sale_reversal',
+          quantity: oldItem.quantity,
+          previousStock: 0,
+          newStock: 0,
+          reason: `Item removed from invoice ${existingInvoice.invoiceNumber}`,
+          updatedBy: req.userId || null
+        });
       }
     }
 
@@ -741,12 +803,25 @@ async function deleteInvoice(req, res, id) {
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
 
-    // Restore stock for all items
+    // Restore stock for all items and log history
     for (const item of invoice.items) {
       const product = await Product.findById(item.product);
       if (product) {
+        const previousStock = product.stock;
         product.stock += item.quantity;
         await product.save();
+        
+        // Log inventory history for deletion
+        await InventoryHistory.create({
+          organizationId: req.organizationId,
+          product: item.product,
+          type: 'sale_deletion',
+          quantity: item.quantity,
+          previousStock: previousStock,
+          newStock: product.stock,
+          reason: `Invoice ${invoice.invoiceNumber} deleted`,
+          updatedBy: req.userId || null
+        });
       }
     }
 
