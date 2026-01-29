@@ -484,10 +484,15 @@ async function createInvoice(req, res) {
 // Update invoice
 async function updateInvoice(req, res, id) {
   try {
+    console.log('🔄 Starting invoice update for ID:', id);
+    
     const existingInvoice = await Invoice.findById(id);
     if (!existingInvoice) {
+      console.log('❌ Invoice not found:', id);
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
+
+    console.log('✅ Found existing invoice:', existingInvoice.invoiceNumber);
 
     const {
       customer, items, discount = 0, discountType = 'amount', applyGST = true,
@@ -495,23 +500,38 @@ async function updateInvoice(req, res, id) {
       destination, deliveryNote, referenceNo, buyerOrderNo
     } = req.body;
 
+    console.log('📝 Request data:', { customer, itemsCount: items?.length, discount, paymentStatus });
+
     if (!customer || !items || items.length === 0) {
+      console.log('❌ Missing required data');
       return res.status(400).json({ success: false, message: 'Customer and items required' });
     }
 
     const customerExists = await Customer.findById(customer);
     if (!customerExists) {
+      console.log('❌ Customer not found:', customer);
       return res.status(404).json({ success: false, message: 'Customer not found' });
     }
 
+    console.log('✅ Customer found:', customerExists.name);
+    console.log('🔄 Restoring stock for old items...');
+
     // Restore stock for old items
     for (const oldItem of existingInvoice.items) {
-      const product = await Product.findById(oldItem.product);
-      if (product) {
-        product.stock += oldItem.quantity;
-        await product.save();
+      try {
+        const product = await Product.findById(oldItem.product);
+        if (product) {
+          product.stock += oldItem.quantity;
+          await product.save();
+          console.log(`✅ Restored ${oldItem.quantity} units for ${product.name}`);
+        }
+      } catch (stockError) {
+        console.error('❌ Error restoring stock:', stockError);
+        throw stockError;
       }
     }
+
+    console.log('🔄 Processing new items...');
 
     // Process new items (same logic as create)
     let grossAmount = 0;
@@ -519,16 +539,21 @@ async function updateInvoice(req, res, id) {
     const processedItems = [];
 
     for (const item of items) {
+      console.log('📝 Processing item:', { product: item.product, quantity: item.quantity, price: item.price });
+      
       if (!item.product || !item.quantity || item.quantity <= 0 || !item.price || item.price < 0) {
+        console.log('❌ Invalid item data:', item);
         return res.status(400).json({ success: false, message: 'Invalid item data' });
       }
 
       const product = await Product.findById(item.product);
       if (!product) {
+        console.log('❌ Product not found:', item.product);
         return res.status(404).json({ success: false, message: `Product not found: ${item.product}` });
       }
 
       if (product.stock < item.quantity) {
+        console.log('❌ Insufficient stock:', { product: product.name, available: product.stock, requested: item.quantity });
         return res.status(400).json({
           success: false,
           message: `Insufficient stock for ${product.name}. Available: ${product.stock}`
