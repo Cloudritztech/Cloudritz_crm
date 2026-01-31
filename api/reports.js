@@ -134,11 +134,15 @@ export default async function handler(req, res) {
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
-      // Pending payments - FIXED: Sum pendingAmount instead of total
+      // Pending payments - Include all invoices with pending amounts
       Invoice.aggregate([
         { $match: { 
-          organizationId: req.organizationId, 
-          paymentStatus: { $in: ['unpaid', 'partial'] } 
+          organizationId: req.organizationId,
+          $or: [
+            { paymentStatus: { $in: ['unpaid', 'partial'] } },
+            { status: { $in: ['pending', 'partial'] } },
+            { pendingAmount: { $gt: 0 } }
+          ]
         }},
         { $group: { 
           _id: null, 
@@ -211,8 +215,12 @@ export default async function handler(req, res) {
     // Send notification for pending payments
     if (pendingPayments[0]?.count > 0) {
       const pendingInvoices = await Invoice.find({ 
-        organizationId: req.organizationId, 
-        paymentStatus: { $in: ['unpaid', 'partial'] } 
+        organizationId: req.organizationId,
+        $or: [
+          { paymentStatus: { $in: ['unpaid', 'partial'] } },
+          { status: { $in: ['pending', 'partial'] } },
+          { pendingAmount: { $gt: 0 } }
+        ]
       }).select('_id invoiceNumber pendingAmount').limit(10).lean();
       
       notifyPendingPayments(req.organizationId, pendingInvoices).catch(err => 
