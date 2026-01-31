@@ -556,6 +556,16 @@ async function updateInvoice(req, res, id) {
     }
 
     console.log('✅ Customer found:', customerExists.name);
+    
+    // Fetch current stock BEFORE any changes for accurate history
+    const stockBeforeUpdate = new Map();
+    for (const oldItem of existingInvoice.items) {
+      const product = await Product.findById(oldItem.product);
+      if (product) {
+        stockBeforeUpdate.set(oldItem.product.toString(), product.stock);
+      }
+    }
+    
     console.log('🔄 Restoring stock for old items...');
 
     // Restore stock for old items
