@@ -347,8 +347,7 @@ const AddInvoice = () => {
         if (discountType === 'percentage') {
           itemDiscountTotal += (item.quantity * item.price * itemDiscount) / 100;
         } else {
-          // Amount discount is per unit, multiply by quantity
-          itemDiscountTotal += itemDiscount * item.quantity;
+          itemDiscountTotal += itemDiscount;
         }
       }
     });
@@ -674,8 +673,7 @@ const AddInvoice = () => {
                       if (discountType === 'percentage') {
                         discountAmount = (item.quantity * item.price * itemDiscount) / 100;
                       } else {
-                        // Amount discount is per unit, multiply by quantity
-                        discountAmount = itemDiscount * item.quantity;
+                        discountAmount = itemDiscount;
                       }
                       
                       return ((item.quantity * item.price) - discountAmount).toFixed(2);

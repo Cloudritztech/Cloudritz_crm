@@ -286,8 +286,7 @@ async function createInvoice(req, res) {
       if (itemDiscountType === 'percentage') {
         discountAmount = (itemGross * itemDiscount) / 100;
       } else {
-        // Amount discount is per unit, multiply by quantity
-        discountAmount = itemDiscount * qty;
+        discountAmount = itemDiscount;
       }
 
       itemDiscountTotal += discountAmount;
@@ -620,8 +619,7 @@ async function updateInvoice(req, res, id) {
       if (itemDiscountType === 'percentage') {
         discountAmount = (itemGross * itemDiscount) / 100;
       } else {
-        // Amount discount is per unit, multiply by quantity
-        discountAmount = itemDiscount * qty;
+        discountAmount = itemDiscount;
       }
 
       itemDiscountTotal += discountAmount;

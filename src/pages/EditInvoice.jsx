@@ -393,18 +393,11 @@ const EditInvoice = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Status (Auto-calculated)</label>
               <select
                 value={formData.paymentStatus}
-                onChange={(e) => {
-                  const status = e.target.value;
-                  const grandTotal = parseFloat(calculateTotals().grandTotal);
-                  updateFormData({ 
-                    paymentStatus: status,
-                    paidAmount: status === 'paid' ? grandTotal : status === 'partial' ? 0 : 0
-                  });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed"
               >
                 <option value="paid">Paid</option>
                 <option value="unpaid">Pending</option>
@@ -412,34 +405,18 @@ const EditInvoice = () => {
               </select>
             </div>
             
-            {/* Paid Amount Field */}
+            {/* Paid Amount Field - Read-only when payments exist */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {formData.paymentStatus === 'paid' ? 'Amount Paid' : formData.paymentStatus === 'partial' ? 'Advance Amount' : 'Paid Amount'}
+                Amount Paid (from payment history)
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">₹</span>
                 <input
                   type="number"
                   value={formData.paidAmount || ''}
-                  onChange={(e) => {
-                    const amount = parseFloat(e.target.value) || 0;
-                    const grandTotal = parseFloat(calculateTotals().grandTotal);
-                    let status = formData.paymentStatus;
-                    
-                    if (amount === 0) status = 'unpaid';
-                    else if (amount >= grandTotal) status = 'paid';
-                    else status = 'partial';
-                    
-                    updateFormData({ 
-                      paidAmount: amount,
-                      paymentStatus: status
-                    });
-                  }}
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  step="0.01"
-                  min="0"
-                  max={calculateTotals().grandTotal}
+                  readOnly
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed"
                   placeholder="0.00"
                 />
               </div>
@@ -448,6 +425,9 @@ const EditInvoice = () => {
                   Pending: ₹{(parseFloat(calculateTotals().grandTotal) - (formData.paidAmount || 0)).toFixed(2)}
                 </p>
               )}
+              <p className="text-xs text-blue-600 mt-1">
+                Note: Use "Add Payment" button on invoice view to record payments
+              </p>
             </div>
           </div>
         </div>
@@ -522,7 +502,7 @@ const EditInvoice = () => {
                 </div>
                 
                 {/* Discount */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount</label>
                   <div className="flex gap-2">
                     <input
@@ -536,7 +516,7 @@ const EditInvoice = () => {
                     <select
                       value={item.discountType || 'amount'}
                       onChange={(e) => updateItem(index, "discountType", e.target.value)}
-                      className="w-20 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                      className="w-10 px-1 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     >
                       <option value="amount">₹</option>
                       <option value="percentage">%</option>
