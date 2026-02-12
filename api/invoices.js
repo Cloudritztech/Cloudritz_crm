@@ -700,37 +700,64 @@ async function updateInvoice(req, res, id) {
       updatedAt: new Date()
     };
 
-    // Calculate total paid from existing payments
-    const existingPayments = existingInvoice.payments || [];
-    const totalPaidFromPayments = existingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Update payment status if changed - preserve existing payments
+    const paidAmountValue = parseFloat(paidAmount) || 0;
     
     console.log('💰 Payment calculation:', {
-      existingPayments: existingPayments.length,
-      totalPaidFromPayments: totalPaidFromPayments,
+      existingPaidAmount: existingInvoice.paidAmount,
+      newPaidAmount: paidAmountValue,
       grandTotal: grandTotal,
       paymentStatus: paymentStatus
     });
     
-    // Keep existing payments and recalculate status based on total
-    updateData.payments = existingPayments;
-    
-    if (totalPaidFromPayments >= grandTotal) {
+    if (paymentStatus === 'paid' || paidAmountValue >= grandTotal) {
       updateData.paymentStatus = 'paid';
       updateData.status = 'paid';
       updateData.paidAmount = grandTotal;
       updateData.pendingAmount = 0;
-      updateData.paymentDate = existingInvoice.paymentDate || new Date();
-    } else if (totalPaidFromPayments > 0) {
+      updateData.paymentDate = updateData.paymentDate || new Date();
+      
+      // If no existing payments and we're marking as paid, create a payment record
+      if (!existingInvoice.payments || existingInvoice.payments.length === 0) {
+        updateData.payments = [{
+          amount: grandTotal,
+          date: new Date(),
+          method: paymentMethod,
+          reference: 'Marked as paid during update',
+          notes: 'Full payment recorded during invoice update',
+          collectedBy: req.userId
+        }];
+      } else {
+        // Keep existing payments
+        updateData.payments = existingInvoice.payments;
+      }
+    } else if (paymentStatus === 'partial' || (paidAmountValue > 0 && paidAmountValue < grandTotal)) {
       updateData.paymentStatus = 'partial';
       updateData.status = 'partial';
-      updateData.paidAmount = totalPaidFromPayments;
-      updateData.pendingAmount = grandTotal - totalPaidFromPayments;
-      updateData.paymentDate = existingInvoice.paymentDate || new Date();
+      updateData.paidAmount = paidAmountValue;
+      updateData.pendingAmount = grandTotal - paidAmountValue;
+      updateData.paymentDate = paidAmountValue > 0 ? (updateData.paymentDate || new Date()) : null;
+      
+      // If we have a new paid amount and no existing payments, create a payment record
+      if (paidAmountValue > 0 && (!existingInvoice.payments || existingInvoice.payments.length === 0)) {
+        updateData.payments = [{
+          amount: paidAmountValue,
+          date: new Date(),
+          method: paymentMethod,
+          reference: 'Partial payment during update',
+          notes: 'Partial payment recorded during invoice update',
+          collectedBy: req.userId
+        }];
+      } else {
+        // Keep existing payments
+        updateData.payments = existingInvoice.payments;
+      }
     } else {
       updateData.paymentStatus = 'unpaid';
       updateData.status = 'pending';
       updateData.paidAmount = 0;
       updateData.pendingAmount = grandTotal;
+      updateData.payments = existingInvoice.payments || [];
     }
 
     const updatedInvoice = await Invoice.findByIdAndUpdate(id, updateData, { new: true })
