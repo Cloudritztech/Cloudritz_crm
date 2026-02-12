@@ -347,7 +347,8 @@ const AddInvoice = () => {
         if (discountType === 'percentage') {
           itemDiscountTotal += (item.quantity * item.price * itemDiscount) / 100;
         } else {
-          itemDiscountTotal += itemDiscount;
+          // Amount discount is per unit, multiply by quantity
+          itemDiscountTotal += itemDiscount * item.quantity;
         }
       }
     });
@@ -673,7 +674,8 @@ const AddInvoice = () => {
                       if (discountType === 'percentage') {
                         discountAmount = (item.quantity * item.price * itemDiscount) / 100;
                       } else {
-                        discountAmount = itemDiscount;
+                        // Amount discount is per unit, multiply by quantity
+                        discountAmount = itemDiscount * item.quantity;
                       }
                       
                       return ((item.quantity * item.price) - discountAmount).toFixed(2);
@@ -788,7 +790,7 @@ const AddInvoice = () => {
             
             {/* Right: Additional Discount Input */}
             <div className="space-y-4 order-1 lg:order-2">
-              <div>
+              <div className="relative z-10">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Discount</label>
                 <div className="flex gap-2">
                   <input
@@ -803,7 +805,7 @@ const AddInvoice = () => {
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-20 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm flex-shrink-0"
+                    className="w-20 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm flex-shrink-0 relative z-20"
                   >
                     <option value="amount">₹</option>
                     <option value="percentage">%</option>
