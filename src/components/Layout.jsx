@@ -58,8 +58,8 @@ const Layout = ({ children }) => {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex h-full flex-col bg-white shadow-strong">
-          {/* Mobile header */}
-          <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
+          {/* Mobile header with safe area */}
+          <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center space-x-3">
               {user?.businessProfile?.logo ? (
                 <img src={user.businessProfile.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
@@ -206,8 +206,8 @@ const Layout = ({ children }) => {
 
       {/* Main content */}
       <div className="lg:pl-72">
-        {/* Top bar */}
-        <div className="sticky top-0 z-30 flex h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+        {/* Top bar with safe area for notch */}
+        <div className="sticky top-0 z-30 flex h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
           {/* Mobile menu button */}
           <button
             className="px-4 text-gray-500 hover:text-gray-700 focus:outline-none lg:hidden"
@@ -228,8 +228,8 @@ const Layout = ({ children }) => {
             </div>
           </div>
           
-          {/* Right section */}
-          <div className="flex items-center space-x-4 px-4 lg:px-6">
+          {/* Right section - Notifications and User */}
+          <div className="flex items-center space-x-2 sm:space-x-4 px-2 sm:px-4 lg:px-6">
             {/* AI Notifications */}
             <NotificationPanel />
             
